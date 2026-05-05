@@ -307,6 +307,58 @@ spec:
                 - fileName
                 - gzipJsonnetProject
                 type: object
+              oci:
+                description: model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
+                properties:
+                  digest:
+                    description: |-
+                      Digest pins the artifact to an immutable content-addressable digest, e.g. "sha256:abc123...".
+                      Exactly one of Tag or Digest must be set.
+                    pattern: ^sha256:[a-fA-F0-9]{64}$
+                    type: string
+                  file:
+                    description: File is the path of the file to extract from the
+                      artifact.
+                    maxLength: 512
+                    minLength: 1
+                    type: string
+                  image:
+                    description: Image is the registry path of the artifact without
+                      tag or digest, e.g. "ghcr.io/team/dashboards".
+                    maxLength: 512
+                    minLength: 3
+                    type: string
+                  insecure:
+                    description: Insecure permits HTTP (non-TLS) registries and skips
+                      TLS verification. Default false.
+                    type: boolean
+                  pullSecretRef:
+                    description: |-
+                      PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+                      If omitted, anonymous pull is attempted.
+                    properties:
+                      name:
+                        default: ""
+                        description: |-
+                          Name of the referent.
+                          This field is effectively required, but due to backwards compatibility is
+                          allowed to be empty. Instances of this type with an empty value here are
+                          almost certainly wrong.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  tag:
+                    description: Tag pins the artifact to a mutable tag, e.g. "v1.4.7".
+                      Exactly one of Tag or Digest must be set.
+                    type: string
+                required:
+                - file
+                - image
+                type: object
+                x-kubernetes-validations:
+                - message: exactly one of tag or digest must be set
+                  rule: has(self.tag) != has(self.digest)
               plugins:
                 description: plugins
                 items:

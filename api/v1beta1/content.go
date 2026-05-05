@@ -53,6 +53,41 @@ type GrafanaComContentReference struct {
 	Revision *int `json:"revision,omitempty"`
 }
 
+// GrafanaContentOCI references a dashboard JSON file inside an OCI artifact in a container registry.
+// Bytes are fetched at reconcile time and never persisted to etcd; recommended for dashboards that
+// exceed the etcd object-size limit (~1 MiB).
+// +kubebuilder:validation:XValidation:rule="has(self.tag) != has(self.digest)",message="exactly one of tag or digest must be set"
+type GrafanaContentOCI struct {
+	// Image is the registry path of the artifact without tag or digest, e.g. "ghcr.io/team/dashboards".
+	// +kubebuilder:validation:MinLength=3
+	// +kubebuilder:validation:MaxLength=512
+	Image string `json:"image"`
+
+	// Tag pins the artifact to a mutable tag, e.g. "v1.4.7". Exactly one of Tag or Digest must be set.
+	// +optional
+	Tag string `json:"tag,omitempty"`
+
+	// Digest pins the artifact to an immutable content-addressable digest, e.g. "sha256:abc123...".
+	// Exactly one of Tag or Digest must be set.
+	// +optional
+	// +kubebuilder:validation:Pattern=`^sha256:[a-fA-F0-9]{64}$`
+	Digest string `json:"digest,omitempty"`
+
+	// File is the path of the file to extract from the artifact.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=512
+	File string `json:"file"`
+
+	// PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+	// If omitted, anonymous pull is attempted.
+	// +optional
+	PullSecretRef *corev1.LocalObjectReference `json:"pullSecretRef,omitempty"`
+
+	// Insecure permits HTTP (non-TLS) registries and skips TLS verification. Default false.
+	// +optional
+	Insecure bool `json:"insecure,omitempty"`
+}
+
 type GrafanaContentSpec struct {
 	// Manually specify the uid, overwrites uids already present in the json model.
 	// Can be any string consisting of alphanumeric characters, - and _ with a maximum length of 40.
@@ -93,6 +128,10 @@ type GrafanaContentSpec struct {
 	// grafana.com/dashboards
 	// +optional
 	GrafanaCom *GrafanaComContentReference `json:"grafanaCom,omitempty"`
+
+	// model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
+	// +optional
+	OCI *GrafanaContentOCI `json:"oci,omitempty"`
 
 	// Cache duration for models fetched from URLs
 	// +optional
