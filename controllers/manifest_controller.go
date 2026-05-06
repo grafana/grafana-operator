@@ -320,8 +320,8 @@ func (r *GrafanaManifestReconciler) loadGVR(cl *discovery.DiscoveryClient, templ
 		}
 
 		for _, api := range res.APIResources {
-			// this removes subresources like playlist/status
-			if strings.Contains(api.Name, "/") {
+			// skip subresources and unrelated kinds
+			if strings.Contains(api.Name, "/") || api.Kind != template.Kind {
 				continue
 			}
 
