@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -51,12 +52,7 @@ func SetContentCache(cr v1beta1.GrafanaContentResource, data map[string]any) err
 }
 
 func setContentCache(in *v1beta1.GrafanaContentStatus, url string, data map[string]any, cacheDuration time.Duration) error {
-	notExpired := cacheDuration <= 0 || in.ContentTimestamp.Add(cacheDuration).After(time.Now())
-
-	if len(in.ContentCache) > 0 && notExpired && in.ContentURL == url {
-		return nil
-	}
-
+	// NOTE: json.Marshal sorts map keys, so we should always get the same result
 	encoded, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("marshaling content: %w", err)
@@ -65,6 +61,13 @@ func setContentCache(in *v1beta1.GrafanaContentStatus, url string, data map[stri
 	gz, err := Gzip(encoded)
 	if err != nil {
 		return fmt.Errorf("compressing content: %w", err)
+	}
+
+	notExpired := cacheDuration <= 0 || in.ContentTimestamp.Add(cacheDuration).After(time.Now())
+
+	// NOTE: as encoded and compressed result should always be same, we can rely on bytes.Equal
+	if notExpired && bytes.Equal(in.ContentCache, gz) && in.ContentURL == url {
+		return nil
 	}
 
 	in.ContentCache = gz
