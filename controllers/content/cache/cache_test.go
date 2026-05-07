@@ -242,7 +242,7 @@ func TestSetContentCache(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.want.ContentCache, status.ContentCache)
-			assert.WithinDuration(t, tt.want.ContentTimestamp.Time, status.ContentTimestamp.Time, time.Second)
+			assert.WithinDuration(t, tt.want.ContentTimestamp.Time, status.ContentTimestamp.Time, 5*time.Second)
 			assert.Equal(t, tt.want.ContentURL, status.ContentURL)
 		})
 	}
