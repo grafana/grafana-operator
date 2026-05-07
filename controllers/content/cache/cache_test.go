@@ -185,14 +185,14 @@ func TestSetContentCache(t *testing.T) {
 			},
 		},
 		{
-			name:            "corrupted cache (missing url): cache is updated",
+			name:            "corrupted cache (broken gzip): cache is updated",
 			url:             url1,
 			data:            data1,
 			contentDuration: 24 * time.Hour,
 			status: v1beta1.GrafanaContentStatus{
-				ContentCache:     []byte{},
+				ContentCache:     []byte{1, 2, 3},
 				ContentTimestamp: hourAgo,
-				// ContentURL:       url1,
+				ContentURL:       url1,
 			},
 			want: v1beta1.GrafanaContentStatus{
 				ContentCache:     gz1,
@@ -233,14 +233,14 @@ func TestSetContentCache(t *testing.T) {
 			},
 		},
 		{
-			name:            "corrupted cache (broken gzip): cache is updated",
+			name:            "corrupted cache (missing url): cache is updated",
 			url:             url1,
 			data:            data1,
 			contentDuration: 24 * time.Hour,
 			status: v1beta1.GrafanaContentStatus{
-				ContentCache:     []byte{1, 2, 3},
+				ContentCache:     []byte{},
 				ContentTimestamp: hourAgo,
-				ContentURL:       url1,
+				// ContentURL:       url1,
 			},
 			want: v1beta1.GrafanaContentStatus{
 				ContentCache:     gz1,
