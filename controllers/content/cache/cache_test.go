@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestGrafanaDashboardStatus_getContentCache(t *testing.T) {
+func TestGetContentCache(t *testing.T) {
 	timestamp := metav1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	infinite := 0 * time.Second
 	dashboardJSON := []byte(`{"dummyField": "dummyData"}`)
