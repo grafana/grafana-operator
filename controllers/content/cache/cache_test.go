@@ -169,6 +169,22 @@ func TestSetContentCache(t *testing.T) {
 			},
 		},
 		{
+			name:            "expired cache (old timestamp): cache is updated",
+			url:             url1,
+			data:            data1,
+			contentDuration: 5 * time.Minute,
+			status: v1beta1.GrafanaContentStatus{
+				ContentURL:       url1,
+				ContentCache:     gz1,
+				ContentTimestamp: hourAgo,
+			},
+			want: v1beta1.GrafanaContentStatus{
+				ContentURL:       url1,
+				ContentCache:     gz1,
+				ContentTimestamp: now,
+			},
+		},
+		{
 			name:            "corrupted cache (missing url): cache is updated",
 			url:             url1,
 			data:            data1,
