@@ -216,6 +216,22 @@ func TestSetContentCache(t *testing.T) {
 				ContentTimestamp: now,
 			},
 		},
+		{
+			name:            "corrupted cache (broken gzip): cache is updated",
+			url:             url1,
+			data:            data1,
+			contentDuration: 24 * time.Hour,
+			status: v1beta1.GrafanaContentStatus{
+				ContentURL:       url1,
+				ContentCache:     []byte{1, 2, 3},
+				ContentTimestamp: hourAgo,
+			},
+			want: v1beta1.GrafanaContentStatus{
+				ContentURL:       url1,
+				ContentCache:     gz1,
+				ContentTimestamp: now,
+			},
+		},
 	}
 
 	for _, tt := range tests {
