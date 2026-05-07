@@ -137,7 +137,7 @@ func TestSetContentCache(t *testing.T) {
 			},
 		},
 		{
-			name:            "existing valid cache: cache is not updated",
+			name:            "valid cache: timestamp is not updated",
 			url:             url1,
 			data:            data1,
 			contentDuration: 24 * time.Hour,
@@ -153,7 +153,7 @@ func TestSetContentCache(t *testing.T) {
 			},
 		},
 		{
-			name:            "existing valid cache with wrong url: cache is updated",
+			name:            "expired cache (old url): cache is updated",
 			url:             url2,
 			data:            data2,
 			contentDuration: 24 * time.Hour,
@@ -169,7 +169,7 @@ func TestSetContentCache(t *testing.T) {
 			},
 		},
 		{
-			name:            "partially populated cache (valid URL, not expired): missing content is added",
+			name:            "corrupted cache (missing content): cache is updated",
 			url:             url1,
 			data:            data1,
 			contentDuration: 24 * time.Hour,
