@@ -168,7 +168,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingFolderUID, err)
 	}
 
-	applyHomeErrors := make(map[string]string)
 	pluginErrors := make(map[string]string)
 	applyErrors := make(map[string]string)
 
@@ -188,13 +187,6 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
-
-		if grafana.Spec.Preferences != nil && uid == grafana.Spec.Preferences.HomeDashboardUID {
-			err = r.UpdateHomeDashboard(ctx, grafana, uid, cr)
-			if err != nil {
-				applyHomeErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
-			}
-		}
 	}
 
 	if len(pluginErrors) > 0 {
@@ -202,12 +194,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		log.Error(err, "failed to apply plugins to all instances")
 	}
 
-	if len(applyHomeErrors) > 0 {
-		err := fmt.Errorf(FmtStrApplyErrors, applyHomeErrors)
-		log.Error(err, "failed to apply home dashboards to all instances")
-	}
-
-	allApplyErrors := mergeReconcileErrors(applyErrors, pluginErrors, applyHomeErrors)
+	allApplyErrors := mergeReconcileErrors(applyErrors, pluginErrors)
 
 	condition := buildSynchronizedCondition("Dashboard", conditionDashboardSynchronized, cr.Generation, allApplyErrors, len(instances))
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
@@ -619,23 +606,3 @@ func (r *GrafanaDashboardReconciler) requestsForChangeByField(indexKey string) h
 	}
 }
 
-func (r *GrafanaDashboardReconciler) UpdateHomeDashboard(ctx context.Context, grafana v1beta1.Grafana, uid string, dashboard *v1beta1.GrafanaDashboard) error {
-	log := logf.FromContext(ctx)
-
-	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, &grafana)
-	if err != nil {
-		return err
-	}
-
-	_, err = gClient.Org.UpdateOrgPreferences(&models.UpdatePrefsCmd{ //nolint:errcheck
-		HomeDashboardUID: uid,
-	})
-	if err != nil {
-		log.Error(err, "unable to update the home dashboard", "namespace", dashboard.Namespace, "name", dashboard.Name)
-		return err
-	}
-
-	log.Info("home dashboard configured", "namespace", dashboard.Namespace, "name", dashboard.Name)
-
-	return nil
-}

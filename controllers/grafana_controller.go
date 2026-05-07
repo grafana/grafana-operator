@@ -109,8 +109,10 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	var stages []v1beta1.OperatorStageName
 	if cr.IsExternal() {
-		// Only reconcile the Completion stage for external instances
-		stages = []v1beta1.OperatorStageName{v1beta1.OperatorStageComplete}
+		// External instances skip the in-cluster Deployment / PVC / Service
+		// pieces; only Preferences (which talks to the Grafana HTTP API)
+		// and the Completion stage apply.
+		stages = []v1beta1.OperatorStageName{v1beta1.OperatorStagePreferences, v1beta1.OperatorStageComplete}
 		// AdminURL is normally set during ingress/route stage.
 		// External instances only use the complete stage
 		cr.Status.AdminURL = cr.Spec.External.URL
@@ -410,6 +412,7 @@ func getInstallationStages() []v1beta1.OperatorStageName {
 		v1beta1.OperatorStageIngress,
 		v1beta1.OperatorStagePlugins,
 		v1beta1.OperatorStageDeployment,
+		v1beta1.OperatorStagePreferences,
 		v1beta1.OperatorStageComplete,
 	}
 }
@@ -432,6 +435,8 @@ func (r *GrafanaReconciler) getReconcilerForStage(stage v1beta1.OperatorStageNam
 		return grafana.NewPluginsReconciler(r.Client)
 	case v1beta1.OperatorStageDeployment:
 		return grafana.NewDeploymentReconciler(r.Client, r.IsOpenShift)
+	case v1beta1.OperatorStagePreferences:
+		return grafana.NewPreferencesReconciler(r.Client)
 	case v1beta1.OperatorStageComplete:
 		return grafana.NewCompleteReconciler(r.Client)
 	default:

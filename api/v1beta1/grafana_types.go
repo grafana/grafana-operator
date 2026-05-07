@@ -45,6 +45,7 @@ const (
 	OperatorStageIngress        OperatorStageName = "ingress"
 	OperatorStagePlugins        OperatorStageName = "plugins"
 	OperatorStageDeployment     OperatorStageName = "deployment"
+	OperatorStagePreferences    OperatorStageName = "preferences"
 	OperatorStageComplete       OperatorStageName = "complete"
 )
 
