@@ -167,4 +167,25 @@ func TestSetContentCache(t *testing.T) {
 		retrieved := getContentCache(&status, exampleURL, -1)
 		assert.JSONEq(t, `{"title":"Test"}`, string(retrieved))
 	})
+
+	t.Run("partially populated cache (valid URL, not expired): missing content is added", func(t *testing.T) {
+		prevTime := time.Now().Add(-time.Minute * 5)
+		status := v1beta1.GrafanaContentStatus{
+			ContentURL:       exampleURL,
+			ContentCache:     []byte{},
+			ContentTimestamp: metav1.NewTime(prevTime),
+		}
+		err := setContentCache(&status, exampleURL, map[string]any{"title": "Test"}, 0)
+		require.NoError(t, err)
+
+		// content timestamp should be now
+		assert.WithinDuration(t, time.Now(), status.ContentTimestamp.Time, time.Second)
+
+		// url should be the same
+		assert.Equal(t, exampleURL, status.ContentURL)
+
+		// cached content should be retrievable
+		retrieved := getContentCache(&status, exampleURL, -1)
+		assert.JSONEq(t, `{"title":"Test"}`, string(retrieved))
+	})
 }

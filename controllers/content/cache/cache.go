@@ -52,7 +52,8 @@ func SetContentCache(cr v1beta1.GrafanaContentResource, data map[string]any) err
 
 func setContentCache(in *v1beta1.GrafanaContentStatus, url string, data map[string]any, cacheDuration time.Duration) error {
 	notExpired := cacheDuration <= 0 || in.ContentTimestamp.Add(cacheDuration).After(time.Now())
-	if notExpired && in.ContentURL == url {
+
+	if len(in.ContentCache) > 0 && notExpired && in.ContentURL == url {
 		return nil
 	}
 
