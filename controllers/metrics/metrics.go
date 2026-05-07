@@ -67,46 +67,6 @@ var (
 		Name:      initialSyncDuration,
 		Help:      "time in ms to sync statuses after operator restart",
 	})
-
-	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
-	InitialContactPointSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: "contactpoints",
-		Name:      initialSyncDuration,
-		Help:      "time in ms to sync contact-points after operator restart",
-	})
-
-	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
-	InitialDashboardSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: "dashboards",
-		Name:      initialSyncDuration,
-		Help:      "time in ms to sync dashboards after operator restart",
-	})
-
-	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
-	InitialLibraryPanelSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: "librarypanels",
-		Name:      initialSyncDuration,
-		Help:      "time in ms to sync library panels after operator restart",
-	})
-
-	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
-	InitialDatasourceSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: "datasources",
-		Name:      initialSyncDuration,
-		Help:      "time in ms to sync datasources after operator restart",
-	})
-
-	// Deprecated: All Initial Sync Duration metrics have merged into a single metric
-	InitialFoldersSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: "folders",
-		Name:      initialSyncDuration,
-		Help:      "time in ms to sync folders after operator restart",
-	})
 )
 
 func init() {
@@ -117,10 +77,4 @@ func init() {
 	metrics.Registry.MustRegister(DashboardURLRequests)
 	metrics.Registry.MustRegister(ContentURLRequests)
 	metrics.Registry.MustRegister(InitialStatusSyncDuration)
-	// TODO Remvoe below registrations
-	metrics.Registry.MustRegister(InitialContactPointSyncDuration)
-	metrics.Registry.MustRegister(InitialDashboardSyncDuration)
-	metrics.Registry.MustRegister(InitialLibraryPanelSyncDuration)
-	metrics.Registry.MustRegister(InitialDatasourceSyncDuration)
-	metrics.Registry.MustRegister(InitialFoldersSyncDuration)
 }
