@@ -128,7 +128,7 @@ func TestSetContentCache(t *testing.T) {
 			name:            "no cache: cache is populated",
 			url:             url1,
 			data:            data1,
-			contentDuration: time.Hour,
+			contentDuration: 24 * time.Hour,
 			status:          v1beta1.GrafanaContentStatus{},
 			want: v1beta1.GrafanaContentStatus{
 				ContentCache:     gz1,
