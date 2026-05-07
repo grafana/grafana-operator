@@ -98,13 +98,13 @@ func TestSetContentCache(t *testing.T) {
 	url1 := "http://localhost:8080/1.json"
 	url2 := "http://localhost:8080/2.json"
 
-	raw1 := map[string]any{"title": "Test1"}
-	raw2 := map[string]any{"title": "Test2"}
+	data1 := map[string]any{"title": "Test1"}
+	data2 := map[string]any{"title": "Test2"}
 
-	j1, err := json.Marshal(raw1)
+	j1, err := json.Marshal(data1)
 	require.NoError(t, err)
 
-	j2, err := json.Marshal(raw2)
+	j2, err := json.Marshal(data2)
 	require.NoError(t, err)
 
 	gz1, err := Gzip(j1)
@@ -119,7 +119,7 @@ func TestSetContentCache(t *testing.T) {
 	tests := []struct {
 		name            string
 		url             string
-		raw             map[string]any // TODO: rename
+		data            map[string]any
 		contentDuration time.Duration
 		status          v1beta1.GrafanaContentStatus
 		want            v1beta1.GrafanaContentStatus
@@ -127,7 +127,7 @@ func TestSetContentCache(t *testing.T) {
 		{
 			name:            "no cache: cache is populated",
 			url:             url1,
-			raw:             raw1,
+			data:            data1,
 			contentDuration: time.Hour,
 			status:          v1beta1.GrafanaContentStatus{},
 			want: v1beta1.GrafanaContentStatus{
@@ -139,7 +139,7 @@ func TestSetContentCache(t *testing.T) {
 		{
 			name:            "existing valid cache: cache is not updated",
 			url:             url1,
-			raw:             raw1,
+			data:            data1,
 			contentDuration: 24 * time.Hour,
 			status: v1beta1.GrafanaContentStatus{
 				ContentURL:       url1,
@@ -155,7 +155,7 @@ func TestSetContentCache(t *testing.T) {
 		{
 			name:            "existing valid cache with wrong url: cache is updated",
 			url:             url2,
-			raw:             raw2,
+			data:            data2,
 			contentDuration: 24 * time.Hour,
 			status: v1beta1.GrafanaContentStatus{
 				ContentURL:       url1,
@@ -171,7 +171,7 @@ func TestSetContentCache(t *testing.T) {
 		{
 			name:            "partially populated cache (valid URL, not expired): missing content is added",
 			url:             url1,
-			raw:             raw1,
+			data:            data1,
 			contentDuration: 24 * time.Hour,
 			status: v1beta1.GrafanaContentStatus{
 				ContentURL:       url1,
@@ -190,7 +190,7 @@ func TestSetContentCache(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			status := tt.status.DeepCopy()
 
-			err := setContentCache(status, tt.url, tt.raw, tt.contentDuration)
+			err := setContentCache(status, tt.url, tt.data, tt.contentDuration)
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.want.ContentCache, status.ContentCache)
