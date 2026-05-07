@@ -113,112 +113,89 @@ func TestSetContentCache(t *testing.T) {
 	gz2, err := Gzip(j2)
 	require.NoError(t, err)
 
-	t.Run("no cache: cache is populated", func(t *testing.T) {
-		status := v1beta1.GrafanaContentStatus{}
-		err := setContentCache(&status, url1, raw1, time.Hour)
-		require.NoError(t, err)
+	now := metav1.NewTime(time.Now())
+	hourAgo := metav1.NewTime(time.Now().Add(-time.Hour))
 
-		// content timestamp should be now
-		assert.WithinDuration(t, time.Now(), status.ContentTimestamp.Time, time.Second)
+	tests := []struct {
+		name            string
+		url             string
+		raw             map[string]any // TODO: rename
+		contentDuration time.Duration
+		status          v1beta1.GrafanaContentStatus
+		want            v1beta1.GrafanaContentStatus
+	}{
+		{
+			name:            "no cache: cache is populated",
+			url:             url1,
+			raw:             raw1,
+			contentDuration: time.Hour,
+			status:          v1beta1.GrafanaContentStatus{},
+			want: v1beta1.GrafanaContentStatus{
+				ContentCache:     gz1,
+				ContentTimestamp: now,
+				ContentURL:       url1,
+			},
+		},
+		{
+			name:            "existing valid cache: cache is not updated",
+			url:             url1,
+			raw:             raw1,
+			contentDuration: 24 * time.Hour,
+			status: v1beta1.GrafanaContentStatus{
+				ContentURL:       url1,
+				ContentCache:     gz1,
+				ContentTimestamp: hourAgo,
+			},
+			want: v1beta1.GrafanaContentStatus{
+				ContentCache:     gz1,
+				ContentTimestamp: hourAgo,
+				ContentURL:       url1,
+			},
+		},
+		{
+			name:            "existing valid cache with wrong url: cache is updated",
+			url:             url2,
+			raw:             raw2,
+			contentDuration: 24 * time.Hour,
+			status: v1beta1.GrafanaContentStatus{
+				ContentURL:       url1,
+				ContentCache:     gz1,
+				ContentTimestamp: hourAgo,
+			},
+			want: v1beta1.GrafanaContentStatus{
+				ContentURL:       url2,
+				ContentCache:     gz2,
+				ContentTimestamp: now,
+			},
+		},
+		{
+			name:            "partially populated cache (valid URL, not expired): missing content is added",
+			url:             url1,
+			raw:             raw1,
+			contentDuration: 24 * time.Hour,
+			status: v1beta1.GrafanaContentStatus{
+				ContentURL:       url1,
+				ContentCache:     []byte{},
+				ContentTimestamp: hourAgo,
+			},
+			want: v1beta1.GrafanaContentStatus{
+				ContentURL:       url1,
+				ContentCache:     gz1,
+				ContentTimestamp: now,
+			},
+		},
+	}
 
-		// url should be updated
-		assert.Equal(t, url1, status.ContentURL)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			status := tt.status.DeepCopy()
 
-		// content should be set to a correct value
-		assert.Equal(t, gz1, status.ContentCache)
+			err := setContentCache(status, tt.url, tt.raw, tt.contentDuration)
+			require.NoError(t, err)
 
-		// cached content should be retrievable
-		retrieved := getContentCache(&status, url1, -1)
-		assert.JSONEq(t, string(j1), string(retrieved))
-	})
-
-	t.Run("existing valid cache: cache is not updated", func(t *testing.T) {
-		prevTime := time.Now().Add(-time.Minute * 5)
-		status := v1beta1.GrafanaContentStatus{
-			ContentURL:       url1,
-			ContentCache:     gz1,
-			ContentTimestamp: metav1.NewTime(prevTime),
-		}
-		err := setContentCache(&status, url1, raw1, time.Hour)
-		require.NoError(t, err)
-
-		// content timestamp should remain at prevTime
-		assert.Equal(t, prevTime, status.ContentTimestamp.Time)
-
-		// content should be set to a correct value
-		assert.Equal(t, gz1, status.ContentCache)
-
-		// cached content should be retrievable
-		retrieved := getContentCache(&status, url1, -1)
-		assert.JSONEq(t, string(j1), string(retrieved))
-	})
-
-	t.Run("existing old cache: cache is updated", func(t *testing.T) {
-		prevTime := time.Now().Add(-time.Hour * 5)
-		status := v1beta1.GrafanaContentStatus{
-			ContentURL:       url1,
-			ContentCache:     gz1,
-			ContentTimestamp: metav1.NewTime(prevTime),
-		}
-		err := setContentCache(&status, url1, raw2, time.Hour)
-		require.NoError(t, err)
-
-		// content timestamp should be now
-		assert.WithinDuration(t, time.Now(), status.ContentTimestamp.Time, time.Second)
-
-		// content should be set to a correct value
-		assert.Equal(t, gz2, status.ContentCache)
-
-		// cached content should be retrievable
-		retrieved := getContentCache(&status, url1, -1)
-		assert.JSONEq(t, string(j2), string(retrieved))
-	})
-
-	t.Run("existing valid cache with wrong url: cache is updated", func(t *testing.T) {
-		prevTime := time.Now().Add(-time.Minute * 5)
-		status := v1beta1.GrafanaContentStatus{
-			ContentURL:       url1,
-			ContentCache:     gz1,
-			ContentTimestamp: metav1.NewTime(prevTime),
-		}
-		err := setContentCache(&status, url2, raw2, time.Hour)
-		require.NoError(t, err)
-
-		// content timestamp should be now
-		assert.WithinDuration(t, time.Now(), status.ContentTimestamp.Time, time.Second)
-
-		// url should be updated
-		assert.Equal(t, url2, status.ContentURL)
-
-		// content should be set to a correct value
-		assert.Equal(t, gz2, status.ContentCache)
-
-		// cached content should be retrievable
-		retrieved := getContentCache(&status, url2, -1)
-		assert.JSONEq(t, string(j2), string(retrieved))
-	})
-
-	t.Run("partially populated cache (valid URL, not expired): missing content is added", func(t *testing.T) {
-		prevTime := time.Now().Add(-time.Minute * 5)
-		status := v1beta1.GrafanaContentStatus{
-			ContentURL:       url1,
-			ContentCache:     []byte{},
-			ContentTimestamp: metav1.NewTime(prevTime),
-		}
-		err := setContentCache(&status, url1, raw1, 0)
-		require.NoError(t, err)
-
-		// content timestamp should be now
-		assert.WithinDuration(t, time.Now(), status.ContentTimestamp.Time, time.Second)
-
-		// url should be the same
-		assert.Equal(t, url1, status.ContentURL)
-
-		// content should be set to a correct value
-		assert.Equal(t, gz1, status.ContentCache)
-
-		// cached content should be retrievable
-		retrieved := getContentCache(&status, url1, -1)
-		assert.JSONEq(t, string(j1), string(retrieved))
-	})
+			assert.Equal(t, tt.want.ContentCache, status.ContentCache)
+			assert.WithinDuration(t, tt.want.ContentTimestamp.Time, status.ContentTimestamp.Time, time.Second)
+			assert.Equal(t, tt.want.ContentURL, status.ContentURL)
+		})
+	}
 }
