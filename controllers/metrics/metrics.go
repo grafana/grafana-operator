@@ -6,7 +6,6 @@ import (
 )
 
 const (
-	initialSyncDuration = "initial_sync_duration"
 	instanceName        = "instance_name"
 	instanceNamespace   = "instance_namespace"
 	method              = "method"
@@ -64,7 +63,7 @@ var (
 	InitialStatusSyncDuration = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystemReconciler,
-		Name:      initialSyncDuration,
+		Name:      "initial_sync_duration",
 		Help:      "time in ms to sync statuses after operator restart",
 	})
 )
