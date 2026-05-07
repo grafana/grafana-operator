@@ -247,3 +247,22 @@ func TestSetContentCache(t *testing.T) {
 		})
 	}
 }
+
+func TestSetAndGetContent(t *testing.T) {
+	status := &v1beta1.GrafanaContentStatus{}
+
+	url := "http://localhost:8080/1.json"
+
+	data := map[string]any{"title": "Test1"}
+
+	j, err := json.Marshal(data)
+	require.NoError(t, err)
+
+	err = setContentCache(status, url, data, 24*time.Hour)
+	require.NoError(t, err)
+
+	want := j
+	got := getContentCache(status, url, -1)
+
+	assert.Equal(t, want, got)
+}
