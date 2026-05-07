@@ -110,8 +110,8 @@ func TestSetContentCache(t *testing.T) {
 	gz1, err := Gzip(j1)
 	require.NoError(t, err)
 
-	// gz2, err := Gzip(j2)
-	// require.NoError(t, err)
+	gz2, err := Gzip(j2)
+	require.NoError(t, err)
 
 	t.Run("no cache: cache is populated", func(t *testing.T) {
 		status := v1beta1.GrafanaContentStatus{}
@@ -123,6 +123,9 @@ func TestSetContentCache(t *testing.T) {
 
 		// url should be updated
 		assert.Equal(t, url1, status.ContentURL)
+
+		// content should be set to a correct value
+		assert.Equal(t, gz1, status.ContentCache)
 
 		// cached content should be retrievable
 		retrieved := getContentCache(&status, url1, -1)
@@ -142,8 +145,12 @@ func TestSetContentCache(t *testing.T) {
 		// content timestamp should remain at prevTime
 		assert.Equal(t, prevTime, status.ContentTimestamp.Time)
 
-		// cached content should stay the same
+		// content should be set to a correct value
 		assert.Equal(t, gz1, status.ContentCache)
+
+		// cached content should be retrievable
+		retrieved := getContentCache(&status, url1, -1)
+		assert.JSONEq(t, string(j1), string(retrieved))
 	})
 
 	t.Run("existing old cache: cache is updated", func(t *testing.T) {
@@ -158,6 +165,9 @@ func TestSetContentCache(t *testing.T) {
 
 		// content timestamp should be now
 		assert.WithinDuration(t, time.Now(), status.ContentTimestamp.Time, time.Second)
+
+		// content should be set to a correct value
+		assert.Equal(t, gz2, status.ContentCache)
 
 		// cached content should be retrievable
 		retrieved := getContentCache(&status, url1, -1)
@@ -180,6 +190,9 @@ func TestSetContentCache(t *testing.T) {
 		// url should be updated
 		assert.Equal(t, url2, status.ContentURL)
 
+		// content should be set to a correct value
+		assert.Equal(t, gz2, status.ContentCache)
+
 		// cached content should be retrievable
 		retrieved := getContentCache(&status, url2, -1)
 		assert.JSONEq(t, string(j2), string(retrieved))
@@ -200,6 +213,9 @@ func TestSetContentCache(t *testing.T) {
 
 		// url should be the same
 		assert.Equal(t, url1, status.ContentURL)
+
+		// content should be set to a correct value
+		assert.Equal(t, gz1, status.ContentCache)
 
 		// cached content should be retrievable
 		retrieved := getContentCache(&status, url1, -1)
