@@ -142,9 +142,9 @@ func TestSetContentCache(t *testing.T) {
 			data:            data1,
 			contentDuration: 24 * time.Hour,
 			status: v1beta1.GrafanaContentStatus{
-				ContentURL:       url1,
 				ContentCache:     gz1,
 				ContentTimestamp: hourAgo,
+				ContentURL:       url1,
 			},
 			want: v1beta1.GrafanaContentStatus{
 				ContentCache:     gz1,
@@ -158,14 +158,14 @@ func TestSetContentCache(t *testing.T) {
 			data:            data2,
 			contentDuration: 24 * time.Hour,
 			status: v1beta1.GrafanaContentStatus{
-				ContentURL:       url1,
 				ContentCache:     gz1,
 				ContentTimestamp: hourAgo,
+				ContentURL:       url1,
 			},
 			want: v1beta1.GrafanaContentStatus{
-				ContentURL:       url2,
 				ContentCache:     gz2,
 				ContentTimestamp: now,
+				ContentURL:       url2,
 			},
 		},
 		{
@@ -174,14 +174,14 @@ func TestSetContentCache(t *testing.T) {
 			data:            data1,
 			contentDuration: 5 * time.Minute,
 			status: v1beta1.GrafanaContentStatus{
-				ContentURL:       url1,
 				ContentCache:     gz1,
 				ContentTimestamp: hourAgo,
+				ContentURL:       url1,
 			},
 			want: v1beta1.GrafanaContentStatus{
-				ContentURL:       url1,
 				ContentCache:     gz1,
 				ContentTimestamp: now,
+				ContentURL:       url1,
 			},
 		},
 		{
@@ -190,14 +190,14 @@ func TestSetContentCache(t *testing.T) {
 			data:            data1,
 			contentDuration: 24 * time.Hour,
 			status: v1beta1.GrafanaContentStatus{
-				// ContentURL:       url1,
 				ContentCache:     []byte{},
 				ContentTimestamp: hourAgo,
+				// ContentURL:       url1,
 			},
 			want: v1beta1.GrafanaContentStatus{
-				ContentURL:       url1,
 				ContentCache:     gz1,
 				ContentTimestamp: now,
+				ContentURL:       url1,
 			},
 		},
 		{
@@ -206,14 +206,14 @@ func TestSetContentCache(t *testing.T) {
 			data:            data1,
 			contentDuration: 24 * time.Hour,
 			status: v1beta1.GrafanaContentStatus{
-				ContentURL: url1,
 				// ContentCache:     gz1,
 				ContentTimestamp: hourAgo,
+				ContentURL:       url1,
 			},
 			want: v1beta1.GrafanaContentStatus{
-				ContentURL:       url1,
 				ContentCache:     gz1,
 				ContentTimestamp: now,
+				ContentURL:       url1,
 			},
 		},
 		{
@@ -222,14 +222,14 @@ func TestSetContentCache(t *testing.T) {
 			data:            data1,
 			contentDuration: 24 * time.Hour,
 			status: v1beta1.GrafanaContentStatus{
-				ContentURL:   url1,
 				ContentCache: gz1,
 				// ContentTimestamp: hourAgo,
+				ContentURL: url1,
 			},
 			want: v1beta1.GrafanaContentStatus{
-				ContentURL:       url1,
 				ContentCache:     gz1,
 				ContentTimestamp: now,
+				ContentURL:       url1,
 			},
 		},
 		{
@@ -238,14 +238,14 @@ func TestSetContentCache(t *testing.T) {
 			data:            data1,
 			contentDuration: 24 * time.Hour,
 			status: v1beta1.GrafanaContentStatus{
-				ContentURL:       url1,
 				ContentCache:     []byte{1, 2, 3},
 				ContentTimestamp: hourAgo,
+				ContentURL:       url1,
 			},
 			want: v1beta1.GrafanaContentStatus{
-				ContentURL:       url1,
 				ContentCache:     gz1,
 				ContentTimestamp: now,
+				ContentURL:       url1,
 			},
 		},
 	}
