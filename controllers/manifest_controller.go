@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/itchyny/gojq"
@@ -27,10 +26,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -49,7 +46,6 @@ type GrafanaManifestReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Cfg      *Config
-	GVRCache sync.Map
 	Recorder events.EventRecorder
 }
 
@@ -162,18 +158,6 @@ func (r *GrafanaManifestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
 
-func getManifestNamespace(cr *v1beta1.GrafanaManifest, instance *v1beta1.Grafana) string {
-	if cr.Spec.Template.Metadata.Namespace != "" {
-		return cr.Spec.Template.Metadata.Namespace
-	}
-
-	if instance.Spec.External != nil && instance.Spec.External.TenantNamespace != "" {
-		return instance.Spec.External.TenantNamespace
-	}
-
-	return "default"
-}
-
 func (r *GrafanaManifestReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaManifest) error {
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaManifest")
@@ -190,20 +174,9 @@ func (r *GrafanaManifestReconciler) finalize(ctx context.Context, cr *v1beta1.Gr
 			return fmt.Errorf("building grafana api client: %w", err)
 		}
 
-		gvr, err := r.loadGVR(cl, cr.Spec.Template)
+		err = cl.DeleteObj(ctx, cr.Spec.Template.ToUnstructured())
 		if err != nil {
-			return fmt.Errorf("getting group version resource for resource: %w", err)
-		}
-
-		ns := getManifestNamespace(cr, &instance)
-
-		err = cl.Resource(gvr).Namespace(ns).Delete(ctx, cr.Spec.Template.Metadata.Name, metav1.DeleteOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			if apierrors.IsForbidden(err) {
-				log.Info("treating forbidden as delete success in case of invalid namespaces")
-			} else {
-				return fmt.Errorf("failed to delete resource: %w", err)
-			}
+			return fmt.Errorf(" resource: %w", err)
 		}
 
 		if err := instance.RemoveNamespacedResource(ctx, r.Client, cr); err != nil {
@@ -221,14 +194,6 @@ func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, i
 	if err != nil {
 		return fmt.Errorf("building grafana api client: %w", err)
 	}
-
-	gvr, err := r.loadGVR(cl, cr.Spec.Template)
-	if err != nil {
-		return fmt.Errorf("getting group version resource for resource: %w", err)
-	}
-
-	ns := getManifestNamespace(cr, instance)
-	resourceClient := cl.Resource(gvr).Namespace(ns)
 
 	template := cr.Spec.Template.ToUnstructured()
 
@@ -274,44 +239,11 @@ func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, i
 		patched.SetKind(template.GetKind())
 	}
 
-	_, err = resourceClient.Get(ctx, cr.Spec.Template.Metadata.Name, metav1.GetOptions{})
-	if apierrors.IsNotFound(err) {
-		_, err := resourceClient.Create(ctx, patched, metav1.CreateOptions{})
-		if err != nil {
-			return fmt.Errorf("creating resource: %w", err)
-		}
-
-		return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
-	} else if err != nil {
-		return fmt.Errorf("fetching existing resource: %w", err)
+	if err := cl.Apply(ctx, patched); err != nil {
+		return fmt.Errorf("applying resource: %w", err)
 	}
-
-	if _, err := resourceClient.Update(ctx, patched, metav1.UpdateOptions{}); err != nil {
-		return fmt.Errorf("updating resource: %w", err)
-	}
-
 	// Update grafana instance Status
 	return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
-}
-
-func (r *GrafanaManifestReconciler) loadGVR(cl *grafanaclient.DynamicClient, template v1beta1.GrafanaManifestTemplate) (schema.GroupVersionResource, error) {
-	gvr, ok := r.GVRCache.Load(gvrKey(template))
-	if ok {
-		return gvr.(schema.GroupVersionResource), nil //nolint:errcheck
-	}
-
-	resolved, err := cl.LookupGVR(template.APIVersion, template.Kind)
-	if err != nil {
-		return schema.GroupVersionResource{}, err
-	}
-
-	r.GVRCache.Store(gvrKey(template), resolved)
-
-	return resolved, nil
-}
-
-func gvrKey(cr v1beta1.GrafanaManifestTemplate) string {
-	return fmt.Sprintf("%s.%s", cr.APIVersion, cr.Kind)
 }
 
 // SetupWithManager sets up the controller with the Manager.
