@@ -18,9 +18,7 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"strings"
 	"sync"
 
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
@@ -33,7 +31,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -188,12 +185,12 @@ func (r *GrafanaManifestReconciler) finalize(ctx context.Context, cr *v1beta1.Gr
 	}
 
 	for _, instance := range instances {
-		cl, dc, err := grafanaclient.NewDynamicClient(ctx, r.Client, &instance)
+		cl, err := grafanaclient.NewDynamicClient(ctx, r.Client, &instance)
 		if err != nil {
 			return fmt.Errorf("building grafana api client: %w", err)
 		}
 
-		gvr, err := r.loadGVR(dc, cr.Spec.Template)
+		gvr, err := r.loadGVR(cl, cr.Spec.Template)
 		if err != nil {
 			return fmt.Errorf("getting group version resource for resource: %w", err)
 		}
@@ -220,12 +217,12 @@ func (r *GrafanaManifestReconciler) finalize(ctx context.Context, cr *v1beta1.Gr
 func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaManifest, patches []*gojq.Query, env []patchEnvResolver) error {
 	log := logf.FromContext(ctx)
 
-	cl, dc, err := grafanaclient.NewDynamicClient(ctx, r.Client, instance)
+	cl, err := grafanaclient.NewDynamicClient(ctx, r.Client, instance)
 	if err != nil {
 		return fmt.Errorf("building grafana api client: %w", err)
 	}
 
-	gvr, err := r.loadGVR(dc, cr.Spec.Template)
+	gvr, err := r.loadGVR(cl, cr.Spec.Template)
 	if err != nil {
 		return fmt.Errorf("getting group version resource for resource: %w", err)
 	}
@@ -297,46 +294,20 @@ func (r *GrafanaManifestReconciler) reconcileWithInstance(ctx context.Context, i
 	return instance.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
 }
 
-func (r *GrafanaManifestReconciler) loadGVR(cl *discovery.DiscoveryClient, template v1beta1.GrafanaManifestTemplate) (schema.GroupVersionResource, error) {
+func (r *GrafanaManifestReconciler) loadGVR(cl *grafanaclient.DynamicClient, template v1beta1.GrafanaManifestTemplate) (schema.GroupVersionResource, error) {
 	gvr, ok := r.GVRCache.Load(gvrKey(template))
 	if ok {
 		return gvr.(schema.GroupVersionResource), nil //nolint:errcheck
 	}
 
-	_, resources, err := cl.ServerGroupsAndResources()
+	resolved, err := cl.LookupGVR(template.APIVersion, template.Kind)
 	if err != nil {
-		return schema.GroupVersionResource{}, fmt.Errorf("failed to discover groups and resources: %w", err)
+		return schema.GroupVersionResource{}, err
 	}
 
-	target := template.APIVersion
-	for _, res := range resources {
-		if res.GroupVersion != target {
-			continue
-		}
+	r.GVRCache.Store(gvrKey(template), resolved)
 
-		gv, err := schema.ParseGroupVersion(res.GroupVersion)
-		if err != nil {
-			return schema.GroupVersionResource{}, fmt.Errorf("failed to parse groupversion returned by server: %w", err)
-		}
-
-		for _, api := range res.APIResources {
-			// skip subresources and unrelated kinds
-			if strings.Contains(api.Name, "/") || api.Kind != template.Kind {
-				continue
-			}
-
-			gvr := schema.GroupVersionResource{
-				Group:    gv.Group,
-				Version:  gv.Version,
-				Resource: api.Name,
-			}
-			r.GVRCache.Store(gvrKey(template), gvr)
-
-			return gvr, nil
-		}
-	}
-
-	return schema.GroupVersionResource{}, errors.New("group version not found")
+	return resolved, nil
 }
 
 func gvrKey(cr v1beta1.GrafanaManifestTemplate) string {
