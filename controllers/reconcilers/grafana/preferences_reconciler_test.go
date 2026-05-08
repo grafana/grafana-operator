@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -26,5 +27,6 @@ var _ = Describe("Reconcile Preferences", func() {
 
 		require.NoError(t, err)
 		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+		assert.Nil(t, meta.FindStatusCondition(cr.Status.Conditions, ConditionPreferencesApplied))
 	})
 })

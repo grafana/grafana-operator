@@ -320,8 +320,9 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	const (
-		secretIndexKey    string = ".metadata.secret"
-		configMapIndexKey string = ".metadata.configMap"
+		secretIndexKey        string = ".metadata.secret"
+		configMapIndexKey     string = ".metadata.configMap"
+		homeDashboardIndexKey string = ".spec.preferences.homeDashboardUID"
 	)
 
 	if err := mgr.GetCache().IndexField(ctx, &v1beta1.Grafana{}, secretIndexKey,
@@ -332,6 +333,11 @@ func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 	if err := mgr.GetCache().IndexField(ctx, &v1beta1.Grafana{}, configMapIndexKey,
 		r.indexConfigMapSource()); err != nil {
 		return fmt.Errorf("failed setting configmap index fields: %w", err)
+	}
+
+	if err := mgr.GetCache().IndexField(ctx, &v1beta1.Grafana{}, homeDashboardIndexKey,
+		r.indexHomeDashboardUID()); err != nil {
+		return fmt.Errorf("failed setting home dashboard index fields: %w", err)
 	}
 
 	b := ctrl.NewControllerManagedBy(mgr).
@@ -350,6 +356,10 @@ func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 		Watches(
 			&corev1.ConfigMap{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForChangeByField(configMapIndexKey)),
+		).
+		Watches(
+			&v1beta1.GrafanaDashboard{},
+			handler.EnqueueRequestsFromMapFunc(r.requestsForDashboardHomeRef(homeDashboardIndexKey)),
 		).
 		WithOptions(controller.Options{RateLimiter: defaultRateLimiter()})
 
@@ -481,6 +491,56 @@ func (r *GrafanaReconciler) indexConfigMapSource() func(client.Object) []string 
 		}
 
 		return refs
+	}
+}
+
+func (r *GrafanaReconciler) indexHomeDashboardUID() func(client.Object) []string {
+	return func(o client.Object) []string {
+		cr, ok := o.(*v1beta1.Grafana)
+		if !ok {
+			panic(fmt.Sprintf("Expected a Grafana, got %T", o))
+		}
+
+		if cr.Spec.Preferences == nil || cr.Spec.Preferences.HomeDashboardUID == "" {
+			return nil
+		}
+
+		return []string{cr.Spec.Preferences.HomeDashboardUID}
+	}
+}
+
+// requestsForDashboardHomeRef enqueues Grafana CRs whose
+// spec.preferences.homeDashboardUID matches the changed dashboard's resolved
+// UID. This closes the chicken-and-egg loop: when a dashboard referenced as
+// home dashboard is created (status.UID populated), the matching Grafana CR
+// re-reconciles so PreferencesReconciler can re-PATCH preferences.
+func (r *GrafanaReconciler) requestsForDashboardHomeRef(indexKey string) handler.MapFunc {
+	return func(ctx context.Context, o client.Object) []reconcile.Request {
+		dash, ok := o.(*v1beta1.GrafanaDashboard)
+		if !ok {
+			return nil
+		}
+
+		uid := dash.Status.UID
+		if uid == "" {
+			return nil
+		}
+
+		var list v1beta1.GrafanaList
+		if err := r.List(ctx, &list, client.MatchingFields{indexKey: uid}); err != nil {
+			logf.FromContext(ctx).Error(err, "failed to list grafana instances for dashboard home-ref watch mapping")
+			return nil
+		}
+
+		reqs := make([]reconcile.Request, 0, len(list.Items))
+		for _, gr := range list.Items {
+			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
+				Namespace: gr.Namespace,
+				Name:      gr.Name,
+			}})
+		}
+
+		return reqs
 	}
 }
 

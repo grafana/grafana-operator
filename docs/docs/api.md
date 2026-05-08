@@ -27569,7 +27569,47 @@ Preferences holds the Grafana Preferences settings
         <td><b>homeDashboardUid</b></td>
         <td>string</td>
         <td>
-          <br/>
+          HomeDashboardUID is the UID of the dashboard shown on the org's home page.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>language</b></td>
+        <td>string</td>
+        <td>
+          Language is the default UI language as a locale code (e.g. "en-US", "de-DE").<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>organizationName</b></td>
+        <td>string</td>
+        <td>
+          OrganizationName sets the display name of the org (defaults to "Main Org."
+in a fresh Grafana). Backed by PUT /api/org. Skipped when empty; reading
+back via GET /api/org is used to avoid an unnecessary write when the
+configured name already matches.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>theme</b></td>
+        <td>string</td>
+        <td>
+          Theme is the default UI theme for the org (e.g. "light", "dark", "system").
+Accepted values depend on the running Grafana version.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>timezone</b></td>
+        <td>string</td>
+        <td>
+          Timezone is the default timezone for the org. Accepts an IANA timezone
+name (e.g. "America/New_York"), "utc", or "browser".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>weekStart</b></td>
+        <td>string</td>
+        <td>
+          WeekStart is the day the calendar week starts on (e.g. "monday", "sunday").<br/>
         </td>
         <td>false</td>
       </tr></tbody>

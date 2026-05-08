@@ -220,9 +220,40 @@ type GrafanaClient struct {
 	Headers map[string]string `json:"headers,omitempty"`
 }
 
-// GrafanaPreferences holds Grafana preferences API settings
+// GrafanaPreferences holds Grafana org-level settings shown on the
+// "Default preferences" admin page. Empty fields are not sent so they
+// don't clobber values set elsewhere (UI, grafana.ini defaults).
+//
+// Most fields are applied via PATCH /api/org/preferences. OrganizationName
+// uses PUT /api/org instead, since Grafana's API separates org metadata
+// from preferences even though the UI groups them on one page.
+//
+// Values are passed to Grafana as-is and validated server-side. Invalid
+// values produce a 4xx from the Grafana API and surface as a reconcile
+// error.
 type GrafanaPreferences struct {
+	// OrganizationName sets the display name of the org (defaults to "Main Org."
+	// in a fresh Grafana). Backed by PUT /api/org. Skipped when empty; reading
+	// back via GET /api/org is used to avoid an unnecessary write when the
+	// configured name already matches.
+	OrganizationName string `json:"organizationName,omitempty"`
+
+	// HomeDashboardUID is the UID of the dashboard shown on the org's home page.
 	HomeDashboardUID string `json:"homeDashboardUid,omitempty"`
+
+	// Theme is the default UI theme for the org (e.g. "light", "dark", "system").
+	// Accepted values depend on the running Grafana version.
+	Theme string `json:"theme,omitempty"`
+
+	// Timezone is the default timezone for the org. Accepts an IANA timezone
+	// name (e.g. "America/New_York"), "utc", or "browser".
+	Timezone string `json:"timezone,omitempty"`
+
+	// WeekStart is the day the calendar week starts on (e.g. "monday", "sunday").
+	WeekStart string `json:"weekStart,omitempty"`
+
+	// Language is the default UI language as a locale code (e.g. "en-US", "de-DE").
+	Language string `json:"language,omitempty"`
 }
 
 // GrafanaStatus defines the observed state of Grafana

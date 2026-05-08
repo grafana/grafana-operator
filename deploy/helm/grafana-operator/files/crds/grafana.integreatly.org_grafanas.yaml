@@ -8261,6 +8261,30 @@ spec:
                   description: Preferences holds the Grafana Preferences settings
                   properties:
                     homeDashboardUid:
+                      description: HomeDashboardUID is the UID of the dashboard shown on the org's home page.
+                      type: string
+                    language:
+                      description: Language is the default UI language as a locale code (e.g. "en-US", "de-DE").
+                      type: string
+                    organizationName:
+                      description: |-
+                        OrganizationName sets the display name of the org (defaults to "Main Org."
+                        in a fresh Grafana). Backed by PUT /api/org. Skipped when empty; reading
+                        back via GET /api/org is used to avoid an unnecessary write when the
+                        configured name already matches.
+                      type: string
+                    theme:
+                      description: |-
+                        Theme is the default UI theme for the org (e.g. "light", "dark", "system").
+                        Accepted values depend on the running Grafana version.
+                      type: string
+                    timezone:
+                      description: |-
+                        Timezone is the default timezone for the org. Accepts an IANA timezone
+                        name (e.g. "America/New_York"), "utc", or "browser".
+                      type: string
+                    weekStart:
+                      description: WeekStart is the day the calendar week starts on (e.g. "monday", "sunday").
                       type: string
                   type: object
                 route:
