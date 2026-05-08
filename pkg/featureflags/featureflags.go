@@ -10,8 +10,12 @@ var activeFlags map[featureFlag]bool = make(map[featureFlag]bool)
 
 type featureFlag string
 
+const FoldersUseNewAPI featureFlag = "FoldersUseNewAPI"
+
 // availableFlags is the source of truth of flags available to the user. The value in the map should contain documentation for the feature flag
-var availableFlags = map[featureFlag]string{}
+var availableFlags = map[featureFlag]string{
+	FoldersUseNewAPI: "Use Grafana 13+ API-server style APIs for the folder controller",
+}
 
 func SetActiveFromArg(arg string) error {
 	active, err := parseFlags(arg, availableFlags)

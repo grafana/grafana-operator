@@ -92,6 +92,17 @@ type GrafanaCommonStatus struct {
 	LastResync metav1.Time `json:"lastResync,omitempty"`
 }
 
+// NoMatchingInstancesResource is only exposed by CRDs before the introduction of conditions
+// +kubebuilder:object:generate=false
+type NoMatchingInstancesResource interface {
+	SetNoMatchingInstances(bool)
+}
+
+// +kubebuilder:object:generate=false
+type CommonSpecResource interface {
+	CommonSpec() GrafanaCommonSpec
+}
+
 func GetPluginConfigMapKey(prefix string, m metav1.Object) string {
 	ns := m.GetNamespace() // Subject to 63 character limit
 	name := m.GetName()    // Up to 253 characters, needs to be cut
