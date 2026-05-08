@@ -98,6 +98,10 @@ func (in *GrafanaLibraryPanel) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status.GrafanaCommonStatus
 }
 
+func (in *GrafanaLibraryPanel) CommonSpec() GrafanaCommonSpec {
+	return in.Spec.GrafanaCommonSpec
+}
+
 // GrafanaContentSpec implements GrafanaContentResource
 func (in *GrafanaLibraryPanel) GrafanaContentSpec() *GrafanaContentSpec {
 	return &in.Spec.GrafanaContentSpec

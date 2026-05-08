@@ -78,6 +78,10 @@ func (in *GrafanaNotificationTemplate) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status
 }
 
+func (in *GrafanaNotificationTemplate) CommonSpec() GrafanaCommonSpec {
+	return in.Spec.GrafanaCommonSpec
+}
+
 func (in *GrafanaNotificationTemplate) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
 }

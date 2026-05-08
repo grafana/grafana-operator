@@ -81,6 +81,7 @@ type CommonResource interface {
 	Metadata() metav1.ObjectMeta
 	AllowCrossNamespace() bool
 	CommonStatus() *GrafanaCommonStatus
+	CommonSpec() GrafanaCommonSpec
 	Conditions() *[]metav1.Condition
 }
 
@@ -90,6 +91,10 @@ type GrafanaCommonStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	// Last time the resource was synchronized with Grafana instances
 	LastResync metav1.Time `json:"lastResync,omitempty"`
+}
+
+type NoMatchingInstancesResource interface {
+	SetNoMatchingInstances(bool)
 }
 
 func GetPluginConfigMapKey(prefix string, m metav1.Object) string {

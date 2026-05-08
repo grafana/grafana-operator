@@ -116,6 +116,10 @@ func (in *GrafanaManifest) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status.GrafanaCommonStatus
 }
 
+func (in *GrafanaManifest) CommonSpec() GrafanaCommonSpec {
+	return in.Spec.GrafanaCommonSpec
+}
+
 func (in *GrafanaManifest) NamespacedResource() NamespacedResource {
 	return NewNamespacedResource(in.Namespace, in.Name, string(in.UID))
 }
