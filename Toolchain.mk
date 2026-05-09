@@ -5,7 +5,7 @@ $(BIN):
 M = $(shell printf "\033[34;1m▶\033[0m")
 
 # renovate: datasource=github-tags depName=kyverno/chainsaw
-CHAINSAW_VERSION = v0.2.14
+CHAINSAW_VERSION = v0.2.15
 # renovate: datasource=github-tags depName=kubernetes-sigs/controller-tools versioning=semver
 CONTROLLER_GEN_VERSION = v0.21.0
 # renovate: datasource=github-tags depName=fybrik/crdoc
