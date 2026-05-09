@@ -7,6 +7,9 @@
     "ghcr.io/grafana/grafana-operator",
     "github.com/openshift/api"
   ],
+  "npm": {
+    "enabled": false
+  },
   "packageRules": [
     {
       "matchManagers": ["github-actions"],
