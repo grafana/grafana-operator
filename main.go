@@ -64,6 +64,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	"github.com/grafana/grafana-operator/v5/embeds"
 	"github.com/grafana/grafana-operator/v5/pkg/autodetect"
+	"github.com/grafana/grafana-operator/v5/pkg/featureflags"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -98,6 +99,8 @@ var operatorConfig struct {
 	ZapLogLevel        string `name:"zap-log-level"        default:"info"                                                          help:"Zap Level to configure the verbosity of logging. Can be one of 'debug', 'info', 'error', 'panic' or any integer value > 0 which corresponds to custom debug levels of increasing verbosity"`
 	ZapTimeEncoding    string `name:"zap-time-encoding"    default:"iso8601" enum:"epoch,millis,nanos,iso8601,rfc3339,rfc3339nano" help:"Zap time encoding ('epoch', 'millis', 'nanos', 'iso8601', 'rfc3339' or 'rfc3339nano')."`
 	ZapStacktraceLevel string `name:"zap-stacktrace-level" default:"error"   enum:"info,error,panic"                               help:"Zap Level at and above which stacktraces are captured (one of 'info', 'error', 'panic')."`
+
+	FeatureFlags string `env:"FEATURE_FLAGS" name:"feature-flags" help:"Specify feature flags to be enabled or disabled. Comma separated"`
 }
 
 func init() {
@@ -192,6 +195,11 @@ func main() { //nolint:gocyclo
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 	slogger := slog.New(logr.ToSlogHandler(setupLog))
 	slog.SetDefault(slogger)
+
+	if err := featureflags.SetActiveFromArg(operatorConfig.FeatureFlags); err != nil {
+		setupLog.Error(err, "failed to parse feature flags")
+		os.Exit(1)
+	}
 
 	// Optimize Go runtime based on CGroup limits (GOMEMLIMIT, sets a soft memory limit for the runtime)
 	memlimit.SetGoMemLimitWithOpts(memlimit.WithLogger(slogger)) //nolint:errcheck
