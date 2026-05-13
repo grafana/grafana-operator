@@ -12,6 +12,9 @@ metadata:
   {{- end }}
 spec:
   type: {{ .Values.metricsService.type }}
+  {{- with .Values.metricsService.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ . }}
+  {{- end }}
   ports:
     - port: {{ .Values.metricsService.metricsPort }}
       targetPort: metrics

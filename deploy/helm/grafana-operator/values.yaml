@@ -141,6 +141,8 @@ metricsService:
   pprofPort: 8888
   # -- annotations on the metrics service
   annotations: {}
+  # -- IP family policy to use, e.g., SingleStack, PreferDualStack, or RequireDualStack
+  ipFamilyPolicy: ""
 
 # -- additional labels to add to all resources
 additionalLabels: {}
