@@ -402,6 +402,11 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
+	if err = controllers.NewGenericPrometheusRuleReconciler(mgr.GetClient(), ctrlCfg).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GrafanaPrometheusRule")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.GrafanaContactPointReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
