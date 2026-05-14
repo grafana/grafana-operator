@@ -49,6 +49,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&GrafanaNotificationPolicyRoute{}, &GrafanaNotificationPolicyRouteList{},
 		&GrafanaNotificationPolicy{}, &GrafanaNotificationPolicyList{},
 		&GrafanaNotificationTemplate{}, &GrafanaNotificationTemplateList{},
+		&GrafanaPrometheusRule{}, &GrafanaPrometheusRuleList{},
 		&GrafanaServiceAccount{}, &GrafanaServiceAccountList{},
 		&Grafana{}, &GrafanaList{},
 	)

@@ -2,7 +2,9 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"path"
 	"time"
@@ -103,6 +105,56 @@ func restConfigFor(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (
 	}
 
 	return config, nil
+}
+
+// ResolveNamespace returns the Grafana app-platform namespace the instance addresses
+// resources in ("default" / "org-N" for on-prem, "stacks-N" for Grafana Cloud).
+// It reads the value from the instance's /api/frontend/settings response using the
+// same authentication path as the typed client, so it works for token, basic-auth,
+// and in-cluster-SA-token configurations.
+func ResolveNamespace(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (string, error) {
+	cfg, err := restConfigFor(ctx, cl, cr)
+	if err != nil {
+		return "", fmt.Errorf("building rest config: %w", err)
+	}
+
+	httpClient, err := rest.HTTPClientFor(cfg)
+	if err != nil {
+		return "", fmt.Errorf("building http client: %w", err)
+	}
+
+	endpoint, err := url.JoinPath(cfg.Host, "api", "frontend", "settings")
+	if err != nil {
+		return "", fmt.Errorf("building frontend settings url: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("fetching frontend settings: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("frontend settings returned %d", resp.StatusCode)
+	}
+
+	var payload struct {
+		Namespace string `json:"namespace"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return "", fmt.Errorf("decoding frontend settings: %w", err)
+	}
+
+	if payload.Namespace == "" {
+		return "", fmt.Errorf("frontend settings response missing namespace")
+	}
+
+	return payload.Namespace, nil
 }
 
 func NewDynamicClient(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (dynamic.Interface, *discovery.DiscoveryClient, error) {

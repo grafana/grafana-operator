@@ -239,6 +239,7 @@ type GrafanaStatus struct {
 	LibraryPanels         NamespacedResourceList `json:"libraryPanels,omitempty"`
 	MuteTimings           NamespacedResourceList `json:"muteTimings,omitempty"`
 	NotificationTemplates NamespacedResourceList `json:"notificationTemplates,omitempty"`
+	PrometheusRules       NamespacedResourceList `json:"prometheusRules,omitempty"`
 	Manifests             NamespacedResourceList `json:"manifests,omitempty"`
 	Version               string                 `json:"version,omitempty"`
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
@@ -262,6 +263,8 @@ func (in *GrafanaStatus) StatusList(cr client.Object) (*NamespacedResourceList, 
 		return &in.MuteTimings, "muteTimings", nil
 	case *GrafanaNotificationTemplate:
 		return &in.NotificationTemplates, "notificationTemplates", nil
+	case *GrafanaPrometheusRule:
+		return &in.PrometheusRules, "prometheusRules", nil
 	case *GrafanaManifest:
 		return &in.Manifests, "manifests", nil
 	default:
