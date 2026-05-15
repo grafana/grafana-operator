@@ -698,7 +698,7 @@ Exactly one of `tag` or `digest` must be set on the `oci` source:
 
 For public registries omit `pullSecretRef`. For private registries create a `kubernetes.io/dockerconfigjson` Secret in the same namespace as the dashboard CR and reference it via `pullSecretRef`.
 
-The `insecure` field (default `false`) allows plain-HTTP registries and skips TLS verification; use only in development environments.
+The `insecure` field (default `false`) switches the registry connection from HTTPS to plain HTTP; intended for in-cluster or test registries. HTTPS registries with self-signed certificates are not supported.
 
 Image signing (e.g. cosign/Sigstore) is not verified by the operator.
 
