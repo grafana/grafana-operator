@@ -121,6 +121,8 @@ func (h *Resolver) fetchContentJSON(ctx context.Context) ([]byte, error) {
 		return fetchers.FetchFromGrafanaCom(ctx, h.resource, h.Client)
 	case SourceConfigMap:
 		return fetchers.FetchDashboardFromConfigMap(ctx, h.resource, h.Client)
+	case SourceOCI:
+		return fetchers.FetchFromOCI(ctx, h.resource, h.Client)
 	default:
 		return nil, fmt.Errorf("unknown source type %v found in content resource %v", sourceTypes[0], h.resource.GetName())
 	}
@@ -226,7 +228,7 @@ func (h *Resolver) UpdateCache(model map[string]any) error {
 	sourceType := GetSourceTypes(h.resource)[0]
 
 	// only cache remote resources
-	if sourceType != SourceTypeURL && sourceType != SourceTypeGrafanaCom {
+	if sourceType != SourceTypeURL && sourceType != SourceTypeGrafanaCom && sourceType != SourceOCI {
 		return nil
 	}
 

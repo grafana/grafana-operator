@@ -1680,6 +1680,15 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanadashboardspecoci">oci</a></b></td>
+        <td>object</td>
+        <td>
+          model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)<br/>
+          <br/>
+            <i>Validations</i>:<li>has(self.tag) != has(self.digest): exactly one of tag or digest must be set</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanadashboardspecpluginsindex">plugins</a></b></td>
         <td>[]object</td>
         <td>
@@ -2260,6 +2269,106 @@ Jsonnet project build
         <td>[]string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.oci
+<sup><sup>[↩ Parent](#grafanadashboardspec)</sup></sup>
+
+
+
+model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File is the path of the file to extract from the artifact.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>image</b></td>
+        <td>string</td>
+        <td>
+          Image is the registry path of the artifact without tag or digest, e.g. "ghcr.io/team/dashboards".<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>digest</b></td>
+        <td>string</td>
+        <td>
+          Digest pins the artifact to an immutable content-addressable digest, e.g. "sha256:abc123...".
+Exactly one of Tag or Digest must be set.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecure</b></td>
+        <td>boolean</td>
+        <td>
+          Insecure switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+Intended for in-cluster or test registries; HTTPS registries with self-signed
+certificates are not supported. Default false.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecocipullsecretref">pullSecretRef</a></b></td>
+        <td>object</td>
+        <td>
+          PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+If omitted, anonymous pull is attempted.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tag</b></td>
+        <td>string</td>
+        <td>
+          Tag pins the artifact to a mutable tag, e.g. "v1.4.7". Exactly one of Tag or Digest must be set.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.oci.pullSecretRef
+<sup><sup>[↩ Parent](#grafanadashboardspecoci)</sup></sup>
+
+
+
+PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+If omitted, anonymous pull is attempted.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3823,6 +3932,15 @@ GrafanaLibraryPanelSpec defines the desired state of GrafanaLibraryPanel
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecoci">oci</a></b></td>
+        <td>object</td>
+        <td>
+          model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)<br/>
+          <br/>
+            <i>Validations</i>:<li>has(self.tag) != has(self.digest): exactly one of tag or digest must be set</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanalibrarypanelspecpluginsindex">plugins</a></b></td>
         <td>[]object</td>
         <td>
@@ -4403,6 +4521,106 @@ Jsonnet project build
         <td>[]string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.oci
+<sup><sup>[↩ Parent](#grafanalibrarypanelspec)</sup></sup>
+
+
+
+model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File is the path of the file to extract from the artifact.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>image</b></td>
+        <td>string</td>
+        <td>
+          Image is the registry path of the artifact without tag or digest, e.g. "ghcr.io/team/dashboards".<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>digest</b></td>
+        <td>string</td>
+        <td>
+          Digest pins the artifact to an immutable content-addressable digest, e.g. "sha256:abc123...".
+Exactly one of Tag or Digest must be set.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecure</b></td>
+        <td>boolean</td>
+        <td>
+          Insecure switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+Intended for in-cluster or test registries; HTTPS registries with self-signed
+certificates are not supported. Default false.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecocipullsecretref">pullSecretRef</a></b></td>
+        <td>object</td>
+        <td>
+          PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+If omitted, anonymous pull is attempted.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tag</b></td>
+        <td>string</td>
+        <td>
+          Tag pins the artifact to a mutable tag, e.g. "v1.4.7". Exactly one of Tag or Digest must be set.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.oci.pullSecretRef
+<sup><sup>[↩ Parent](#grafanalibrarypanelspecoci)</sup></sup>
+
+
+
+PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+If omitted, anonymous pull is attempted.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
