@@ -4,12 +4,17 @@ resources:
   - ../../base
 
 patches:
-  - path: deployment.yaml
-    target:
+  - target:
       kind: Deployment
-      version: v1
-      group: apps
       name: grafana-operator-controller-manager
+    patch: |
+      - op: "add"
+        path: "/spec/template/spec/containers/0/env/-"
+        value:
+          name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
   - target:
       kind: ClusterRole
     patch: |

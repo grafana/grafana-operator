@@ -32,7 +32,7 @@ spec:
         - args:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=0.0.0.0:9090
-            - --leader-elect
+            # - --leader-elect
             # - --max-concurrent-reconciles=1
           image: controller:latest
           name: manager
@@ -66,6 +66,8 @@ spec:
               cpu: 100m
               memory: 20Mi
           env:
+            - name: ENABLE_LEADER_ELECTION
+              value: "true"
             - name: RELATED_IMAGE_GRAFANA
               value: "docker.io/grafana/grafana:13.0.1"
             - name: WATCH_NAMESPACE
