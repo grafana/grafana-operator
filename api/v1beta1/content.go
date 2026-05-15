@@ -83,7 +83,9 @@ type GrafanaContentOCI struct {
 	// +optional
 	PullSecretRef *corev1.LocalObjectReference `json:"pullSecretRef,omitempty"`
 
-	// Insecure permits HTTP (non-TLS) registries and skips TLS verification. Default false.
+	// Insecure switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+	// Intended for in-cluster or test registries; HTTPS registries with self-signed
+	// certificates are not supported. Default false.
 	// +optional
 	Insecure bool `json:"insecure,omitempty"`
 }

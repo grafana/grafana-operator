@@ -1,24 +1,21 @@
 package fetchers
 
 import (
-	"archive/tar"
-	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
 
-	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/google/go-containerregistry/pkg/v1/mutate"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	corev1 "k8s.io/api/core/v1"
+	oras "oras.land/oras-go/v2"
+	"oras.land/oras-go/v2/content"
+	"oras.land/oras-go/v2/registry/remote"
+	"oras.land/oras-go/v2/registry/remote/auth"
+	"oras.land/oras-go/v2/registry/remote/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -27,87 +24,80 @@ import (
 func FetchFromOCI(ctx context.Context, cr v1beta1.GrafanaContentResource, cl client.Client) ([]byte, error) {
 	o := cr.GrafanaContentSpec().OCI
 
-	var refStr string
+	var ref string
 
 	switch {
 	case o.Digest != "":
-		refStr = fmt.Sprintf("%s@%s", o.Image, o.Digest)
+		ref = o.Digest
 	case o.Tag != "":
-		refStr = fmt.Sprintf("%s:%s", o.Image, o.Tag)
+		ref = o.Tag
 	default:
 		return nil, fmt.Errorf("oci source must specify tag or digest on %v/%v", cr.GetNamespace(), cr.GetName())
 	}
 
-	var nameOpts []name.Option
+	artifactRef := ociArtifactRef(o)
+
+	repo, err := remote.NewRepository(o.Image)
+	if err != nil {
+		return nil, fmt.Errorf("parse oci reference %q: %w", o.Image, err)
+	}
 
 	if o.Insecure {
-		nameOpts = append(nameOpts, name.Insecure)
+		repo.PlainHTTP = true
 	}
 
-	ref, err := name.ParseReference(refStr, nameOpts...)
-	if err != nil {
-		return nil, fmt.Errorf("parse oci reference %q: %w", refStr, err)
-	}
-
-	auth := authn.Anonymous
+	var credFunc auth.CredentialFunc
 
 	if o.PullSecretRef != nil {
-		auth, err = authFromPullSecret(ctx, cl, cr.GetNamespace(), o.PullSecretRef.Name, ref.Context())
+		credFunc, err = authFromPullSecret(ctx, cl, cr.GetNamespace(), o.PullSecretRef.Name, repo.Reference.Registry)
 		if err != nil {
 			return nil, fmt.Errorf("resolve pull secret: %w", err)
 		}
 	}
 
-	opts := []remote.Option{remote.WithContext(ctx), remote.WithAuth(auth)}
-
-	if o.Insecure {
-		opts = append(opts, remote.WithTransport(insecureTransport()))
+	repo.Client = &auth.Client{
+		Client:     retry.DefaultClient,
+		Cache:      auth.NewCache(),
+		Credential: credFunc,
 	}
 
-	img, err := remote.Image(ref, opts...)
+	_, manifestBytes, err := oras.FetchBytes(ctx, repo, ref, oras.DefaultFetchBytesOptions)
 	if err != nil {
-		return nil, fmt.Errorf("pull oci image %s: %w", refStr, err)
+		return nil, fmt.Errorf("pull oci manifest %s: %w", artifactRef, err)
 	}
 
-	rc := mutate.Extract(img)
-	defer rc.Close()
-
-	data, err := extractFromTar(rc, o.File)
-	if err != nil {
-		return nil, fmt.Errorf("extract %q from %s: %w", o.File, refStr, err)
+	var manifest ocispec.Manifest
+	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+		return nil, fmt.Errorf("parse manifest for %s: %w", artifactRef, err)
 	}
 
-	return data, nil
-}
+	target := filepath.ToSlash(o.File)
 
-func extractFromTar(r io.Reader, target string) ([]byte, error) {
-	tr := tar.NewReader(r)
-
-	for {
-		h, err := tr.Next()
-
-		if err == io.EOF {
-			return nil, fmt.Errorf("file %q not found", target)
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		if h.Typeflag != tar.TypeReg {
+	for _, layer := range manifest.Layers {
+		title := layer.Annotations[ocispec.AnnotationTitle]
+		if filepath.ToSlash(title) != target {
 			continue
 		}
 
-		if filepath.ToSlash(h.Name) == target {
-			var buf bytes.Buffer
-
-			if _, err := io.Copy(&buf, tr); err != nil { // #nosec G110 - operator pulls from trusted registries configured by cluster admins
-				return nil, err
-			}
-
-			return buf.Bytes(), nil
+		blob, err := content.FetchAll(ctx, repo, layer)
+		if err != nil {
+			return nil, fmt.Errorf("fetch layer %s for %s: %w", layer.Digest, artifactRef, err)
 		}
+
+		return blob, nil
 	}
+
+	return nil, fmt.Errorf("file %q not found in %s", o.File, artifactRef)
+}
+
+// ociArtifactRef formats the user-supplied image plus tag/digest using the
+// conventional separator: ":" for tags, "@" for digests.
+func ociArtifactRef(o *v1beta1.GrafanaContentOCI) string {
+	if o.Digest != "" {
+		return o.Image + "@" + o.Digest
+	}
+
+	return o.Image + ":" + o.Tag
 }
 
 // dockerConfigJSON mirrors the relevant subset of the kubernetes.io/dockerconfigjson secret format.
@@ -121,7 +111,7 @@ type dockerConfigAuth struct {
 	Auth     string `json:"auth"` // base64("username:password")
 }
 
-func authFromPullSecret(ctx context.Context, cl client.Client, namespace, secretName string, repo name.Repository) (authn.Authenticator, error) {
+func authFromPullSecret(ctx context.Context, cl client.Client, namespace, secretName, registryHost string) (auth.CredentialFunc, error) {
 	secret := &corev1.Secret{}
 
 	if err := cl.Get(ctx, client.ObjectKey{Namespace: namespace, Name: secretName}, secret); err != nil {
@@ -144,8 +134,6 @@ func authFromPullSecret(ctx context.Context, cl client.Client, namespace, secret
 		return nil, fmt.Errorf("parse pull secret %s/%s: %w", namespace, secretName, err)
 	}
 
-	registryHost := repo.RegistryStr()
-
 	for host, a := range cfg.Auths {
 		if !hostMatches(host, registryHost) {
 			continue
@@ -165,22 +153,10 @@ func authFromPullSecret(ctx context.Context, cl client.Client, namespace, secret
 			}
 		}
 
-		return authn.FromConfig(authn.AuthConfig{Username: username, Password: password}), nil
+		return auth.StaticCredential(registryHost, auth.Credential{Username: username, Password: password}), nil
 	}
 
-	return authn.Anonymous, nil
-}
-
-func insecureTransport() http.RoundTripper {
-	base, ok := http.DefaultTransport.(*http.Transport)
-	if !ok {
-		return http.DefaultTransport
-	}
-
-	t := base.Clone()
-	t.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} // #nosec G402 - Linter disabled because InsecureSkipVerify is the wanted behavior for this variable
-
-	return t
+	return nil, nil
 }
 
 // hostMatches returns true when the config host key matches the registry hostname.

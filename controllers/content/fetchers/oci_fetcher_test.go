@@ -5,12 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
-	"github.com/google/go-containerregistry/pkg/crane"
-	"github.com/google/go-containerregistry/pkg/registry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -19,22 +15,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 )
-
-// buildAndPush creates a synthetic OCI image containing the given filemap and pushes it to the
-// registry at host under the given reference. Returns the image digest.
-func buildAndPush(t *testing.T, host, ref string, filemap map[string][]byte) string {
-	t.Helper()
-
-	img, err := crane.Image(filemap)
-	require.NoError(t, err)
-
-	require.NoError(t, crane.Push(img, host+"/"+ref, crane.Insecure))
-
-	d, err := img.Digest()
-	require.NoError(t, err)
-
-	return d.String()
-}
 
 // makeDockerConfigJSON builds a kubernetes.io/dockerconfigjson secret payload for registryHost.
 func makeDockerConfigJSON(t *testing.T, registryHost, username, password string) []byte {
@@ -53,17 +33,11 @@ func makeDockerConfigJSON(t *testing.T, registryHost, username, password string)
 	return raw
 }
 
-// startRegistry starts an in-process OCI registry and returns the host (host:port without scheme).
-func startRegistry(t *testing.T) string {
-	t.Helper()
-
-	s := httptest.NewServer(registry.New())
-	t.Cleanup(s.Close)
-
-	return strings.TrimPrefix(s.URL, "http://")
-}
-
 // ociDashboard builds a GrafanaDashboard CR pointing at an OCI source.
+//
+// Insecure is always true: the test registry is plain HTTP (httptest.NewServer),
+// and the production code requires Insecure=true to skip HTTPS. The HTTPS path
+// is exercised by oras-go's own test suite and not re-tested here.
 func ociDashboard(image, tag, digest, file string, pullSecretRef *corev1.LocalObjectReference) *v1beta1.GrafanaDashboard {
 	return &v1beta1.GrafanaDashboard{
 		ObjectMeta: metav1.ObjectMeta{
@@ -89,8 +63,8 @@ func TestFetchFromOCI(t *testing.T) {
 	const wantJSON = `{"title":"test","panels":[]}`
 
 	t.Run("happy path tag", func(t *testing.T) {
-		host := startRegistry(t)
-		buildAndPush(t, host, "team/boards:v1", map[string][]byte{"board.json": []byte(wantJSON)})
+		reg, host := newFakeRegistry(t)
+		reg.pushArtifact(t, "team/boards", "v1", map[string][]byte{"board.json": []byte(wantJSON)})
 
 		cr := ociDashboard(host+"/team/boards", "v1", "", "board.json", nil)
 
@@ -100,8 +74,8 @@ func TestFetchFromOCI(t *testing.T) {
 	})
 
 	t.Run("happy path digest", func(t *testing.T) {
-		host := startRegistry(t)
-		digest := buildAndPush(t, host, "team/boards:v1", map[string][]byte{"board.json": []byte(wantJSON)})
+		reg, host := newFakeRegistry(t)
+		digest := reg.pushArtifact(t, "team/boards", "v1", map[string][]byte{"board.json": []byte(wantJSON)})
 
 		cr := ociDashboard(host+"/team/boards", "", digest, "board.json", nil)
 
@@ -111,8 +85,8 @@ func TestFetchFromOCI(t *testing.T) {
 	})
 
 	t.Run("nested file path", func(t *testing.T) {
-		host := startRegistry(t)
-		buildAndPush(t, host, "team/boards:v1", map[string][]byte{"subdir/board.json": []byte(wantJSON)})
+		reg, host := newFakeRegistry(t)
+		reg.pushArtifact(t, "team/boards", "v1", map[string][]byte{"subdir/board.json": []byte(wantJSON)})
 
 		cr := ociDashboard(host+"/team/boards", "v1", "", "subdir/board.json", nil)
 
@@ -122,8 +96,8 @@ func TestFetchFromOCI(t *testing.T) {
 	})
 
 	t.Run("file not in artifact", func(t *testing.T) {
-		host := startRegistry(t)
-		buildAndPush(t, host, "team/boards:v1", map[string][]byte{"board.json": []byte(wantJSON)})
+		reg, host := newFakeRegistry(t)
+		reg.pushArtifact(t, "team/boards", "v1", map[string][]byte{"board.json": []byte(wantJSON)})
 
 		cr := ociDashboard(host+"/team/boards", "v1", "", "absent.json", nil)
 
@@ -133,7 +107,7 @@ func TestFetchFromOCI(t *testing.T) {
 	})
 
 	t.Run("neither tag nor digest", func(t *testing.T) {
-		host := startRegistry(t)
+		_, host := newFakeRegistry(t)
 
 		cr := ociDashboard(host+"/team/boards", "", "", "board.json", nil)
 
@@ -151,8 +125,10 @@ func TestFetchFromOCI(t *testing.T) {
 	})
 
 	t.Run("pull secret happy path", func(t *testing.T) {
-		host := startRegistry(t)
-		buildAndPush(t, host, "team/boards:v1", map[string][]byte{"board.json": []byte(wantJSON)})
+		reg, host := newFakeRegistry(t)
+		reg.requireAuth = true
+		reg.user, reg.pass = "user", "pass"
+		reg.pushArtifact(t, "team/boards", "v1", map[string][]byte{"board.json": []byte(wantJSON)})
 
 		rawCfg := makeDockerConfigJSON(t, host, "user", "pass")
 		pullSecret := &corev1.Secret{
@@ -171,7 +147,7 @@ func TestFetchFromOCI(t *testing.T) {
 	})
 
 	t.Run("missing pull secret", func(t *testing.T) {
-		host := startRegistry(t)
+		_, host := newFakeRegistry(t)
 
 		cr := ociDashboard(host+"/team/boards", "v1", "", "board.json",
 			&corev1.LocalObjectReference{Name: "does-not-exist"})
@@ -181,7 +157,7 @@ func TestFetchFromOCI(t *testing.T) {
 	})
 
 	t.Run("wrong secret type", func(t *testing.T) {
-		host := startRegistry(t)
+		_, host := newFakeRegistry(t)
 		opaqueSecret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{Name: "bad-secret", Namespace: "default"},
 			Type:       corev1.SecretTypeOpaque,
@@ -195,6 +171,23 @@ func TestFetchFromOCI(t *testing.T) {
 		_, err := FetchFromOCI(context.Background(), cr, cl)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), string(corev1.SecretTypeDockerConfigJson))
+	})
+
+	t.Run("malformed pull secret body", func(t *testing.T) {
+		_, host := newFakeRegistry(t)
+		badSecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: "malformed", Namespace: "default"},
+			Type:       corev1.SecretTypeDockerConfigJson,
+			Data:       map[string][]byte{corev1.DockerConfigJsonKey: []byte("not json{")},
+		}
+		cl := tk8s.GetFakeClient(t, badSecret)
+
+		cr := ociDashboard(host+"/team/boards", "v1", "", "board.json",
+			&corev1.LocalObjectReference{Name: "malformed"})
+
+		_, err := FetchFromOCI(context.Background(), cr, cl)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "parse pull secret")
 	})
 }
 

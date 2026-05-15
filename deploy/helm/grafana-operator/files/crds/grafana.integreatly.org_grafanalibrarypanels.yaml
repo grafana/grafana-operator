@@ -329,8 +329,10 @@ spec:
                     minLength: 3
                     type: string
                   insecure:
-                    description: Insecure permits HTTP (non-TLS) registries and skips
-                      TLS verification. Default false.
+                    description: |-
+                      Insecure switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+                      Intended for in-cluster or test registries; HTTPS registries with self-signed
+                      certificates are not supported. Default false.
                     type: boolean
                   pullSecretRef:
                     description: |-

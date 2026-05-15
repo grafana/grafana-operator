@@ -2317,7 +2317,9 @@ Exactly one of Tag or Digest must be set.<br/>
         <td><b>insecure</b></td>
         <td>boolean</td>
         <td>
-          Insecure permits HTTP (non-TLS) registries and skips TLS verification. Default false.<br/>
+          Insecure switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+Intended for in-cluster or test registries; HTTPS registries with self-signed
+certificates are not supported. Default false.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4567,7 +4569,9 @@ Exactly one of Tag or Digest must be set.<br/>
         <td><b>insecure</b></td>
         <td>boolean</td>
         <td>
-          Insecure permits HTTP (non-TLS) registries and skips TLS verification. Default false.<br/>
+          Insecure switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+Intended for in-cluster or test registries; HTTPS registries with self-signed
+certificates are not supported. Default false.<br/>
         </td>
         <td>false</td>
       </tr><tr>
