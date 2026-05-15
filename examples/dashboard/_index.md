@@ -713,4 +713,36 @@ oras push ghcr.io/team-a/dashboards:v1.4.7 \
 
 Note: the `oci` source is available on both `GrafanaDashboard` and `GrafanaLibraryPanel` CRs.
 
-{{< example src="examples/dashboard/oci/resources.yaml" >}}
+```yaml
+# Tag-pinned variant (mutable release channel).
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-from-oci-tag
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  oci:
+    image: ghcr.io/team-a/dashboards
+    tag: v1.4.7
+    file: board.json
+    pullSecretRef:
+      name: ghcr-pull
+---
+# Digest-pinned variant (immutable, reproducible deployments).
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-from-oci-digest
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  oci:
+    image: ghcr.io/team-a/dashboards
+    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    file: board.json
+    pullSecretRef:
+      name: ghcr-pull
+```
