@@ -35,8 +35,10 @@ func TestFeatureFlagsSetActive(t *testing.T) {
 }
 
 func TestFeatureFlagsSetActiveFromArg(t *testing.T) {
-	const name1 = "ff1"
-	const name2 = "ff2"
+	const (
+		name1 = "ff1"
+		name2 = "ff2"
+	)
 
 	tests := []struct {
 		name      string
@@ -54,7 +56,7 @@ func TestFeatureFlagsSetActiveFromArg(t *testing.T) {
 		},
 		{
 			name: "valid flag",
-			arg:  fmt.Sprintf("%s", name1),
+			arg:  name1,
 			ffs: FeatureFlags{
 				name1: getFF(t, name1, false),
 			},
