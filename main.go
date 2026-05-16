@@ -41,7 +41,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/config"
+	ctrlconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -61,10 +61,10 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers"
+	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	"github.com/grafana/grafana-operator/v5/embeds"
 	"github.com/grafana/grafana-operator/v5/pkg/autodetect"
-	"github.com/grafana/grafana-operator/v5/pkg/featureflags"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -196,10 +196,12 @@ func main() { //nolint:gocyclo
 	slogger := slog.New(logr.ToSlogHandler(setupLog))
 	slog.SetDefault(slogger)
 
-	if err := featureflags.SetActiveFromArg(operatorConfig.FeatureFlags); err != nil {
+	if err := config.FeatureFlags.SetActiveFromArg(operatorConfig.FeatureFlags); err != nil {
 		setupLog.Error(err, "failed to parse feature flags")
 		os.Exit(1)
 	}
+
+	slog.Info("activation status of the feature flags", "flags", fmt.Sprint(config.FeatureFlags))
 
 	// Optimize Go runtime based on CGroup limits (GOMEMLIMIT, sets a soft memory limit for the runtime)
 	memlimit.SetGoMemLimitWithOpts(memlimit.WithLogger(slogger)) //nolint:errcheck
@@ -239,7 +241,7 @@ func main() { //nolint:gocyclo
 		LeaderElection:         operatorConfig.EnableLeaderElection,
 		LeaderElectionID:       fmt.Sprintf("grafana-operator-%x", leHash.Sum(nil)),
 		PprofBindAddress:       operatorConfig.PprofAddr,
-		Controller: config.Controller{
+		Controller: ctrlconfig.Controller{
 			MaxConcurrentReconciles: operatorConfig.MaxConcurrentReconciles,
 		},
 	}
