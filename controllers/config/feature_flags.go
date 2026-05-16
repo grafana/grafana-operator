@@ -9,6 +9,6 @@ import "github.com/grafana/grafana-operator/v5/pkg/featureflags"
 // 	Description:  "Use Grafana 13+ API-server style APIs for the folder controller",
 // }
 
-var FeatureFlags = featureflags.FeatureFlags{
-	// FoldersUseNewAPI.Name: &FoldersUseNewAPI,
-}
+var FeatureFlags = featureflags.NewFeatureFlags(
+// FoldersUseNewAPI,
+)

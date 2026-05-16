@@ -74,3 +74,13 @@ func (ffs FeatureFlags) String() string {
 
 	return strings.Join(withStatus, ", ")
 }
+
+func NewFeatureFlags(flags ...FeatureFlag) FeatureFlags {
+	ffs := FeatureFlags{}
+
+	for _, ff := range flags {
+		ffs[ff.Name] = &ff
+	}
+
+	return ffs
+}
