@@ -117,6 +117,10 @@ func (in *GrafanaMuteTiming) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status
 }
 
+func (in *GrafanaMuteTiming) CommonSpec() GrafanaCommonSpec {
+	return in.Spec.GrafanaCommonSpec
+}
+
 func (in *GrafanaMuteTiming) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
 }

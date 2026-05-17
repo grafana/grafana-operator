@@ -196,6 +196,11 @@ func (in *GrafanaServiceAccount) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status.GrafanaCommonStatus
 }
 
+func (in *GrafanaServiceAccount) CommonSpec() GrafanaCommonSpec {
+	// NOTE: Grafana service account don't implement common spec due to security concerns
+	return GrafanaCommonSpec{}
+}
+
 func (in *GrafanaServiceAccount) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
 }

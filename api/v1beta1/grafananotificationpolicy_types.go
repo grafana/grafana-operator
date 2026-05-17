@@ -277,6 +277,10 @@ func (in *GrafanaNotificationPolicy) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status.GrafanaCommonStatus
 }
 
+func (in *GrafanaNotificationPolicy) CommonSpec() GrafanaCommonSpec {
+	return in.Spec.GrafanaCommonSpec
+}
+
 func (in *GrafanaNotificationPolicy) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
 }
