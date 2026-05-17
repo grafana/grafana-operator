@@ -1,49 +1,86 @@
 package featureflags
 
 import (
+	"errors"
 	"fmt"
-	"log/slog"
+	"sort"
 	"strings"
 )
 
-var activeFlags map[featureFlag]bool = make(map[featureFlag]bool)
+var ErrUknownFeatureFlag = errors.New("unknown feature flag")
 
-type featureFlag string
+type FeatureFlag struct {
+	Name         string
+	IsActive     bool
+	IsDeprecated bool
+	Description  string
+}
 
-// availableFlags is the source of truth of flags available to the user. The value in the map should contain documentation for the feature flag
-var availableFlags = map[featureFlag]string{}
+func (ff FeatureFlag) String() string {
+	return fmt.Sprintf("%s: %t", ff.Name, ff.IsActive)
+}
 
-func SetActiveFromArg(arg string) error {
-	active, err := parseFlags(arg, availableFlags)
-	if err != nil {
-		return err
+type FeatureFlags map[string]*FeatureFlag
+
+func (ffs FeatureFlags) SetActive(name string) error {
+	if _, ok := ffs[name]; !ok {
+		return ErrUknownFeatureFlag
 	}
 
-	activeFlags = active
+	ffs[name].IsActive = true
 
 	return nil
 }
 
-func parseFlags(arg string, existing map[featureFlag]string) (map[featureFlag]bool, error) {
-	active := make(map[featureFlag]bool)
+func (ffs FeatureFlags) SetActiveFromArg(arg string) error {
+	toActivate := []string{}
+	unknown := []string{}
 
-	for f := range strings.SplitSeq(arg, ",") {
-		if f == "" {
+	for name := range strings.SplitSeq(arg, ",") {
+		if name == "" {
 			continue
 		}
 
-		ff := featureFlag(f)
-		if _, ok := existing[ff]; !ok {
-			return nil, fmt.Errorf("unknown feature flag: '%s'", ff)
+		if _, ok := ffs[name]; !ok {
+			unknown = append(unknown, name)
+			continue
 		}
 
-		slog.Info("activating feature flag", "flag", ff)
-		active[ff] = true
+		toActivate = append(toActivate, name)
 	}
 
-	return active, nil
+	if len(unknown) > 0 {
+		return fmt.Errorf("unknown feature flags: %s", strings.Join(unknown, ","))
+	}
+
+	for _, name := range toActivate {
+		err := ffs.SetActive(name)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func IsEnabled(flag featureFlag) bool {
-	return activeFlags[flag]
+func (ffs FeatureFlags) String() string {
+	withStatus := make([]string, 0, len(ffs))
+
+	for _, v := range ffs {
+		withStatus = append(withStatus, v.String())
+	}
+
+	sort.Strings(withStatus)
+
+	return strings.Join(withStatus, ", ")
+}
+
+func NewFeatureFlags(flags ...FeatureFlag) FeatureFlags {
+	ffs := FeatureFlags{}
+
+	for _, ff := range flags {
+		ffs[ff.Name] = &ff
+	}
+
+	return ffs
 }
