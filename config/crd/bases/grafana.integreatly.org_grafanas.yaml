@@ -8987,6 +8987,10 @@ spec:
                   items:
                     type: string
                   type: array
+                prometheusRules:
+                  items:
+                    type: string
+                  type: array
                 serviceaccounts:
                   items:
                     type: string

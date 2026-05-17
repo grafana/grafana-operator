@@ -17,6 +17,7 @@ resources:
 - bases/grafana.integreatly.org_grafananotificationtemplates.yaml
 - bases/grafana.integreatly.org_grafanas.yaml
 - bases/grafana.integreatly.org_grafanaserviceaccounts.yaml
+- bases/grafana.integreatly.org_grafanaprometheusrules.yaml
 #+kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 #patchesStrategicMerge:
