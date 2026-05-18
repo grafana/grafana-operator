@@ -57,27 +57,11 @@ jobs:
           tar -xzf cr.tar.gz -C "${CR_TOOL_PATH}"
           rm -f cr.tar.gz
 
-      - name: Get secrets
-        id: secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@a53fc80bc30b0a16a262520465db899fa3af08b7 # get-vault-secrets/v1.3.2
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@580590a644e82e79bb2598bdaba0be245a14dda0 # create-github-app-token/v0.2.2
         with:
-          repo_secrets: |
-            APP_ID=helm-release-github-app:app-id
-            APP_PRIVATE_KEY=helm-release-github-app:private-key
-          export_env: false
-
-      - name: Create a GitHub App installation access token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        id: app-token
-        with:
-          app-id: ${{ fromJSON(steps.secrets.outputs.secrets || '{}').APP_ID }}
-          private-key: ${{ fromJSON(steps.secrets.outputs.secrets || '{}').APP_PRIVATE_KEY }}
-          repositories: helm-charts
-          owner: "${{ github.event.repository.owner.login }}"
-
-      - name: Set the correct token (Github App or PAT) # zizmor: ignore[template-injection] app token considered safe
-        run: |
-          echo "AUTHTOKEN=${{ steps.app-token.outputs.token }}" >> $GITHUB_ENV
+          github_app: grafana-operator-helm-release
 
       - name: Make github release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
@@ -90,7 +74,7 @@ jobs:
             source/deploy/helm/grafana-operator-${{ env.HELM_RELEASE_VERSION }}.tgz
           repository: grafana/helm-charts
           tag_name: grafana-operator-${{ env.HELM_RELEASE_VERSION }}
-          token: ${{ env.AUTHTOKEN }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
 
       - name: Checkout helm-charts # zizmor: ignore[artipacked] required to push using chart releaser in last step
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -98,7 +82,7 @@ jobs:
           fetch-depth: 0
           repository: grafana/helm-charts
           path: helm-charts
-          token: ${{ env.AUTHTOKEN }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
 
       - name: Configure Git for helm-charts
         run: |
@@ -107,9 +91,11 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Update helm repo index.yaml
+        env:
+          AUTHTOKEN: ${{ steps.get-github-app-token.outputs.token }}
         run: |
           cd helm-charts
-          "${CR_TOOL_PATH}/cr" index --config ../source/deploy/helm/cr.yaml --token "${{ env.AUTHTOKEN }}" --index-path "${CR_INDEX_PATH}" --package-path ../source/deploy/helm/ --push
+          "${CR_TOOL_PATH}/cr" index --config ../source/deploy/helm/cr.yaml --token "$AUTHTOKEN" --index-path "${CR_INDEX_PATH}" --package-path ../source/deploy/helm/ --push
 
   kustomize:
     runs-on: ubuntu-latest
