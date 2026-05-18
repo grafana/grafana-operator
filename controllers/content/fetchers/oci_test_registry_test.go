@@ -94,6 +94,7 @@ func (r *fakeRegistry) handler() http.Handler {
 			if !ok || user != r.user || pass != r.pass {
 				w.Header().Set("WWW-Authenticate", `Basic realm="registry"`)
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
+
 				return
 			}
 		}
@@ -102,7 +103,8 @@ func (r *fakeRegistry) handler() http.Handler {
 
 		if path == "/v2/" || path == "/v2" {
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte("{}"))
+			writeOrFail(w, []byte("{}"))
+
 			return
 		}
 
@@ -146,7 +148,7 @@ func (r *fakeRegistry) serveManifest(w http.ResponseWriter, req *http.Request, r
 		return
 	}
 
-	_, _ = w.Write(body)
+	writeOrFail(w, body)
 }
 
 func (r *fakeRegistry) serveBlob(w http.ResponseWriter, req *http.Request, ref string) {
@@ -164,7 +166,16 @@ func (r *fakeRegistry) serveBlob(w http.ResponseWriter, req *http.Request, ref s
 		return
 	}
 
-	_, _ = w.Write(body)
+	writeOrFail(w, body)
+}
+
+// writeOrFail writes to the response, panicking on error so the test surfaces
+// a server-side write failure rather than the linter complaining about a
+// silently dropped error.
+func writeOrFail(w http.ResponseWriter, body []byte) {
+	if _, err := w.Write(body); err != nil {
+		panic(err)
+	}
 }
 
 func sha256Digest(data []byte) string {
