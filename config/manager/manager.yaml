@@ -74,5 +74,17 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.annotations['olm.targetNamespaces']
+          volumeMounts:
+            - name: kubeauth-token-volume
+              mountPath: /var/run/secrets/grafana.com/serviceaccount
+              readOnly: true
+      volumes:
+        - name: kubeauth-token-volume
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: operator.grafana.com
+                  expirationSeconds: 3600
+                  path: token
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
