@@ -105,8 +105,17 @@ func crToUnstructuredPrometheusRule(cr *v1beta1.GrafanaPrometheusRule, folderUID
 	}
 
 	annotations := map[string]string{}
-	if folderUID != "" {
+	switch {
+	case folderUID != "":
 		annotations[prometheusRuleFolderAnnotation] = folderUID
+	case cr.GetNamespace() != "":
+		// Drop-in convenience for VMRule / prometheus-operator migrations: when
+		// the customer set neither Spec.FolderUID nor Spec.FolderRef, default
+		// the upstream folder reference to the source k8s namespace. The
+		// upstream kind treats the annotation as UID first and then as a folder
+		// title to find-or-create, so the rules land in a per-namespace folder
+		// instead of all collapsing into one.
+		annotations[prometheusRuleFolderAnnotation] = cr.GetNamespace()
 	}
 
 	if cr.Spec.DatasourceUID != "" {
