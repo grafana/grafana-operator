@@ -66,10 +66,10 @@ type GrafanaContentOCI struct {
 	// +kubebuilder:validation:Pattern=`^[^:@]+(:[^:@/]+|@sha256:[a-fA-F0-9]{64})$`
 	Reference string `json:"reference"`
 
-	// File is the path of the file to extract from the artifact.
+	// Path is the path of the file to extract from the artifact.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=512
-	File string `json:"file"`
+	Path string `json:"path"`
 
 	// PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
 	// If omitted, anonymous pull is attempted.

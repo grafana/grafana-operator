@@ -315,18 +315,18 @@ spec:
               oci:
                 description: model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
                 properties:
-                  file:
-                    description: File is the path of the file to extract from the
-                      artifact.
-                    maxLength: 512
-                    minLength: 1
-                    type: string
                   insecure:
                     description: |-
                       Insecure switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
                       Intended for in-cluster or test registries; HTTPS registries with self-signed
                       certificates are not supported. Default false.
                     type: boolean
+                  path:
+                    description: Path is the path of the file to extract from the
+                      artifact.
+                    maxLength: 512
+                    minLength: 1
+                    type: string
                   pullSecretRef:
                     description: |-
                       PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
@@ -354,7 +354,7 @@ spec:
                     pattern: ^[^:@]+(:[^:@/]+|@sha256:[a-fA-F0-9]{64})$
                     type: string
                 required:
-                - file
+                - path
                 - reference
                 type: object
               plugins:

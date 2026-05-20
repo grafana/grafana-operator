@@ -38,7 +38,7 @@ func makeDockerConfigJSON(t *testing.T, registryHost, username, password string)
 // Insecure is always true: the test registry is plain HTTP (httptest.NewServer),
 // and the production code requires Insecure=true to skip HTTPS. The HTTPS path
 // is exercised by oras-go's own test suite and not re-tested here.
-func ociDashboard(reference, file string, pullSecretRef *corev1.LocalObjectReference) *v1beta1.GrafanaDashboard {
+func ociDashboard(reference, path string, pullSecretRef *corev1.LocalObjectReference) *v1beta1.GrafanaDashboard {
 	return &v1beta1.GrafanaDashboard{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
@@ -48,7 +48,7 @@ func ociDashboard(reference, file string, pullSecretRef *corev1.LocalObjectRefer
 			GrafanaContentSpec: v1beta1.GrafanaContentSpec{
 				OCI: &v1beta1.GrafanaContentOCI{
 					Reference:     reference,
-					File:          file,
+					Path:          path,
 					PullSecretRef: pullSecretRef,
 					Insecure:      true,
 				},

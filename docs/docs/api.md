@@ -2290,10 +2290,10 @@ model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>file</b></td>
+        <td><b>path</b></td>
         <td>string</td>
         <td>
-          File is the path of the file to extract from the artifact.<br/>
+          Path is the path of the file to extract from the artifact.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -4528,10 +4528,10 @@ model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>file</b></td>
+        <td><b>path</b></td>
         <td>string</td>
         <td>
-          File is the path of the file to extract from the artifact.<br/>
+          Path is the path of the file to extract from the artifact.<br/>
         </td>
         <td>true</td>
       </tr><tr>

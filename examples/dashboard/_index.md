@@ -725,7 +725,7 @@ spec:
       dashboards: "grafana"
   oci:
     reference: ghcr.io/team-a/dashboards:v1.4.7
-    file: board.json
+    path: board.json
     pullSecretRef:
       name: ghcr-pull
 ---
@@ -740,7 +740,7 @@ spec:
       dashboards: "grafana"
   oci:
     reference: ghcr.io/team-a/dashboards@sha256:0000000000000000000000000000000000000000000000000000000000000000
-    file: board.json
+    path: board.json
     pullSecretRef:
       name: ghcr-pull
 ```

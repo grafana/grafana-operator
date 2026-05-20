@@ -68,7 +68,7 @@ func FetchFromOCI(ctx context.Context, cr v1beta1.GrafanaContentResource, cl cli
 		return nil, fmt.Errorf("parse manifest for %s: %w", o.Reference, err)
 	}
 
-	target := filepath.ToSlash(o.File)
+	target := filepath.ToSlash(o.Path)
 
 	for _, layer := range manifest.Layers {
 		title := layer.Annotations[ocispec.AnnotationTitle]
@@ -84,7 +84,7 @@ func FetchFromOCI(ctx context.Context, cr v1beta1.GrafanaContentResource, cl cli
 		return blob, nil
 	}
 
-	return nil, fmt.Errorf("file %q not found in %s", o.File, o.Reference)
+	return nil, fmt.Errorf("file %q not found in %s", o.Path, o.Reference)
 }
 
 // dockerConfigJSON mirrors the relevant subset of the kubernetes.io/dockerconfigjson secret format.
