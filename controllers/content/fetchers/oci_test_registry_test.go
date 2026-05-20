@@ -1,6 +1,9 @@
 package fetchers
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -74,6 +77,72 @@ func (r *fakeRegistry) pushArtifact(t *testing.T, repo, tag string, files map[st
 			Size:      int64(len(emptyJSON)),
 		},
 		Layers: layers,
+	}
+	manifest.SchemaVersion = 2
+
+	manifestBytes, err := json.Marshal(manifest)
+	require.NoError(t, err)
+
+	manifestDigest := sha256Digest(manifestBytes)
+	r.manifests[repo+"/"+tag] = manifestBytes
+	r.manifests[repo+"/"+manifestDigest] = manifestBytes
+
+	return manifestDigest
+}
+
+// pushImage stores a container-image style artifact: each input map becomes one
+// gzipped-tar layer of "application/vnd.oci.image.layer.v1.tar+gzip". Layers are
+// stored in the order given (layers[0] = lowest, layers[len-1] = highest).
+// Returns the manifest digest.
+func (r *fakeRegistry) pushImage(t *testing.T, repo, tag string, layers []map[string][]byte) string {
+	t.Helper()
+
+	descs := make([]ocispec.Descriptor, 0, len(layers))
+
+	for _, files := range layers {
+		var buf bytes.Buffer
+
+		gz := gzip.NewWriter(&buf)
+		tw := tar.NewWriter(gz)
+
+		for name, body := range files {
+			require.NoError(t, tw.WriteHeader(&tar.Header{
+				Name:     name,
+				Mode:     0o644,
+				Size:     int64(len(body)),
+				Typeflag: tar.TypeReg,
+			}))
+
+			_, err := tw.Write(body)
+			require.NoError(t, err)
+		}
+
+		require.NoError(t, tw.Close())
+		require.NoError(t, gz.Close())
+
+		blob := buf.Bytes()
+		d := sha256Digest(blob)
+		r.blobs[d] = blob
+
+		descs = append(descs, ocispec.Descriptor{
+			MediaType: "application/vnd.oci.image.layer.v1.tar+gzip",
+			Digest:    digest.Digest(d),
+			Size:      int64(len(blob)),
+		})
+	}
+
+	emptyJSON := []byte("{}")
+	emptyDigest := sha256Digest(emptyJSON)
+	r.blobs[emptyDigest] = emptyJSON
+
+	manifest := ocispec.Manifest{
+		MediaType: ocispec.MediaTypeImageManifest,
+		Config: ocispec.Descriptor{
+			MediaType: ocispec.MediaTypeEmptyJSON,
+			Digest:    digest.Digest(emptyDigest),
+			Size:      int64(len(emptyJSON)),
+		},
+		Layers: descs,
 	}
 	manifest.SchemaVersion = 2
 

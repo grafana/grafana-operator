@@ -1,12 +1,17 @@
 package fetchers
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -70,6 +75,8 @@ func FetchFromOCI(ctx context.Context, cr v1beta1.GrafanaContentResource, cl cli
 
 	target := filepath.ToSlash(o.Path)
 
+	// Pass 1: oras-style artifact. Each file is its own raw-blob layer carrying an
+	// org.opencontainers.image.title annotation; match the annotation to the requested path.
 	for _, layer := range manifest.Layers {
 		title := layer.Annotations[ocispec.AnnotationTitle]
 		if filepath.ToSlash(title) != target {
@@ -84,7 +91,81 @@ func FetchFromOCI(ctx context.Context, cr v1beta1.GrafanaContentResource, cl cli
 		return blob, nil
 	}
 
+	// Pass 2: container-image style. Each layer is a (gzipped) tarball of a filesystem.
+	// Walk layers in reverse so upper layers win, matching the container filesystem
+	// overlay semantics. Non-tar layers (e.g. an oras-style raw blob that did not match
+	// pass 1) are silently skipped.
+	for _, layer := range slices.Backward(manifest.Layers) {
+		data, found, err := fetchFileFromImageLayer(ctx, repo, layer, target)
+		if err != nil {
+			return nil, fmt.Errorf("scan layer %s of %s: %w", layer.Digest, o.Reference, err)
+		}
+
+		if found {
+			return data, nil
+		}
+	}
+
 	return nil, fmt.Errorf("file %q not found in %s", o.Path, o.Reference)
+}
+
+// fetchFileFromImageLayer streams a single layer blob and looks for target inside it,
+// treating the blob as a (possibly gzipped) tarball. Returns (data, true, nil) on hit,
+// (nil, false, nil) when the layer is not a tar or simply does not contain target.
+func fetchFileFromImageLayer(ctx context.Context, repo *remote.Repository, layer ocispec.Descriptor, target string) ([]byte, bool, error) {
+	rc, err := repo.Fetch(ctx, layer)
+	if err != nil {
+		return nil, false, err
+	}
+	defer rc.Close()
+
+	var tarReader io.Reader = rc
+
+	if isGzipMediaType(layer.MediaType) {
+		gz, gzErr := gzip.NewReader(rc)
+		if gzErr != nil {
+			return nil, false, nil
+		}
+
+		defer gz.Close()
+
+		tarReader = gz
+	}
+
+	tr := tar.NewReader(tarReader)
+
+	for {
+		h, err := tr.Next()
+		if err == io.EOF {
+			return nil, false, nil
+		}
+
+		if err != nil {
+			// Not a tar (e.g. raw artifact blob). Treat as not-found in this layer.
+			return nil, false, nil
+		}
+
+		if h.Typeflag != tar.TypeReg {
+			continue
+		}
+
+		name := strings.TrimPrefix(filepath.ToSlash(h.Name), "/")
+		name = strings.TrimPrefix(name, "./")
+
+		if name == target {
+			var buf bytes.Buffer
+			if _, err := io.Copy(&buf, tr); err != nil { // #nosec G110 - operator pulls from trusted registries configured by cluster admins
+				return nil, false, err
+			}
+
+			return buf.Bytes(), true, nil
+		}
+	}
+}
+
+// isGzipMediaType reports whether an OCI layer media type denotes gzip-wrapped content.
+func isGzipMediaType(mt string) bool {
+	return strings.HasSuffix(mt, "+gzip") || strings.HasSuffix(mt, ".gz") || strings.HasSuffix(mt, ".gzip")
 }
 
 // dockerConfigJSON mirrors the relevant subset of the kubernetes.io/dockerconfigjson secret format.

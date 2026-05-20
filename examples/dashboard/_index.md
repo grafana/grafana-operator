@@ -711,6 +711,15 @@ oras push ghcr.io/team-a/dashboards:v1.4.7 \
   board.json:application/json
 ```
 
+Alternatively, a regular container image works too — useful if you already have container tooling in your pipeline:
+
+```dockerfile
+FROM scratch
+ADD board.json /board.json
+```
+
+When the artifact is a container image the operator walks its layer tarballs in reverse order (upper layers win), matching standard container filesystem semantics.
+
 Note: the `oci` source is available on both `GrafanaDashboard` and `GrafanaLibraryPanel` CRs.
 
 ```yaml

@@ -171,6 +171,46 @@ func TestFetchFromOCI(t *testing.T) {
 		assert.Contains(t, err.Error(), string(corev1.SecretTypeDockerConfigJson))
 	})
 
+	t.Run("image-style single layer", func(t *testing.T) {
+		reg, host := newFakeRegistry(t)
+		reg.pushImage(t, "team/boards", "v1", []map[string][]byte{
+			{"board.json": []byte(wantJSON)},
+		})
+
+		cr := ociDashboard(host+"/team/boards:v1", "board.json", nil)
+
+		got, err := FetchFromOCI(context.Background(), cr, tk8s.GetFakeClient(t))
+		require.NoError(t, err)
+		assert.JSONEq(t, wantJSON, string(got))
+	})
+
+	t.Run("image-style upper layer wins", func(t *testing.T) {
+		reg, host := newFakeRegistry(t)
+		reg.pushImage(t, "team/boards", "v1", []map[string][]byte{
+			{"board.json": []byte(`{"title":"OLD","panels":[]}`)},
+			{"board.json": []byte(wantJSON)},
+		})
+
+		cr := ociDashboard(host+"/team/boards:v1", "board.json", nil)
+
+		got, err := FetchFromOCI(context.Background(), cr, tk8s.GetFakeClient(t))
+		require.NoError(t, err)
+		assert.JSONEq(t, wantJSON, string(got))
+	})
+
+	t.Run("image-style nested path", func(t *testing.T) {
+		reg, host := newFakeRegistry(t)
+		reg.pushImage(t, "team/boards", "v1", []map[string][]byte{
+			{"opt/grafana/board.json": []byte(wantJSON)},
+		})
+
+		cr := ociDashboard(host+"/team/boards:v1", "opt/grafana/board.json", nil)
+
+		got, err := FetchFromOCI(context.Background(), cr, tk8s.GetFakeClient(t))
+		require.NoError(t, err)
+		assert.JSONEq(t, wantJSON, string(got))
+	})
+
 	t.Run("malformed pull secret body", func(t *testing.T) {
 		_, host := newFakeRegistry(t)
 		badSecret := &corev1.Secret{
