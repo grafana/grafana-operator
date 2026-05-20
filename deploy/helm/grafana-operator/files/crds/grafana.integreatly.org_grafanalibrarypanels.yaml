@@ -310,23 +310,11 @@ spec:
               oci:
                 description: model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
                 properties:
-                  digest:
-                    description: |-
-                      Digest pins the artifact to an immutable content-addressable digest, e.g. "sha256:abc123...".
-                      Exactly one of Tag or Digest must be set.
-                    pattern: ^sha256:[a-fA-F0-9]{64}$
-                    type: string
                   file:
                     description: File is the path of the file to extract from the
                       artifact.
                     maxLength: 512
                     minLength: 1
-                    type: string
-                  image:
-                    description: Image is the registry path of the artifact without
-                      tag or digest, e.g. "ghcr.io/team/dashboards".
-                    maxLength: 512
-                    minLength: 3
                     type: string
                   insecure:
                     description: |-
@@ -350,17 +338,20 @@ spec:
                         type: string
                     type: object
                     x-kubernetes-map-type: atomic
-                  tag:
-                    description: Tag pins the artifact to a mutable tag, e.g. "v1.4.7".
-                      Exactly one of Tag or Digest must be set.
+                  reference:
+                    description: |-
+                      Reference is the full OCI artifact reference including a tag or digest,
+                      e.g. "ghcr.io/team/dashboards:v1.4.7" or
+                      "ghcr.io/team/dashboards@sha256:abc123...". Prefer a digest for
+                      reproducible deployments.
+                    maxLength: 512
+                    minLength: 3
+                    pattern: ^[^:@]+(:[^:@/]+|@sha256:[a-fA-F0-9]{64})$
                     type: string
                 required:
                 - file
-                - image
+                - reference
                 type: object
-                x-kubernetes-validations:
-                - message: exactly one of tag or digest must be set
-                  rule: has(self.tag) != has(self.digest)
               plugins:
                 description: plugins
                 items:

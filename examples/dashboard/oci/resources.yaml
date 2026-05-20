@@ -32,8 +32,7 @@ spec:
     matchLabels:
       dashboards: "grafana"
   oci:
-    image: ghcr.io/team-a/dashboards
-    tag: v1.4.7
+    reference: ghcr.io/team-a/dashboards:v1.4.7
     file: board.json
     pullSecretRef:
       name: ghcr-pull
@@ -48,8 +47,7 @@ spec:
     matchLabels:
       dashboards: "grafana"
   oci:
-    image: ghcr.io/team-a/dashboards
-    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    reference: ghcr.io/team-a/dashboards@sha256:0000000000000000000000000000000000000000000000000000000000000000
     file: board.json
     pullSecretRef:
       name: ghcr-pull

@@ -38,7 +38,7 @@ func makeDockerConfigJSON(t *testing.T, registryHost, username, password string)
 // Insecure is always true: the test registry is plain HTTP (httptest.NewServer),
 // and the production code requires Insecure=true to skip HTTPS. The HTTPS path
 // is exercised by oras-go's own test suite and not re-tested here.
-func ociDashboard(image, tag, digest, file string, pullSecretRef *corev1.LocalObjectReference) *v1beta1.GrafanaDashboard {
+func ociDashboard(reference, file string, pullSecretRef *corev1.LocalObjectReference) *v1beta1.GrafanaDashboard {
 	return &v1beta1.GrafanaDashboard{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
@@ -47,9 +47,7 @@ func ociDashboard(image, tag, digest, file string, pullSecretRef *corev1.LocalOb
 		Spec: v1beta1.GrafanaDashboardSpec{
 			GrafanaContentSpec: v1beta1.GrafanaContentSpec{
 				OCI: &v1beta1.GrafanaContentOCI{
-					Image:         image,
-					Tag:           tag,
-					Digest:        digest,
+					Reference:     reference,
 					File:          file,
 					PullSecretRef: pullSecretRef,
 					Insecure:      true,
@@ -66,7 +64,7 @@ func TestFetchFromOCI(t *testing.T) {
 		reg, host := newFakeRegistry(t)
 		reg.pushArtifact(t, "team/boards", "v1", map[string][]byte{"board.json": []byte(wantJSON)})
 
-		cr := ociDashboard(host+"/team/boards", "v1", "", "board.json", nil)
+		cr := ociDashboard(host+"/team/boards:v1", "board.json", nil)
 
 		got, err := FetchFromOCI(context.Background(), cr, tk8s.GetFakeClient(t))
 		require.NoError(t, err)
@@ -77,7 +75,7 @@ func TestFetchFromOCI(t *testing.T) {
 		reg, host := newFakeRegistry(t)
 		digest := reg.pushArtifact(t, "team/boards", "v1", map[string][]byte{"board.json": []byte(wantJSON)})
 
-		cr := ociDashboard(host+"/team/boards", "", digest, "board.json", nil)
+		cr := ociDashboard(host+"/team/boards@"+digest, "board.json", nil)
 
 		got, err := FetchFromOCI(context.Background(), cr, tk8s.GetFakeClient(t))
 		require.NoError(t, err)
@@ -88,7 +86,7 @@ func TestFetchFromOCI(t *testing.T) {
 		reg, host := newFakeRegistry(t)
 		reg.pushArtifact(t, "team/boards", "v1", map[string][]byte{"subdir/board.json": []byte(wantJSON)})
 
-		cr := ociDashboard(host+"/team/boards", "v1", "", "subdir/board.json", nil)
+		cr := ociDashboard(host+"/team/boards:v1", "subdir/board.json", nil)
 
 		got, err := FetchFromOCI(context.Background(), cr, tk8s.GetFakeClient(t))
 		require.NoError(t, err)
@@ -99,17 +97,17 @@ func TestFetchFromOCI(t *testing.T) {
 		reg, host := newFakeRegistry(t)
 		reg.pushArtifact(t, "team/boards", "v1", map[string][]byte{"board.json": []byte(wantJSON)})
 
-		cr := ociDashboard(host+"/team/boards", "v1", "", "absent.json", nil)
+		cr := ociDashboard(host+"/team/boards:v1", "absent.json", nil)
 
 		_, err := FetchFromOCI(context.Background(), cr, tk8s.GetFakeClient(t))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "absent.json")
 	})
 
-	t.Run("neither tag nor digest", func(t *testing.T) {
+	t.Run("reference without tag or digest", func(t *testing.T) {
 		_, host := newFakeRegistry(t)
 
-		cr := ociDashboard(host+"/team/boards", "", "", "board.json", nil)
+		cr := ociDashboard(host+"/team/boards", "board.json", nil)
 
 		_, err := FetchFromOCI(context.Background(), cr, tk8s.GetFakeClient(t))
 		require.Error(t, err)
@@ -117,7 +115,7 @@ func TestFetchFromOCI(t *testing.T) {
 	})
 
 	t.Run("invalid image reference", func(t *testing.T) {
-		cr := ociDashboard("not a valid image!!", "v1", "", "board.json", nil)
+		cr := ociDashboard("not a valid image!!:v1", "board.json", nil)
 
 		_, err := FetchFromOCI(context.Background(), cr, tk8s.GetFakeClient(t))
 		require.Error(t, err)
@@ -138,7 +136,7 @@ func TestFetchFromOCI(t *testing.T) {
 		}
 		cl := tk8s.GetFakeClient(t, pullSecret)
 
-		cr := ociDashboard(host+"/team/boards", "v1", "", "board.json",
+		cr := ociDashboard(host+"/team/boards:v1", "board.json",
 			&corev1.LocalObjectReference{Name: "regcred"})
 
 		got, err := FetchFromOCI(context.Background(), cr, cl)
@@ -149,7 +147,7 @@ func TestFetchFromOCI(t *testing.T) {
 	t.Run("missing pull secret", func(t *testing.T) {
 		_, host := newFakeRegistry(t)
 
-		cr := ociDashboard(host+"/team/boards", "v1", "", "board.json",
+		cr := ociDashboard(host+"/team/boards:v1", "board.json",
 			&corev1.LocalObjectReference{Name: "does-not-exist"})
 
 		_, err := FetchFromOCI(context.Background(), cr, tk8s.GetFakeClient(t))
@@ -165,7 +163,7 @@ func TestFetchFromOCI(t *testing.T) {
 		}
 		cl := tk8s.GetFakeClient(t, opaqueSecret)
 
-		cr := ociDashboard(host+"/team/boards", "v1", "", "board.json",
+		cr := ociDashboard(host+"/team/boards:v1", "board.json",
 			&corev1.LocalObjectReference{Name: "bad-secret"})
 
 		_, err := FetchFromOCI(context.Background(), cr, cl)
@@ -182,7 +180,7 @@ func TestFetchFromOCI(t *testing.T) {
 		}
 		cl := tk8s.GetFakeClient(t, badSecret)
 
-		cr := ociDashboard(host+"/team/boards", "v1", "", "board.json",
+		cr := ociDashboard(host+"/team/boards:v1", "board.json",
 			&corev1.LocalObjectReference{Name: "malformed"})
 
 		_, err := FetchFromOCI(context.Background(), cr, cl)

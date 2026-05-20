@@ -691,10 +691,10 @@ If you need more control over folders (such as RBAC settings), it can be achieve
 
 Load a dashboard JSON file from an OCI artifact stored in a container registry (e.g. GHCR, ECR, GAR). Bytes are fetched at reconcile time and never stored in etcd, making this the recommended source for dashboards that exceed the etcd object-size limit (~1 MiB).
 
-Exactly one of `tag` or `digest` must be set on the `oci` source:
+The `reference` field must include either a tag (`:v1.4.7`) or a digest (`@sha256:...`):
 
-- **tag** - mutable pointer to a registry tag (e.g. `v1.4.7`). The operator re-fetches on each reconcile and caches the result according to `contentCacheDuration`.
-- **digest** - immutable content-addressable reference (e.g. `sha256:abc...`). Guarantees bit-for-bit reproducibility and is recommended for production deployments.
+- **tag** - mutable pointer to a registry tag. The operator re-fetches on each reconcile and caches the result according to `contentCacheDuration`.
+- **digest** - immutable content-addressable reference. Guarantees bit-for-bit reproducibility and is recommended for production deployments.
 
 For public registries omit `pullSecretRef`. For private registries create a `kubernetes.io/dockerconfigjson` Secret in the same namespace as the dashboard CR and reference it via `pullSecretRef`.
 
@@ -724,8 +724,7 @@ spec:
     matchLabels:
       dashboards: "grafana"
   oci:
-    image: ghcr.io/team-a/dashboards
-    tag: v1.4.7
+    reference: ghcr.io/team-a/dashboards:v1.4.7
     file: board.json
     pullSecretRef:
       name: ghcr-pull
@@ -740,8 +739,7 @@ spec:
     matchLabels:
       dashboards: "grafana"
   oci:
-    image: ghcr.io/team-a/dashboards
-    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    reference: ghcr.io/team-a/dashboards@sha256:0000000000000000000000000000000000000000000000000000000000000000
     file: board.json
     pullSecretRef:
       name: ghcr-pull

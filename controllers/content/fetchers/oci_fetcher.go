@@ -13,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	oras "oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content"
+	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
 	"oras.land/oras-go/v2/registry/remote/retry"
@@ -24,22 +25,18 @@ import (
 func FetchFromOCI(ctx context.Context, cr v1beta1.GrafanaContentResource, cl client.Client) ([]byte, error) {
 	o := cr.GrafanaContentSpec().OCI
 
-	var ref string
-
-	switch {
-	case o.Digest != "":
-		ref = o.Digest
-	case o.Tag != "":
-		ref = o.Tag
-	default:
-		return nil, fmt.Errorf("oci source must specify tag or digest on %v/%v", cr.GetNamespace(), cr.GetName())
+	parsed, err := registry.ParseReference(o.Reference)
+	if err != nil {
+		return nil, fmt.Errorf("parse oci reference %q: %w", o.Reference, err)
 	}
 
-	artifactRef := ociArtifactRef(o)
+	if parsed.Reference == "" {
+		return nil, fmt.Errorf("oci reference must include tag or digest on %v/%v", cr.GetNamespace(), cr.GetName())
+	}
 
-	repo, err := remote.NewRepository(o.Image)
+	repo, err := remote.NewRepository(parsed.Registry + "/" + parsed.Repository)
 	if err != nil {
-		return nil, fmt.Errorf("parse oci reference %q: %w", o.Image, err)
+		return nil, fmt.Errorf("parse oci reference %q: %w", o.Reference, err)
 	}
 
 	if o.Insecure {
@@ -61,14 +58,14 @@ func FetchFromOCI(ctx context.Context, cr v1beta1.GrafanaContentResource, cl cli
 		Credential: credFunc,
 	}
 
-	_, manifestBytes, err := oras.FetchBytes(ctx, repo, ref, oras.DefaultFetchBytesOptions)
+	_, manifestBytes, err := oras.FetchBytes(ctx, repo, parsed.Reference, oras.DefaultFetchBytesOptions)
 	if err != nil {
-		return nil, fmt.Errorf("pull oci manifest %s: %w", artifactRef, err)
+		return nil, fmt.Errorf("pull oci manifest %s: %w", o.Reference, err)
 	}
 
 	var manifest ocispec.Manifest
 	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
-		return nil, fmt.Errorf("parse manifest for %s: %w", artifactRef, err)
+		return nil, fmt.Errorf("parse manifest for %s: %w", o.Reference, err)
 	}
 
 	target := filepath.ToSlash(o.File)
@@ -81,23 +78,13 @@ func FetchFromOCI(ctx context.Context, cr v1beta1.GrafanaContentResource, cl cli
 
 		blob, err := content.FetchAll(ctx, repo, layer)
 		if err != nil {
-			return nil, fmt.Errorf("fetch layer %s for %s: %w", layer.Digest, artifactRef, err)
+			return nil, fmt.Errorf("fetch layer %s for %s: %w", layer.Digest, o.Reference, err)
 		}
 
 		return blob, nil
 	}
 
-	return nil, fmt.Errorf("file %q not found in %s", o.File, artifactRef)
-}
-
-// ociArtifactRef formats the user-supplied image plus tag/digest using the
-// conventional separator: ":" for tags, "@" for digests.
-func ociArtifactRef(o *v1beta1.GrafanaContentOCI) string {
-	if o.Digest != "" {
-		return o.Image + "@" + o.Digest
-	}
-
-	return o.Image + ":" + o.Tag
+	return nil, fmt.Errorf("file %q not found in %s", o.File, o.Reference)
 }
 
 // dockerConfigJSON mirrors the relevant subset of the kubernetes.io/dockerconfigjson secret format.

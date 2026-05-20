@@ -56,22 +56,15 @@ type GrafanaComContentReference struct {
 // GrafanaContentOCI references a dashboard JSON file inside an OCI artifact in a container registry.
 // Bytes are fetched at reconcile time and never persisted to etcd; recommended for dashboards that
 // exceed the etcd object-size limit (~1 MiB).
-// +kubebuilder:validation:XValidation:rule="has(self.tag) != has(self.digest)",message="exactly one of tag or digest must be set"
 type GrafanaContentOCI struct {
-	// Image is the registry path of the artifact without tag or digest, e.g. "ghcr.io/team/dashboards".
+	// Reference is the full OCI artifact reference including a tag or digest,
+	// e.g. "ghcr.io/team/dashboards:v1.4.7" or
+	// "ghcr.io/team/dashboards@sha256:abc123...". Prefer a digest for
+	// reproducible deployments.
 	// +kubebuilder:validation:MinLength=3
 	// +kubebuilder:validation:MaxLength=512
-	Image string `json:"image"`
-
-	// Tag pins the artifact to a mutable tag, e.g. "v1.4.7". Exactly one of Tag or Digest must be set.
-	// +optional
-	Tag string `json:"tag,omitempty"`
-
-	// Digest pins the artifact to an immutable content-addressable digest, e.g. "sha256:abc123...".
-	// Exactly one of Tag or Digest must be set.
-	// +optional
-	// +kubebuilder:validation:Pattern=`^sha256:[a-fA-F0-9]{64}$`
-	Digest string `json:"digest,omitempty"`
+	// +kubebuilder:validation:Pattern=`^[^:@]+(:[^:@/]+|@sha256:[a-fA-F0-9]{64})$`
+	Reference string `json:"reference"`
 
 	// File is the path of the file to extract from the artifact.
 	// +kubebuilder:validation:MinLength=1

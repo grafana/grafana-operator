@@ -1684,8 +1684,6 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         <td>object</td>
         <td>
           model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)<br/>
-          <br/>
-            <i>Validations</i>:<li>has(self.tag) != has(self.digest): exactly one of tag or digest must be set</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2299,20 +2297,15 @@ model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>image</b></td>
+        <td><b>reference</b></td>
         <td>string</td>
         <td>
-          Image is the registry path of the artifact without tag or digest, e.g. "ghcr.io/team/dashboards".<br/>
+          Reference is the full OCI artifact reference including a tag or digest,
+e.g. "ghcr.io/team/dashboards:v1.4.7" or
+"ghcr.io/team/dashboards@sha256:abc123...". Prefer a digest for
+reproducible deployments.<br/>
         </td>
         <td>true</td>
-      </tr><tr>
-        <td><b>digest</b></td>
-        <td>string</td>
-        <td>
-          Digest pins the artifact to an immutable content-addressable digest, e.g. "sha256:abc123...".
-Exactly one of Tag or Digest must be set.<br/>
-        </td>
-        <td>false</td>
       </tr><tr>
         <td><b>insecure</b></td>
         <td>boolean</td>
@@ -2328,13 +2321,6 @@ certificates are not supported. Default false.<br/>
         <td>
           PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
 If omitted, anonymous pull is attempted.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>tag</b></td>
-        <td>string</td>
-        <td>
-          Tag pins the artifact to a mutable tag, e.g. "v1.4.7". Exactly one of Tag or Digest must be set.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3936,8 +3922,6 @@ GrafanaLibraryPanelSpec defines the desired state of GrafanaLibraryPanel
         <td>object</td>
         <td>
           model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)<br/>
-          <br/>
-            <i>Validations</i>:<li>has(self.tag) != has(self.digest): exactly one of tag or digest must be set</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4551,20 +4535,15 @@ model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>image</b></td>
+        <td><b>reference</b></td>
         <td>string</td>
         <td>
-          Image is the registry path of the artifact without tag or digest, e.g. "ghcr.io/team/dashboards".<br/>
+          Reference is the full OCI artifact reference including a tag or digest,
+e.g. "ghcr.io/team/dashboards:v1.4.7" or
+"ghcr.io/team/dashboards@sha256:abc123...". Prefer a digest for
+reproducible deployments.<br/>
         </td>
         <td>true</td>
-      </tr><tr>
-        <td><b>digest</b></td>
-        <td>string</td>
-        <td>
-          Digest pins the artifact to an immutable content-addressable digest, e.g. "sha256:abc123...".
-Exactly one of Tag or Digest must be set.<br/>
-        </td>
-        <td>false</td>
       </tr><tr>
         <td><b>insecure</b></td>
         <td>boolean</td>
@@ -4580,13 +4559,6 @@ certificates are not supported. Default false.<br/>
         <td>
           PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
 If omitted, anonymous pull is attempted.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>tag</b></td>
-        <td>string</td>
-        <td>
-          Tag pins the artifact to a mutable tag, e.g. "v1.4.7". Exactly one of Tag or Digest must be set.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
