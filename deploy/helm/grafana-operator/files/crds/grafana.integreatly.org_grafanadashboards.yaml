@@ -315,9 +315,9 @@ spec:
               oci:
                 description: model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
                 properties:
-                  insecure:
+                  insecurePlainHTTP:
                     description: |-
-                      Insecure switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+                      InsecurePlainHTTP switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
                       Intended for in-cluster or test registries; HTTPS registries with self-signed
                       certificates are not supported. Default false.
                     type: boolean

@@ -698,7 +698,7 @@ The `reference` field must include either a tag (`:v1.4.7`) or a digest (`@sha25
 
 For public registries omit `pullSecretRef`. For private registries create a `kubernetes.io/dockerconfigjson` Secret in the same namespace as the dashboard CR and reference it via `pullSecretRef`.
 
-The `insecure` field (default `false`) switches the registry connection from HTTPS to plain HTTP; intended for in-cluster or test registries. HTTPS registries with self-signed certificates are not supported.
+The `insecurePlainHTTP` field (default `false`) switches the registry connection from HTTPS to plain HTTP; intended for in-cluster or test registries. HTTPS registries with self-signed certificates are not supported.
 
 Image signing (e.g. cosign/Sigstore) is not verified by the operator.
 

@@ -2307,10 +2307,10 @@ reproducible deployments.<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>insecure</b></td>
+        <td><b>insecurePlainHTTP</b></td>
         <td>boolean</td>
         <td>
-          Insecure switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+          InsecurePlainHTTP switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
 Intended for in-cluster or test registries; HTTPS registries with self-signed
 certificates are not supported. Default false.<br/>
         </td>
@@ -4545,10 +4545,10 @@ reproducible deployments.<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>insecure</b></td>
+        <td><b>insecurePlainHTTP</b></td>
         <td>boolean</td>
         <td>
-          Insecure switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+          InsecurePlainHTTP switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
 Intended for in-cluster or test registries; HTTPS registries with self-signed
 certificates are not supported. Default false.<br/>
         </td>

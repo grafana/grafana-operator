@@ -35,8 +35,8 @@ func makeDockerConfigJSON(t *testing.T, registryHost, username, password string)
 
 // ociDashboard builds a GrafanaDashboard CR pointing at an OCI source.
 //
-// Insecure is always true: the test registry is plain HTTP (httptest.NewServer),
-// and the production code requires Insecure=true to skip HTTPS. The HTTPS path
+// InsecurePlainHTTP is always true: the test registry is plain HTTP (httptest.NewServer),
+// and the production code requires InsecurePlainHTTP=true to skip HTTPS. The HTTPS path
 // is exercised by oras-go's own test suite and not re-tested here.
 func ociDashboard(reference, path string, pullSecretRef *corev1.LocalObjectReference) *v1beta1.GrafanaDashboard {
 	return &v1beta1.GrafanaDashboard{
@@ -47,10 +47,10 @@ func ociDashboard(reference, path string, pullSecretRef *corev1.LocalObjectRefer
 		Spec: v1beta1.GrafanaDashboardSpec{
 			GrafanaContentSpec: v1beta1.GrafanaContentSpec{
 				OCI: &v1beta1.GrafanaContentOCI{
-					Reference:     reference,
-					Path:          path,
-					PullSecretRef: pullSecretRef,
-					Insecure:      true,
+					Reference:         reference,
+					Path:              path,
+					PullSecretRef:     pullSecretRef,
+					InsecurePlainHTTP: true,
 				},
 			},
 		},

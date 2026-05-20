@@ -39,7 +39,7 @@ func FetchFromOCI(ctx context.Context, cr v1beta1.GrafanaContentResource, cl cli
 		return nil, fmt.Errorf("parse oci reference %q: %w", o.Reference, err)
 	}
 
-	if o.Insecure {
+	if o.InsecurePlainHTTP {
 		repo.PlainHTTP = true
 	}
 
