@@ -201,7 +201,7 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
-	slog.Info("activation status of the feature flags", "flags", fmt.Sprint(config.FeatureFlags))
+	setupLog.Info("activation status of the feature flags", "flags", fmt.Sprint(config.FeatureFlags))
 
 	// Optimize Go runtime based on CGroup limits (GOMEMLIMIT, sets a soft memory limit for the runtime)
 	memlimit.SetGoMemLimitWithOpts(memlimit.WithLogger(slogger)) //nolint:errcheck
