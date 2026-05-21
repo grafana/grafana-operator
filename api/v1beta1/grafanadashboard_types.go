@@ -148,6 +148,10 @@ func (in *GrafanaDashboard) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status.GrafanaCommonStatus
 }
 
+func (in *GrafanaDashboard) CommonSpec() GrafanaCommonSpec {
+	return in.Spec.GrafanaCommonSpec
+}
+
 func (in *GrafanaDashboard) NamespacedResource(uid string) NamespacedResource {
 	// Not enough context to call content.GetGrafanaUID(uid).
 	// Hence, use uid from args as the caller has more context

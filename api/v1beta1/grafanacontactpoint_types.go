@@ -173,6 +173,10 @@ func (in *GrafanaContactPoint) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status
 }
 
+func (in *GrafanaContactPoint) CommonSpec() GrafanaCommonSpec {
+	return in.Spec.GrafanaCommonSpec
+}
+
 func (in *GrafanaContactPoint) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
 }

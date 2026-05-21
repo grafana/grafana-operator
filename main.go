@@ -369,11 +369,17 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
-	if err = (&controllers.GrafanaFolderReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Cfg:    ctrlCfg,
-	}).SetupWithManager(mgr); err != nil {
+	if featureflags.IsEnabled(featureflags.FoldersUseNewAPI) {
+		err = controllers.NewGenericFolderReconciler(mgr.GetClient(), ctrlCfg).SetupWithManager(mgr)
+	} else {
+		err = (&controllers.GrafanaFolderReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+			Cfg:    ctrlCfg,
+		}).SetupWithManager(mgr)
+	}
+
+	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaFolder")
 		os.Exit(1)
 	}
@@ -393,6 +399,11 @@ func main() { //nolint:gocyclo
 		Cfg:    ctrlCfg,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaAlertRuleGroup")
+		os.Exit(1)
+	}
+
+	if err = controllers.NewGenericPrometheusRuleReconciler(mgr.GetClient(), ctrlCfg).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GrafanaPrometheusRule")
 		os.Exit(1)
 	}
 
