@@ -97,12 +97,51 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 			want:             true,
 		},
 		{
-			name:   "No labels",
+			name:   "No labels does not match Exists",
 			labels: map[string]string{},
 			matchExpressions: []metav1.LabelSelectorRequirement{
 				{
 					Operator: metav1.LabelSelectorOpExists,
 					Key:      "dashboards",
+				},
+			},
+			want: false,
+		},
+		{
+			name:   "No labels matches DoesNotExist",
+			labels: map[string]string{},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpDoesNotExist,
+					Key:      "dashboards",
+				},
+			},
+			want: true,
+		},
+		{
+			name:   "No labels does not match In",
+			labels: map[string]string{},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name:   "No labels matches NotIn",
+			labels: map[string]string{},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpNotIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana",
+					},
 				},
 			},
 			want: true,
@@ -276,6 +315,35 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 				},
 			},
 			want: false,
+		},
+		{
+			name: "Missing label matches DoesNotExist",
+			labels: map[string]string{
+				"random-label": "random-value",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpDoesNotExist,
+					Key:      "dashboards",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Missing label matches NotIn",
+			labels: map[string]string{
+				"random-label": "random-value",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpNotIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana",
+					},
+				},
+			},
+			want: true,
 		},
 	}
 
