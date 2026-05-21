@@ -199,21 +199,16 @@ func getFolderUID(ctx context.Context, cl client.Client, ref v1beta1.FolderRefer
 }
 
 func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {
-	// To preserve support for scenario with instanceSelector: {}
-	if len(matchExpressions) == 0 {
-		return true
-	}
-
 	for _, matchExpression := range matchExpressions {
+		selected := false
+
 		label, exists := labels[matchExpression.Key]
 
-		var selected bool
-
 		switch matchExpression.Operator {
-		case metav1.LabelSelectorOpDoesNotExist:
-			selected = !exists
 		case metav1.LabelSelectorOpExists:
 			selected = exists
+		case metav1.LabelSelectorOpDoesNotExist:
+			selected = !exists
 		case metav1.LabelSelectorOpIn:
 			selected = exists && slices.Contains(matchExpression.Values, label)
 		case metav1.LabelSelectorOpNotIn:
