@@ -170,13 +170,15 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-func (r *GrafanaReconciler) setDefaultGrafanaVersion(ctx context.Context, cr client.Object) error {
+func (r *GrafanaReconciler) setDefaultGrafanaVersion(ctx context.Context, cr *v1beta1.Grafana) error {
 	// For clusters where RELATED_IMAGE_GRAFANA is set to an image hash,
 	// we want to set version to the value of the variable to support airgapped clusters as well
 	targetVersion := config.GrafanaVersion
 	if envVersion := os.Getenv("RELATED_IMAGE_GRAFANA"); isImageSHA256(envVersion) {
 		targetVersion = envVersion
 	}
+
+	cr.Spec.Version = targetVersion
 
 	// Create patch with the target version
 	patch, err := json.Marshal(map[string]any{"spec": map[string]any{"version": targetVersion}})
