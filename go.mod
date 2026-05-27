@@ -15,7 +15,7 @@ require (
 	github.com/grafana/grafana/apps/folder v0.0.0-20260511051340-90bed70d199c
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260511053550-5c87510b9bf6
 	github.com/itchyny/gojq v0.12.19
-	github.com/onsi/ginkgo/v2 v2.28.3
+	github.com/onsi/ginkgo/v2 v2.29.0
 	github.com/openshift/api v0.0.0-20251021211107-8c9accafe91d
 	github.com/prometheus/client_golang v1.23.2
 	github.com/spyzhov/ajson v0.9.6
