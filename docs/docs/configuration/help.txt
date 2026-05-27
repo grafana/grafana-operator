@@ -1,0 +1,57 @@
+Usage: grafana-operator [flags]
+
+Flags:
+  -h, --help                      Show context-sensitive help.
+      --cluster-domain=STRING     Fully specify the domain to address services
+                                  with using their FQDNs, e.g. 'cluster.local'
+                                  ($CLUSTER_DOMAIN)
+      --watch-namespace=STRING    Comma separated Namespaces to watch, If empty
+                                  or undefined, the operator will run in cluster
+                                  scope ($WATCH_NAMESPACE).
+      --watch-namespace-selector=STRING
+                                  The namespace label and key to watch, e.g.
+                                  'environment: dev', If empty or undefined,
+                                  the operator will run in cluster scope
+                                  ($WATCH_NAMESPACE_SELECTOR).
+      --watch-label-selectors=STRING
+                                  The resources to watch according to their
+                                  labels. e.g. 'partition in (customerA,
+                                  customerB),environment!=qa'. If empty of
+                                  undefined, the operator will watch all CRs
+                                  ($WATCH_LABEL_SELECTORS).
+      --caching-level="safe"      Configure cache limits. Valid
+                                  values are 'off', 'safe' and 'all'
+                                  ($ENFORCE_CACHE_LABELS)
+      --metrics-bind-address=":8080"
+                                  The address the metric endpoint binds to.
+      --health-probe-bind-address=":8081"
+                                  The address the probe endpoint binds to.
+      --pprof-addr=STRING         The address to expose the pprof server.
+                                  Empty string disables the pprof server.
+      --leader-elect              Enable leader election for controller
+                                  manager. Enabling this will ensure there
+                                  is only one active controller manager
+                                  ($ENABLE_LEADER_ELECTION).
+      --max-concurrent-reconciles=1
+                                  Maximum number of concurrent reconciles for
+                                  dashboard, datasource, folder controllers
+                                  ($MAX_CONCURRENT_RECONCILES).
+      --default-resync-period=10m
+                                  Controls the default .spec.resyncPeriod when
+                                  undefined on CRs ($DEFAULT_RESYNC_PERIOD).
+      --zap-devel                 Development Mode
+                                  defaults(encoder=consoleEncoder,logLevel=Debug,stackTraceLevel=Warn)
+      --zap-encoder="console"     Zap log encoding ('json' or 'console')
+      --zap-log-level="info"      Zap Level to configure the verbosity of
+                                  logging. Can be one of 'debug', 'info',
+                                  'error', 'panic' or any integer value > 0
+                                  which corresponds to custom debug levels of
+                                  increasing verbosity
+      --zap-time-encoding="iso8601"
+                                  Zap time encoding ('epoch', 'millis', 'nanos',
+                                  'iso8601', 'rfc3339' or 'rfc3339nano').
+      --zap-stacktrace-level="error"
+                                  Zap Level at and above which stacktraces are
+                                  captured (one of 'info', 'error', 'panic').
+      --feature-flags=STRING      Specify feature flags to be enabled or
+                                  disabled. Comma separated ($FEATURE_FLAGS)
