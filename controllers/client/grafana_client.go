@@ -55,7 +55,9 @@ func NewGeneratedGrafanaClient(ctx context.Context, cl client.Client, cr *v1beta
 		return nil, fmt.Errorf("casting client transport into *httptransport.Runtime to overwrite the default context")
 	}
 
-	runtime.Context = ctx
+	// This is deprecated but there is no good way to set this through the grafana
+	// client lib yet
+	runtime.Context = ctx //nolint:staticcheck
 
 	return gClient, nil
 }
