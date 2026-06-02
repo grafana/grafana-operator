@@ -129,11 +129,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: v1.33.7
+          - version: v1.33.12
             grafana_version: "10.4.5"
-          - version: v1.34.3
-            grafana_version: "" # default
-          - version: v1.35.0
+          - version: v1.34.8
+            grafana_version: "11.0.0"
+          - version: v1.35.5
+            grafana_version: "12.0.0"
+          - version: v1.36.1
             grafana_version: "" # default
     env:
       GF_TEST_CONTAINER_VERSION: ${{ matrix.grafana_version }}
