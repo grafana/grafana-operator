@@ -75,27 +75,18 @@ func FetchFromOCI(ctx context.Context, cr v1beta1.GrafanaContentResource, cl cli
 
 	target := filepath.ToSlash(o.Path)
 
-	// Pass 1: oras-style artifact. Each file is its own raw-blob layer carrying an
-	// org.opencontainers.image.title annotation; match the annotation to the requested path.
-	for _, layer := range manifest.Layers {
-		title := layer.Annotations[ocispec.AnnotationTitle]
-		if filepath.ToSlash(title) != target {
-			continue
-		}
-
-		blob, err := content.FetchAll(ctx, repo, layer)
-		if err != nil {
-			return nil, fmt.Errorf("fetch layer %s for %s: %w", layer.Digest, o.Reference, err)
-		}
-
-		return blob, nil
-	}
-
-	// Pass 2: container-image style. Each layer is a (gzipped) tarball of a filesystem.
-	// Walk layers in reverse so upper layers win, matching the container filesystem
-	// overlay semantics. Non-tar layers (e.g. an oras-style raw blob that did not match
-	// pass 1) are silently skipped.
+	// Reverse order so upper layers win for container images. Per layer, try the
+	// oras title annotation first, then fall back to scanning the layer tarball.
 	for _, layer := range slices.Backward(manifest.Layers) {
+		if filepath.ToSlash(layer.Annotations[ocispec.AnnotationTitle]) == target {
+			blob, err := content.FetchAll(ctx, repo, layer)
+			if err != nil {
+				return nil, fmt.Errorf("fetch layer %s for %s: %w", layer.Digest, o.Reference, err)
+			}
+
+			return blob, nil
+		}
+
 		data, found, err := fetchFileFromImageLayer(ctx, repo, layer, target)
 		if err != nil {
 			return nil, fmt.Errorf("scan layer %s of %s: %w", layer.Digest, o.Reference, err)
