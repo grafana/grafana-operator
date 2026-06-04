@@ -720,34 +720,4 @@ ADD board.json /board.json
 
 When the artifact is a container image the operator walks its layer tarballs in reverse order (upper layers win), matching standard container filesystem semantics.
 
-```yaml
-# Tag-pinned variant (mutable release channel).
-apiVersion: grafana.integreatly.org/v1beta1
-kind: GrafanaDashboard
-metadata:
-  name: grafanadashboard-from-oci-tag
-spec:
-  instanceSelector:
-    matchLabels:
-      dashboards: "grafana"
-  oci:
-    reference: ghcr.io/team-a/dashboards:v1.4.7
-    path: board.json
-    pullSecretRef:
-      name: ghcr-pull
----
-# Digest-pinned variant (immutable, reproducible deployments).
-apiVersion: grafana.integreatly.org/v1beta1
-kind: GrafanaDashboard
-metadata:
-  name: grafanadashboard-from-oci-digest
-spec:
-  instanceSelector:
-    matchLabels:
-      dashboards: "grafana"
-  oci:
-    reference: ghcr.io/team-a/dashboards@sha256:0000000000000000000000000000000000000000000000000000000000000000
-    path: board.json
-    pullSecretRef:
-      name: ghcr-pull
-```
+{{< readfile file="./oci/resources.yaml" code="true" lang="yaml" >}}
