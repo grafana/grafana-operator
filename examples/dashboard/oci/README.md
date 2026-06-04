@@ -22,4 +22,11 @@ oras push ghcr.io/team-a/dashboards:v1.4.7 \
   board.json:application/json
 ```
 
+Alternatively, build a regular container image with the dashboard baked in:
+
+```dockerfile
+FROM scratch
+ADD board.json /board.json
+```
+
 {{< readfile file="resources.yaml" code="true" lang="yaml" >}}
