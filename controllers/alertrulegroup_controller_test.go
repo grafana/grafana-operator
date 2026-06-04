@@ -1,8 +1,12 @@
 package controllers
 
 import (
+	"encoding/json"
+	"testing"
 	"time"
 
+	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
+	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -294,3 +298,54 @@ var _ = Describe("AlertRuleGroup Controller Conversion", func() {
 		})
 	})
 })
+
+func TestGrafanaAlertRuleGroupMatchesStateInGrafanaNormalizesEquivalentQueryModels(t *testing.T) {
+	noDataState := "NoData"
+	durationString := "60s"
+
+	cr := &v1beta1.GrafanaAlertRuleGroup{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-group",
+			Namespace: "default",
+		},
+		Spec: v1beta1.GrafanaAlertRuleGroupSpec{
+			Name:      "test-group",
+			FolderUID: "test-folder",
+			Interval:  metav1.Duration{Duration: 60 * time.Second},
+			Rules: []v1beta1.AlertRule{
+				{
+					Title:        "TestRule",
+					UID:          "test-uid",
+					Condition:    "A",
+					ExecErrState: "Error",
+					NoDataState:  &noDataState,
+					For:          &durationString,
+					Data: []*v1beta1.AlertQuery{
+						{
+							RefID:         "A",
+							DatasourceUID: "__expr__",
+							Model: &apiextensionsv1.JSON{
+								Raw: []byte(`{"expression":"1 > 0","refId":"A","type":"math"}`),
+							},
+							RelativeTimeRange: &models.RelativeTimeRange{From: 0, To: 0},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	model, err := crToModel(cr, "test-folder")
+	require.NoError(t, err)
+
+	remotePayloadBytes, err := json.Marshal(model)
+	require.NoError(t, err)
+
+	var remoteModel models.AlertRuleGroup
+	require.NoError(t, json.Unmarshal(remotePayloadBytes, &remoteModel))
+
+	reconciler := &GrafanaAlertRuleGroupReconciler{}
+	assert.True(t, reconciler.matchesStateInGrafana(true, &model, &provisioning.GetAlertRuleGroupOK{
+		Payload: &remoteModel,
+	}))
+}

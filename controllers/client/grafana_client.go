@@ -10,8 +10,6 @@ import (
 	httptransport "github.com/go-openapi/runtime/client"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -57,7 +55,9 @@ func NewGeneratedGrafanaClient(ctx context.Context, cl client.Client, cr *v1beta
 		return nil, fmt.Errorf("casting client transport into *httptransport.Runtime to overwrite the default context")
 	}
 
-	runtime.Context = ctx
+	// This is deprecated but there is no good way to set this through the grafana
+	// client lib yet
+	runtime.Context = ctx //nolint:staticcheck
 
 	return gClient, nil
 }
@@ -103,23 +103,4 @@ func restConfigFor(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (
 	}
 
 	return config, nil
-}
-
-func NewDynamicClient(ctx context.Context, cl client.Client, cr *v1beta1.Grafana) (dynamic.Interface, *discovery.DiscoveryClient, error) {
-	config, err := restConfigFor(ctx, cl, cr)
-	if err != nil {
-		return nil, nil, fmt.Errorf("building rest config for client: %w", err)
-	}
-
-	dynamicClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return nil, nil, fmt.Errorf("building k8s client: %w", err)
-	}
-
-	dc, err := discovery.NewDiscoveryClientForConfig(config)
-	if err != nil {
-		return nil, nil, fmt.Errorf("building discovery client: %w", err)
-	}
-
-	return dynamicClient, dc, nil
 }

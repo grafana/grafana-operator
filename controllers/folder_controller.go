@@ -26,6 +26,8 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -324,4 +326,70 @@ func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&v1beta1.GrafanaFolder{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
+}
+
+func NewGenericFolderReconciler(cl client.Client, cfg *Config) *GenericReconciler[v1beta1.GrafanaFolder, *v1beta1.GrafanaFolder] {
+	return &GenericReconciler[v1beta1.GrafanaFolder, *v1beta1.GrafanaFolder]{
+		Client:       cl,
+		Cfg:          cfg,
+		ResourceName: "Folder",
+		GVR:          folderv1.FolderKind().GroupVersionResource(),
+		Convert: func(ctx context.Context, cl client.Client, cr *v1beta1.GrafanaFolder) (runtime.Object, error) {
+			parentFolderUID, err := getFolderUID(ctx, cl, cr)
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", LogMsgResolvingFolderUID, err)
+			}
+
+			f := folderv1.NewFolder()
+			f.APIVersion = folderv1.GroupVersion.Identifier()
+			f.Kind = folderv1.FolderKind().Kind()
+
+			f.Name = cr.GetGrafanaUID()
+			f.Annotations = make(map[string]string)
+
+			f.Spec.Title = cr.Spec.Title
+			if parentFolderUID != "" {
+				f.Annotations[apiutils.AnnoKeyFolder] = parentFolderUID
+			}
+
+			return f, nil
+		},
+		Validate: func(cr *v1beta1.GrafanaFolder) *ValidationError {
+			if cr.Spec.ParentFolderUID == cr.GetGrafanaUID() {
+				return &ValidationError{
+					Err:    fmt.Errorf("%s: %w", LogMsgCyclicFolder, ErrCyclicFolder),
+					Reason: "The value of parentFolderUID must not be the uid of the current folder",
+				}
+			}
+
+			return nil
+		},
+		PostApplyHook: func(ctx context.Context, cl client.Client, instance *v1beta1.Grafana, cr *v1beta1.GrafanaFolder) error {
+			if cr.Spec.Permissions != "" {
+				gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, cl, instance)
+				if err != nil {
+					return fmt.Errorf("building grafana client: %w", err)
+				}
+
+				uid := cr.GetGrafanaUID()
+				// NOTE: it's up to a user to reset permissions with correct json
+				permissions := models.UpdateDashboardACLCommand{}
+
+				err = json.Unmarshal([]byte(cr.Spec.Permissions), &permissions)
+				if err != nil {
+					return fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
+				}
+
+				_, err = gClient.Folders.UpdateFolderPermissions(uid, &permissions) //nolint:errcheck
+				if err != nil {
+					return fmt.Errorf("failed to update folder permissions: %w", err)
+				}
+
+				return nil
+			}
+
+			return nil
+		},
+		SynchronizedCondition: conditionFolderSynchronized,
+	}
 }

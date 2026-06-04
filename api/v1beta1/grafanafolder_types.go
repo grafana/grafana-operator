@@ -173,6 +173,18 @@ func (in *GrafanaFolder) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status.GrafanaCommonStatus
 }
 
+var _ CommonSpecResource = (*GrafanaFolder)(nil)
+
+func (in *GrafanaFolder) CommonSpec() GrafanaCommonSpec {
+	return in.Spec.GrafanaCommonSpec
+}
+
+var _ NoMatchingInstancesResource = (*GrafanaFolder)(nil)
+
+func (in *GrafanaFolder) SetNoMatchingInstances(v bool) {
+	in.Status.NoMatchingInstances = v
+}
+
 func (in *GrafanaFolder) NamespacedResource(uid string) NamespacedResource {
 	// .GetGrafanaUID() can be wrong when the fallback to search is used.
 	// Hence, use uid from args as the caller has more context

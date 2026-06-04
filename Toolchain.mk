@@ -19,7 +19,7 @@ HELM_DOCS_VERSION = 1.14.2
 HELM_VERSION = v3.17.3
 HUGO_VERSION = 0.151.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/kind
-KIND_VERSION = v0.31.0
+KIND_VERSION = v0.32.0
 # renovate: datasource=github-tags depName=ko-build/ko
 KO_VERSION = 0.18.1
 # renovate: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.*)$
@@ -30,7 +30,7 @@ OPM_VERSION = v1.23.2
 # renovate: datasource=github-tags depName=mikefarah/yq
 YQ_VERSION = v4.53.2
 # renovate: datasource=github-tags depName=google/go-containerregistry
-CRANE_VERSION = v0.21.5
+CRANE_VERSION = v0.21.6
 
 ifdef GITHUB_TOKEN
 	CURL_GH_AUTH=-H 'Authorization: Bearer $(GITHUB_TOKEN)'
