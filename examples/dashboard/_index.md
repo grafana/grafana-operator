@@ -720,8 +720,6 @@ ADD board.json /board.json
 
 When the artifact is a container image the operator walks its layer tarballs in reverse order (upper layers win), matching standard container filesystem semantics.
 
-Note: the `oci` source is available on both `GrafanaDashboard` and `GrafanaLibraryPanel` CRs.
-
 ```yaml
 # Tag-pinned variant (mutable release channel).
 apiVersion: grafana.integreatly.org/v1beta1
