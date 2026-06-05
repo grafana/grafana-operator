@@ -573,8 +573,11 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 			// In case the cr is recreated without running the finalizer or EtcD state is lost, we need to recover
 			name: "UID changes should recreate",
 			changes: &models.PublicDashboardDTO{
-				UID:         "changed-uid",
-				AccessToken: uid,
+				UID:                  "changed-uid",
+				AccessToken:          uid,
+				IsEnabled:            new(true),
+				AnnotationsEnabled:   new(false),
+				TimeSelectionEnabled: new(false),
 			},
 			wantMatch:    false,
 			wantRecreate: true,
@@ -582,8 +585,11 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 		{
 			name: "AccessToken changes should recreate",
 			changes: &models.PublicDashboardDTO{
-				UID:         uid,
-				AccessToken: uuid.NewString(),
+				UID:                  uid,
+				AccessToken:          uuid.NewString(),
+				IsEnabled:            new(true),
+				AnnotationsEnabled:   new(false),
+				TimeSelectionEnabled: new(false),
 			},
 			wantMatch:    false,
 			wantRecreate: true,
@@ -591,8 +597,11 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 		{
 			name: "status annotation is empty",
 			changes: &models.PublicDashboardDTO{
-				UID:         uid,
-				AccessToken: uid,
+				UID:                  uid,
+				AccessToken:          uid,
+				IsEnabled:            new(true),
+				AnnotationsEnabled:   new(false),
+				TimeSelectionEnabled: new(false),
 			},
 			annotations:  map[string]string{annotationSyncedPublicSharing: ""},
 			wantMatch:    false,
@@ -601,8 +610,11 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 		{
 			name: "status annotation does not match",
 			changes: &models.PublicDashboardDTO{
-				UID:         uid,
-				AccessToken: uid,
+				UID:                  uid,
+				AccessToken:          uid,
+				IsEnabled:            new(true),
+				AnnotationsEnabled:   new(false),
+				TimeSelectionEnabled: new(false),
 			},
 			annotations:  map[string]string{annotationSyncedPublicSharing: uuid.NewString()},
 			wantMatch:    false,
