@@ -1,0 +1,42 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-from-configmap
+spec:
+  instanceSelector: {}
+  publicSharing:
+    accessToken: ""             # Defaults to the value of `.metadata.UID`
+    enabled: true               # When false, the public sharing config is still created in Grafana, but the link is disabled.
+    annotationsEnabled: false   # Allow visitors to see annotations
+    timeSelectionEnabled: false # Allow visitors to alter the time range
+  json: >
+    {
+      "id": null,
+      "title": "Simple Dashboard with a public URL",
+      "tags": [],
+      "style": "dark",
+      "timezone": "browser",
+      "editable": true,
+      "hideControls": false,
+      "graphTooltip": 1,
+      "panels": [],
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timepicker": {
+        "time_options": [],
+        "refresh_intervals": []
+      },
+      "templating": {
+        "list": []
+      },
+      "annotations": {
+        "list": []
+      },
+      "refresh": "5s",
+      "schemaVersion": 17,
+      "version": 0,
+      "links": []
+    }
