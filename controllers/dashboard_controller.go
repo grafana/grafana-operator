@@ -624,7 +624,7 @@ func (r *GrafanaDashboardReconciler) matchesStateInGrafana(exists bool, model ma
 
 // publicSharingMatchesStateInGrafana checks whether a public dashboard share exists in Grafana and its contents matches the model defined in the custom resources
 func (r *GrafanaDashboardReconciler) publicSharingMatchesStateInGrafana(cr *v1beta1.GrafanaDashboard, model *models.PublicDashboardDTO, remoteDashboard *dashboards.GetPublicDashboardOK) (matchesRemoteState, recreate bool) {
-	if cr.Annotations != nil && cr.Annotations[annotationSyncedPublicSharing] != model.UID {
+	if cr.Annotations != nil && cr.Annotations[annotationSyncedPublicSharing] != model.AccessToken {
 		return false, true
 	}
 

@@ -381,9 +381,14 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		assert.NotNil(t, remoteDTO)
 		assert.NotNil(t, remoteDTO.Payload)
 
+		rawUID, err := uuid.Parse(string(cr.UID))
+		require.NoError(t, err)
+
+		shareUID := fmt.Sprintf("%x", rawUID[:])
+
 		expectedDTO := &models.PublicDashboardDTO{
 			UID:                  string(cr.UID),
-			AccessToken:          string(cr.UID),
+			AccessToken:          shareUID,
 			IsEnabled:            new(true),
 			TimeSelectionEnabled: new(false),
 			AnnotationsEnabled:   new(false),
