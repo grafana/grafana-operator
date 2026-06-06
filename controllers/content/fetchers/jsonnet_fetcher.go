@@ -247,20 +247,27 @@ func postJsonnetProjectBuild(buildName string) error {
 	return nil
 }
 
-func BuildProjectAndFetchJsonnetFrom(cr v1beta1.GrafanaContentResource, envs map[string]string) ([]byte, error) {
+func BuildProjectAndFetchJsonnetFrom(cr v1beta1.GrafanaContentResource, envs map[string]string) (jsonBytes []byte, err error) {
 	jsonnetProjectBuildName, err := getJSONProjectBuildRoundName(cr.GetName())
 	if err != nil {
 		return nil, fmt.Errorf("error generating jsonnet project build name: %w", err)
 	}
 
-	jsonBytes, err := buildJsonnetProject(jsonnetProjectBuildName, envs, cr)
+	defer func() {
+		cleanupErr := postJsonnetProjectBuild(jsonnetProjectBuildName)
+		if cleanupErr != nil {
+			cleanupErr = fmt.Errorf("error cleaning up jsonnet project build: %w", cleanupErr)
+			if err != nil {
+				err = errors.Join(err, cleanupErr)
+			} else {
+				err = cleanupErr
+			}
+		}
+	}()
+
+	jsonBytes, err = buildJsonnetProject(jsonnetProjectBuildName, envs, cr)
 	if err != nil {
 		return nil, fmt.Errorf("error building jsonnet project: %w", err)
-	}
-
-	err = postJsonnetProjectBuild(jsonnetProjectBuildName)
-	if err != nil {
-		return nil, fmt.Errorf("error cleaning up jsonnet project build: %w", err)
 	}
 
 	return jsonBytes, nil
