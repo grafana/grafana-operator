@@ -103,6 +103,85 @@ func (importer *EmbedFSImporter) Import(importedFrom, importedPath string) (cont
 	return foundContents, s, nil
 }
 
+type fsCacheEntry struct {
+	contents jsonnet.Contents
+	exists   bool
+}
+
+// ScopedImporter is a reimplementation of the upstream jsonnet.FileImporter,
+// scoping imports to a specific dir using os.Root
+type ScopedImporter struct {
+	Root    *os.Root
+	fsCache map[string]*fsCacheEntry
+	// JPaths is a slice of extra paths to search for relative imports.
+	// Note this is not an isolation or restriction mechanism; absolute
+	// import paths or paths that traverse up the directory hierarchy
+	// are both allowed, so imports can access any file path regardless
+	// of the content of JPaths.
+	JPaths []string
+}
+
+func (importer *ScopedImporter) tryPath(importedPath string) (found bool, contents jsonnet.Contents, foundHere string, err error) {
+	if importer.fsCache == nil {
+		importer.fsCache = make(map[string]*fsCacheEntry)
+	}
+
+	var relPath string
+	if !filepath.IsAbs(importedPath) {
+		relPath = importedPath
+	} else {
+		relPath, err = filepath.Rel(importer.Root.Name(), importedPath)
+		if err != nil {
+			return false, jsonnet.Contents{}, "", err
+		}
+	}
+
+	var entry *fsCacheEntry
+	if cacheEntry, isCached := importer.fsCache[relPath]; isCached {
+		entry = cacheEntry
+	} else {
+		contentBytes, err := importer.Root.ReadFile(relPath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				entry = &fsCacheEntry{
+					exists: false,
+				}
+			} else {
+				return false, jsonnet.Contents{}, "", err
+			}
+		} else {
+			entry = &fsCacheEntry{
+				exists:   true,
+				contents: jsonnet.MakeContentsRaw(contentBytes),
+			}
+		}
+
+		importer.fsCache[relPath] = entry
+	}
+
+	return entry.exists, entry.contents, relPath, nil
+}
+
+func (importer *ScopedImporter) Import(importedFrom, importedPath string) (contents jsonnet.Contents, foundAt string, err error) {
+	found, content, foundHere, err := importer.tryPath(importedPath)
+	if err != nil {
+		return jsonnet.Contents{}, "", err
+	}
+
+	for i := len(importer.JPaths) - 1; !found && i >= 0; i-- {
+		found, content, foundHere, err = importer.tryPath(filepath.Join(importer.JPaths[i], importedPath))
+		if err != nil {
+			return jsonnet.Contents{}, "", err
+		}
+	}
+
+	if !found {
+		return jsonnet.Contents{}, "", fmt.Errorf("couldn't open import %#v: no match locally or in the Jsonnet library paths", importedPath)
+	}
+
+	return content, foundHere, nil
+}
+
 func FetchJsonnet(cr v1beta1.GrafanaContentResource, envs map[string]string, libsonnet embed.FS) ([]byte, error) {
 	spec := cr.GrafanaContentSpec()
 
@@ -214,6 +293,11 @@ func buildJsonnetProject(buildName string, envs map[string]string, cr v1beta1.Gr
 		return nil, fmt.Errorf("error extracting gzip archive: %w", err)
 	}
 
+	fsRoot, err := os.OpenRoot(extractTo)
+	if err != nil {
+		return nil, fmt.Errorf("error creating os.Root: %w", err)
+	}
+
 	vm := jsonnet.MakeVM()
 	for k, v := range envs {
 		vm.ExtVar(k, v)
@@ -221,7 +305,10 @@ func buildJsonnetProject(buildName string, envs map[string]string, cr v1beta1.Gr
 
 	jPath = addPrefixToElements(extractTo+"/", jPath)
 
-	vm.Importer(&jsonnet.FileImporter{JPaths: jPath})
+	vm.Importer(&ScopedImporter{
+		Root:   fsRoot,
+		JPaths: jPath,
+	})
 
 	evaluateFilePath := fmt.Sprintf("%s/%s", extractTo, spec.JsonnetProjectBuild.FileName)
 

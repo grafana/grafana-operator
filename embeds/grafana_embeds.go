@@ -20,5 +20,8 @@ var TestDashboardEmbedWithEnvExpectedJSON []byte
 //go:embed testing/jsonnetProjectWithRuntimeRaw.tar.gz
 var TestJsonnetProjectBuildFolderGzip []byte
 
+//go:embed testing/jsonnetProjectPathTraversalRaw.tar.gz
+var TestJsonnetProjectPathTraversalGzip []byte
+
 // this variable is replaced during production builds
 var Version = "dev"
