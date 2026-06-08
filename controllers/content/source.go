@@ -12,6 +12,7 @@ const (
 	SourceTypeJsonnet    SourceType = "jsonnet"
 	SourceTypeGrafanaCom SourceType = "grafana"
 	SourceConfigMap      SourceType = "configmap"
+	SourceOCI            SourceType = "oci"
 )
 
 func GetSourceTypes(cr v1beta1.GrafanaContentResource) []SourceType {
@@ -45,6 +46,10 @@ func GetSourceTypes(cr v1beta1.GrafanaContentResource) []SourceType {
 
 	if spec.JsonnetProjectBuild != nil {
 		sourceTypes = append(sourceTypes, SourceJsonnetProject)
+	}
+
+	if spec.OCI != nil {
+		sourceTypes = append(sourceTypes, SourceOCI)
 	}
 
 	return sourceTypes

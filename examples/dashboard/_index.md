@@ -19,6 +19,7 @@ You can configure and reference dashboards as code in many different ways.
 - [Jsonnet](#jsonnet) (Deprecated)
 - [JaaS](#jaas)
 - [ConfigMap](#configmap)
+- [OCI](#oci)
 
 To view all configuration options for folders, look at our [API documentation](/docs/api/#grafanadashboardspec).
 
@@ -685,3 +686,38 @@ In a standard scenario, a folder with default settings gets created through a `G
 
 If you need more control over folders (such as RBAC settings), it can be achieved through a `GrafanaFolder` CR.
 {{% /alert %}}
+
+## OCI
+
+Load a dashboard JSON file from an OCI artifact stored in a container registry (e.g. GHCR, ECR, GAR). Bytes are fetched at reconcile time and never stored in etcd, making this the recommended source for dashboards that exceed the etcd object-size limit (~1 MiB).
+
+The `reference` field must include either a tag (`:v1.4.7`) or a digest (`@sha256:...`):
+
+- **tag** - mutable pointer to a registry tag. The operator re-fetches on each reconcile and caches the result according to `contentCacheDuration`.
+- **digest** - immutable content-addressable reference. Guarantees bit-for-bit reproducibility and is recommended for production deployments.
+
+For public registries omit `pullSecretRef`. For private registries create a `kubernetes.io/dockerconfigjson` Secret in the same namespace as the dashboard CR and reference it via `pullSecretRef`.
+
+The `insecurePlainHTTP` field (default `false`) switches the registry connection from HTTPS to plain HTTP; intended for in-cluster or test registries. HTTPS registries with self-signed certificates are not supported.
+
+Image signing (e.g. cosign/Sigstore) is not verified by the operator.
+
+Example: push a dashboard artifact with [oras](https://oras.land/):
+
+```bash
+echo '{"title":"My Dashboard","panels":[]}' > board.json
+oras push ghcr.io/team-a/dashboards:v1.4.7 \
+  --artifact-type application/vnd.grafana.dashboard+json \
+  board.json:application/json
+```
+
+Alternatively, a regular container image works too — useful if you already have container tooling in your pipeline:
+
+```dockerfile
+FROM scratch
+ADD board.json /board.json
+```
+
+When the artifact is a container image the operator walks its layer tarballs in reverse order (upper layers win), matching standard container filesystem semantics.
+
+{{< readfile file="./oci/resources.yaml" code="true" lang="yaml" >}}
