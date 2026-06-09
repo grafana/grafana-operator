@@ -119,6 +119,26 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 
 		assert.JSONEq(t, string(want), string(got))
 	})
+	t.Run("Prevents path traversal attacks", func(t *testing.T) {
+		cr := &v1beta1.GrafanaDashboard{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "grafanadashboard-jsonnet",
+				Namespace: "grafana",
+			},
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					JsonnetProjectBuild: &v1beta1.JsonnetProjectBuild{
+						JPath:              []string{""},
+						FileName:           "main.jsonnet",
+						GzipJsonnetProject: embeds.TestJsonnetProjectPathTraversalGzip,
+					},
+				},
+			},
+		}
+
+		_, err := BuildProjectAndFetchJsonnetFrom(cr, nil)
+		require.ErrorContains(t, err, "path escapes from parent")
+	})
 }
 
 func TestGetJsonProjectBuildRoundName(t *testing.T) {
