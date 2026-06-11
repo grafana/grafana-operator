@@ -1,0 +1,81 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-variable-override
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  # Override the default (current) value of the dashboard template variables below.
+  # Unlike `datasources`, this operates on the parsed templating.list[] and works even
+  # when the dashboard JSON ships fully-formed variables (e.g. from grafana.com / OCI).
+  variables:
+    - name: namespace
+      value: "default"
+    - name: datasource
+      value: "prometheus-uid"
+  json: >
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "id": null,
+      "panels": [],
+      "schemaVersion": 37,
+      "tags": [],
+      "templating": {
+        "list": [
+          {
+            "name": "datasource",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {
+              "selected": false,
+              "text": "default",
+              "value": "default"
+            }
+          },
+          {
+            "name": "namespace",
+            "type": "query",
+            "current": {
+              "selected": true,
+              "text": "kube-system",
+              "value": "kube-system"
+            },
+            "options": [
+              {
+                "selected": true,
+                "text": "kube-system",
+                "value": "kube-system"
+              }
+            ]
+          }
+        ]
+      },
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "title": "Variable Override Dashboard",
+      "uid": "variable-override-sample",
+      "version": 1
+    }
