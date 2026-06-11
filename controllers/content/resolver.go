@@ -196,6 +196,64 @@ func (h *Resolver) getReferencedValue(ctx context.Context, cr v1beta1.GrafanaCon
 	return "", "", fmt.Errorf("source couldn't be parsed source: %s", source)
 }
 
+// overrideVariables sets the default (current) value of named template variables in the content model.
+func (h *Resolver) overrideVariables(contentModel map[string]any) {
+	overrides := map[string]string{}
+	for _, v := range h.resource.GrafanaContentSpec().Variables {
+		overrides[v.Name] = v.Value
+	}
+
+	if len(overrides) == 0 {
+		return
+	}
+
+	templating, _ := contentModel["templating"].(map[string]any) //nolint:errcheck
+	list, _ := templating["list"].([]any)                        //nolint:errcheck
+
+	for _, item := range list {
+		variable, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		name, _ := variable["name"].(string) //nolint:errcheck
+		if value, ok := overrides[name]; ok {
+			overrideVariable(variable, value)
+		}
+	}
+}
+
+// overrideVariable sets a template variable's default (current) value and keeps its options[] consistent.
+func overrideVariable(variable map[string]any, value string) {
+	variable["current"] = selectedOption(value)
+
+	options, ok := variable["options"].([]any)
+	if !ok {
+		return
+	}
+
+	matched := false
+
+	for _, opt := range options {
+		option, ok := opt.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		isMatch := option["value"] == value
+		option["selected"] = isMatch
+		matched = matched || isMatch
+	}
+
+	if !matched {
+		variable["options"] = append([]any{selectedOption(value)}, options...)
+	}
+}
+
+func selectedOption(value string) map[string]any {
+	return map[string]any{"selected": true, "text": value, "value": value}
+}
+
 // getContentModel resolves datasources, updates uid (if needed) and converts raw json to type grafana client accepts
 func (h *Resolver) getContentModel(contentJSON []byte) (map[string]any, string, error) {
 	contentJSON, err := h.resolveDatasources(contentJSON)
@@ -205,6 +263,13 @@ func (h *Resolver) getContentModel(contentJSON []byte) (map[string]any, string, 
 
 	hash := sha256.New()
 	hash.Write(contentJSON)
+	// Variable overrides mutate the parsed model, so fold them into the hash explicitly.
+	for _, v := range h.resource.GrafanaContentSpec().Variables {
+		hash.Write([]byte(v.Name))
+		hash.Write([]byte{0})
+		hash.Write([]byte(v.Value))
+		hash.Write([]byte{0})
+	}
 
 	var contentModel map[string]any
 
@@ -212,6 +277,8 @@ func (h *Resolver) getContentModel(contentJSON []byte) (map[string]any, string, 
 	if err != nil {
 		return map[string]any{}, "", err
 	}
+
+	h.overrideVariables(contentModel)
 
 	// NOTE: id should never be hardcoded in a model, otherwise grafana will try to update a model by id instead of uid.
 	//       And, in case the id is non-existent, grafana will respond with 404. https://github.com/grafana/grafana-operator/issues/1108

@@ -468,6 +468,40 @@ spec:
 the `.spec.folder` field is ignored when either `.spec.folderUID` or `.spec.folderRef` is present in the GrafanaDashboard declaration.
 {{% /alert %}}
 
+## Override template variable defaults
+
+The `spec.variables` field overrides the default (`current`) value of a dashboard's template
+variables (`templating.list[]`). For each entry the operator matches a variable by `name` and
+sets its selected value, reconciling `options[]` so the value is valid. A `name` that is not
+present in the dashboard is ignored.
+
+Unlike `spec.datasources` (which performs a `${...}` string replacement and requires the
+author to embed placeholders), `spec.variables` operates on the parsed model, so it also works
+on dashboards you do not author, such as those fetched via `grafanaCom`, `url`, `oci` or a
+shared `configMapRef`. Datasource-type variables are overridden the same way, where the `value`
+is the datasource UID or name.
+
+The override sets both the variable's display text and value to `value`, so for datasource or
+query variables the dropdown may show the raw value until Grafana re-resolves the label.
+Multi-value (multi-select) variables are collapsed to the single provided `value`.
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-variable-override
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  variables:
+    - name: namespace
+      value: "default"
+    - name: datasource
+      value: "prometheus-uid"
+  url: "https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/examples/dashboard_from_url/dashboard.json"
+```
+
 ## Dashboard customization by providing environment variables
 
 Will be pleasant for scenarios when you would like to extend the behaviour of jsonnet generation by parametrizing it with runtime Env vars:
