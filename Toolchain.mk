@@ -16,6 +16,7 @@ ENVTEST_VERSION ?= $(shell go list -m -f "{{ .Version }}" sigs.k8s.io/controller
 GOLANGCI_LINT_VERSION = v2.12.2
 # renovate: datasource=github-tags depName=norwoodj/helm-docs
 HELM_DOCS_VERSION = 1.14.2
+# renovate: datasource=github-tags depName=helm/helm
 HELM_VERSION = v3.17.3
 HUGO_VERSION = 0.151.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/kind
