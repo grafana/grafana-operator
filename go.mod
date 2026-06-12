@@ -11,7 +11,7 @@ require (
 	github.com/go-openapi/runtime v0.32.3
 	github.com/go-openapi/strfmt v0.26.3
 	github.com/google/go-jsonnet v0.22.0
-	github.com/grafana/grafana-openapi-client-go v0.0.0-20260430175825-547a3b5a00a5
+	github.com/grafana/grafana-openapi-client-go v0.0.0-20260608140303-399c66621c54
 	github.com/grafana/grafana/apps/folder v0.0.0-20260511051340-90bed70d199c
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260511053550-5c87510b9bf6
 	github.com/itchyny/gojq v0.12.19
@@ -54,7 +54,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-openapi/analysis v0.25.2 // indirect
-	github.com/go-openapi/errors v0.22.7 // indirect
+	github.com/go-openapi/errors v0.22.8 // indirect
 	github.com/go-openapi/loads v0.23.3 // indirect
 	github.com/go-openapi/runtime/server-middleware v0.30.0 // indirect
 	github.com/go-openapi/spec v0.22.5 // indirect
