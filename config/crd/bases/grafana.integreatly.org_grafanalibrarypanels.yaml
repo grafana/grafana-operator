@@ -307,6 +307,51 @@ spec:
                 - fileName
                 - gzipJsonnetProject
                 type: object
+              oci:
+                description: model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
+                properties:
+                  insecurePlainHTTP:
+                    description: |-
+                      InsecurePlainHTTP switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+                      Intended for in-cluster or test registries; HTTPS registries with self-signed
+                      certificates are not supported. Default false.
+                    type: boolean
+                  path:
+                    description: Path is the path of the file to extract from the
+                      artifact.
+                    maxLength: 512
+                    minLength: 1
+                    type: string
+                  pullSecretRef:
+                    description: |-
+                      PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+                      If omitted, anonymous pull is attempted.
+                    properties:
+                      name:
+                        default: ""
+                        description: |-
+                          Name of the referent.
+                          This field is effectively required, but due to backwards compatibility is
+                          allowed to be empty. Instances of this type with an empty value here are
+                          almost certainly wrong.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  reference:
+                    description: |-
+                      Reference is the full OCI artifact reference including a tag or digest,
+                      e.g. "ghcr.io/team/dashboards:v1.4.7" or
+                      "ghcr.io/team/dashboards@sha256:abc123...". Prefer a digest for
+                      reproducible deployments.
+                    maxLength: 512
+                    minLength: 3
+                    pattern: ^[^:@]+(:[^:@/]+|@sha256:[a-fA-F0-9]{64})$
+                    type: string
+                required:
+                - path
+                - reference
+                type: object
               plugins:
                 description: plugins
                 items:
