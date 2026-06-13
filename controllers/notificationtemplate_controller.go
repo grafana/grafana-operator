@@ -79,7 +79,7 @@ func (r *GrafanaNotificationTemplateReconciler) Reconcile(ctx context.Context, r
 		return ctrl.Result{}, nil
 	}
 
-	defer UpdateStatus(ctx, r.Client, cr)
+	defer UpdateStatus(ctx, r.Client, cr, snapshotStatus(cr))
 
 	if cr.Spec.Suspend {
 		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReasonApplySuspended)

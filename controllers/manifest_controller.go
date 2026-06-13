@@ -83,7 +83,7 @@ func (r *GrafanaManifestReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, nil
 	}
 
-	defer UpdateStatus(ctx, r.Client, cr)
+	defer UpdateStatus(ctx, r.Client, cr, snapshotStatus(cr))
 
 	if cr.Spec.Suspend {
 		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReasonApplySuspended)
