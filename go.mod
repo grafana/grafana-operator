@@ -12,8 +12,8 @@ require (
 	github.com/go-openapi/strfmt v0.26.3
 	github.com/google/go-jsonnet v0.22.0
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20260608140303-399c66621c54
-	github.com/grafana/grafana/apps/folder v0.0.0-20260511051340-90bed70d199c
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260511053550-5c87510b9bf6
+	github.com/grafana/grafana/apps/folder/v13 v13.0.2
+	github.com/grafana/grafana/pkg/apimachinery/v13 v13.0.2
 	github.com/itchyny/gojq v0.12.19
 	github.com/onsi/ginkgo/v2 v2.29.0
 	github.com/opencontainers/go-digest v1.0.0
