@@ -119,6 +119,33 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 
 		assert.JSONEq(t, string(want), string(got))
 	})
+
+	t.Run("Cleans up temporary files when jsonnet evaluation fails", func(t *testing.T) {
+		cr := &v1beta1.GrafanaDashboard{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "grafanadashboard-jsonnet",
+				Namespace: "grafana",
+			},
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					JsonnetProjectBuild: &v1beta1.JsonnetProjectBuild{
+						JPath:              []string{"/testing/jsonnetProjectWithRuntimeRaw"},
+						FileName:           "testing/jsonnetProjectWithRuntimeRaw/does-not-exist.jsonnet",
+						GzipJsonnetProject: embeds.TestJsonnetProjectBuildFolderGzip,
+					},
+				},
+			},
+		}
+
+		got, err := BuildProjectAndFetchJsonnetFrom(cr, map[string]string{"TEST_ENV": "123"})
+		require.Nil(t, got)
+		require.Error(t, err)
+
+		entries, readErr := os.ReadDir(config.GrafanaDashboardsRuntimeBuild)
+		require.NoError(t, readErr)
+		assert.Empty(t, entries)
+	})
+
 	t.Run("Prevents path traversal attacks", func(t *testing.T) {
 		cr := &v1beta1.GrafanaDashboard{
 			ObjectMeta: metav1.ObjectMeta{

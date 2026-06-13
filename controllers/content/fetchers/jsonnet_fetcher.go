@@ -21,9 +21,11 @@ import (
 
 	"github.com/google/go-jsonnet"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var errJsonnetNoContent = errors.New("no jsonnet Content Found, nil or empty string")
+var fetcherLog = logf.Log.WithName("jsonnet-fetcher")
 
 // EmbedFSImporter "imports" data from an in-memory embedFS.
 type EmbedFSImporter struct {
@@ -340,14 +342,16 @@ func BuildProjectAndFetchJsonnetFrom(cr v1beta1.GrafanaContentResource, envs map
 		return nil, fmt.Errorf("error generating jsonnet project build name: %w", err)
 	}
 
+	defer func() {
+		cleanupErr := postJsonnetProjectBuild(jsonnetProjectBuildName)
+		if cleanupErr != nil {
+			fetcherLog.Error(cleanupErr, "failed to clean up jsonnet project build", "buildName", jsonnetProjectBuildName, "resource", cr.GetName())
+		}
+	}()
+
 	jsonBytes, err := buildJsonnetProject(jsonnetProjectBuildName, envs, cr)
 	if err != nil {
 		return nil, fmt.Errorf("error building jsonnet project: %w", err)
-	}
-
-	err = postJsonnetProjectBuild(jsonnetProjectBuildName)
-	if err != nil {
-		return nil, fmt.Errorf("error cleaning up jsonnet project build: %w", err)
 	}
 
 	return jsonBytes, nil
