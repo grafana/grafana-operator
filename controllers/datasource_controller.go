@@ -94,7 +94,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, nil
 	}
 
-	defer UpdateStatus(ctx, r.Client, cr)
+	defer UpdateStatus(ctx, r.Client, cr, snapshotStatus(cr))
 
 	if cr.Spec.Suspend {
 		setSuspended(&cr.Status.Conditions, cr.Generation, conditionReasonApplySuspended)

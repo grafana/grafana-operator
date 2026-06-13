@@ -127,7 +127,7 @@ func (r *GrafanaServiceAccountReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	// 3. From here on, we're handling normal reconciliation (not deletion)
-	defer UpdateStatus(ctx, r.Client, cr)
+	defer UpdateStatus(ctx, r.Client, cr, snapshotStatus(cr))
 
 	// Check if reconciliation is suspended
 	if cr.Spec.Suspend {

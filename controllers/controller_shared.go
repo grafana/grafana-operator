@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -579,12 +580,18 @@ type statusResource interface {
 	CommonStatus() *v1beta1.GrafanaCommonStatus
 }
 
-func UpdateStatus(ctx context.Context, cl client.Client, cr statusResource) {
+func UpdateStatus(ctx context.Context, cl client.Client, cr statusResource, original ...statusResource) {
 	log := logf.FromContext(ctx)
 
-	cr.CommonStatus().LastResync = metav1.Time{Time: time.Now()}
-	if err := cl.Status().Update(ctx, cr); err != nil {
-		log.Error(err, "updating status")
+	// Only write the status subresource when no original snapshot was provided
+	// (preserving the unconditional behavior) or when the status actually
+	// changed since the start of the reconcile, so identical resyncs no longer
+	// issue needless ETCD writes.
+	if len(original) == 0 || statusChanged(cr, original[0]) {
+		cr.CommonStatus().LastResync = metav1.Time{Time: time.Now()}
+		if err := cl.Status().Update(ctx, cr); err != nil {
+			log.Error(err, "updating status")
+		}
 	}
 
 	if meta.IsStatusConditionTrue(cr.CommonStatus().Conditions, conditionNoMatchingInstance) {
@@ -596,6 +603,29 @@ func UpdateStatus(ctx context.Context, cl client.Client, cr statusResource) {
 			log.Error(err, "failed to set finalizer")
 		}
 	}
+}
+
+// snapshotStatus returns a deep copy of cr to capture its status before the
+// reconcile mutates it. Pass the result to UpdateStatus as the original
+// snapshot. It is evaluated where the defer is declared, so it records the
+// pre-reconcile state while cr itself reflects the final state at execution.
+// A nil result makes UpdateStatus fall back to writing unconditionally.
+func snapshotStatus(cr statusResource) statusResource {
+	snapshot, ok := cr.DeepCopyObject().(statusResource)
+	if !ok {
+		return nil
+	}
+
+	return snapshot
+}
+
+// statusChanged reports whether cr's status differs from the original snapshot
+// taken at the start of the reconcile. LastResync is never mutated during a
+// reconcile (only UpdateStatus bumps it, after this comparison), so cr and the
+// snapshot still share it; together with their identical metadata and spec
+// baseline, a whole-object comparison reduces to comparing the status.
+func statusChanged(cr, original statusResource) bool {
+	return original == nil || !equality.Semantic.DeepEqual(cr, original)
 }
 
 // IsErrorType finds the first error in err's tree that matches the type E, and

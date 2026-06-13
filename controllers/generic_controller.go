@@ -94,7 +94,7 @@ func (r *GenericReconciler[T, PT]) Reconcile(ctx context.Context, req ctrl.Reque
 
 		return ctrl.Result{}, nil
 	}
-	defer UpdateStatus(ctx, r.Client, cr)
+	defer UpdateStatus(ctx, r.Client, cr, snapshotStatus(cr))
 
 	if cr.CommonSpec().Suspend {
 		setSuspended(cr.Conditions(), cr.GetGeneration(), conditionReasonApplySuspended)
