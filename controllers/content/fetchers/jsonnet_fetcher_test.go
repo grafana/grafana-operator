@@ -114,7 +114,7 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 
 		want := []byte("{\n    \"env\" : \"123\"   \n}")
 
-		got, err := BuildProjectAndFetchJsonnetFrom(cr, envs)
+		got, err := BuildProjectAndFetchJsonnetFrom(t.Context(), cr, envs)
 		require.NoError(t, err)
 
 		assert.JSONEq(t, string(want), string(got))
@@ -137,7 +137,7 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 			},
 		}
 
-		got, err := BuildProjectAndFetchJsonnetFrom(cr, map[string]string{"TEST_ENV": "123"})
+		got, err := BuildProjectAndFetchJsonnetFrom(t.Context(), cr, map[string]string{"TEST_ENV": "123"})
 		require.Nil(t, got)
 		require.Error(t, err)
 
@@ -163,7 +163,7 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 			},
 		}
 
-		_, err := BuildProjectAndFetchJsonnetFrom(cr, nil)
+		_, err := BuildProjectAndFetchJsonnetFrom(t.Context(), cr, nil)
 		require.ErrorContains(t, err, "path escapes from parent")
 	})
 }

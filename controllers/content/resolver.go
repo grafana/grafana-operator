@@ -116,7 +116,7 @@ func (h *Resolver) fetchContentJSON(ctx context.Context) ([]byte, error) {
 			return nil, fmt.Errorf("something went wrong while collecting envs, error: %w", err)
 		}
 
-		return fetchers.BuildProjectAndFetchJsonnetFrom(h.resource, envs)
+		return fetchers.BuildProjectAndFetchJsonnetFrom(ctx, h.resource, envs)
 	case SourceTypeGrafanaCom:
 		return fetchers.FetchFromGrafanaCom(ctx, h.resource, h.Client)
 	case SourceConfigMap:

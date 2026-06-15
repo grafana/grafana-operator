@@ -3,6 +3,7 @@ package fetchers
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"crypto/rand"
 	"embed"
 	"encoding/base64"
@@ -25,7 +26,6 @@ import (
 )
 
 var errJsonnetNoContent = errors.New("no jsonnet Content Found, nil or empty string")
-var fetcherLog = logf.Log.WithName("jsonnet-fetcher")
 
 // EmbedFSImporter "imports" data from an in-memory embedFS.
 type EmbedFSImporter struct {
@@ -336,7 +336,9 @@ func postJsonnetProjectBuild(buildName string) error {
 	return nil
 }
 
-func BuildProjectAndFetchJsonnetFrom(cr v1beta1.GrafanaContentResource, envs map[string]string) ([]byte, error) {
+func BuildProjectAndFetchJsonnetFrom(ctx context.Context, cr v1beta1.GrafanaContentResource, envs map[string]string) ([]byte, error) {
+	log := logf.FromContext(ctx).WithName("jsonnet-fetcher")
+
 	jsonnetProjectBuildName, err := getJSONProjectBuildRoundName(cr.GetName())
 	if err != nil {
 		return nil, fmt.Errorf("error generating jsonnet project build name: %w", err)
@@ -345,7 +347,7 @@ func BuildProjectAndFetchJsonnetFrom(cr v1beta1.GrafanaContentResource, envs map
 	defer func() {
 		cleanupErr := postJsonnetProjectBuild(jsonnetProjectBuildName)
 		if cleanupErr != nil {
-			fetcherLog.Error(cleanupErr, "failed to clean up jsonnet project build", "buildName", jsonnetProjectBuildName, "resource", cr.GetName())
+			log.Error(cleanupErr, "failed to clean up jsonnet project build", "buildName", jsonnetProjectBuildName, "resource", cr.GetName())
 		}
 	}()
 
