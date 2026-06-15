@@ -5,6 +5,10 @@ tags:
   - Folders
 ---
 
+{{% alert title="Note" color="primary" %}}
+The GrafanaDashboard CR only supports V1 dashboards(legacy API), but it is possible to provision V2 dashboards via the [`GrafanaManifest`](https://grafana.github.io/grafana-operator/docs/examples/manifests/dashboards-v2/) resource.
+{{% /alert %}}
+
 [Dashboards](https://grafana.com/docs/grafana/latest/dashboards/) is the core feature of Grafana and of course something that you can manage through the operator.
 
 To view the entire configuration that you can do within Dashboards, look at our [API documentation](/docs/api/#grafanadashboardspec).
