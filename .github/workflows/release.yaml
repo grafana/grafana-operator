@@ -29,7 +29,7 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5
         with:
-          version: v4.2.1
+          version: v4.2.2
 
       - name: Prepare
         shell: bash
@@ -64,7 +64,7 @@ jobs:
           github_app: grafana-operator-helm-release
 
       - name: Make github release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3
         with:
           body: |
             Helm chart for the [grafana-operator](https://github.com/${{ github.repository }})
