@@ -158,8 +158,8 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		// Clean up uid, so further reconciliations can track changes there
 		cr.Status.UID = ""
 
-		// Trigger the next reconciliation right away
-		return ctrl.Result{Requeue: true}, nil
+		// Requeue after a short delay to let the cache observe the status update
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	folderUID, err := getFolderUID(ctx, r.Client, cr)
