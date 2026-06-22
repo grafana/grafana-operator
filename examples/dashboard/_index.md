@@ -500,10 +500,12 @@ spec:
           name: custom-grafana-dashboard-secrets
           key: PROMETHEUS_USERNAME
   envFrom: # just example, such cm and secrets are not provided by vendor
-    - configMapRef:
+    - configMapKeyRef:
         name: custom-grafana-dashboard-cm
-    - secretRef:
+        key: GRAFANA_URL
+    - secretKeyRef:
         name: custom-grafana-dashboard-secrets
+        key: PROMETHEUS_USERNAME
   jsonnet: |
    local grafana = import 'grafonnet/grafana.libsonnet';
    local dashboard = grafana.dashboard;
@@ -605,10 +607,12 @@ spec:
           name: custom-grafana-dashboard-secrets
           key: PROMETHEUS_USERNAME
   envFrom: # just example, such cm and secrets are not provided by vendor
-    - configMapRef:
+    - configMapKeyRef:
         name: custom-grafana-dashboard-cm
-    - secretRef:
+        key: GRAFANA_URL
+    - secretKeyRef:
         name: custom-grafana-dashboard-secrets
+        key: PROMETHEUS_USERNAME
   jsonnetLib:
     jPath:
       - "vendor"
