@@ -141,8 +141,8 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		// Clean up uid, so further reconcilications can track changes there
 		cr.Status.UID = ""
 
-		// Force requeue for datasource creation
-		return ctrl.Result{Requeue: true}, nil
+		// Requeue after a short delay to let the cache observe the status update
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	datasource, hash, err := r.buildDatasourceModel(ctx, cr)
