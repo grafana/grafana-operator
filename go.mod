@@ -74,7 +74,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/pprof v0.0.0-20260604005048-7023385849c0 // indirect
-	github.com/grafana/grafana-app-sdk v0.54.1 // indirect
+	github.com/grafana/grafana-app-sdk v0.56.2 // indirect
 	github.com/itchyny/timefmt-go v0.1.8 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
