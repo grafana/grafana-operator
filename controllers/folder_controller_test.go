@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
+	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
@@ -102,6 +103,49 @@ var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
 
 var _ = Describe("Folder reconciler", func() {
 	t := GinkgoT()
+
+	It("marks legacy title-fallback folders as unsafe for folderRef consumers", func() {
+		const (
+			folderName = "legacy-fallback-folder"
+			remoteUID  = "legacy-fallback-uid"
+		)
+
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
+		require.NoError(t, err)
+
+		_, err = gClient.Folders.CreateFolder(&models.CreateFolderCommand{
+			Title: folderName,
+			UID:   remoteUID,
+		}) //nolint:errcheck
+		require.NoError(t, err)
+
+		folder := &v1beta1.GrafanaFolder{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      folderName,
+			},
+			Spec: v1beta1.GrafanaFolderSpec{
+				GrafanaCommonSpec: commonSpecSynchronized,
+			},
+		}
+
+		req := tk8s.GetRequest(t, folder)
+		reconciler := &GrafanaFolderReconciler{Client: cl, Scheme: cl.Scheme()}
+
+		err = cl.Create(testCtx, folder)
+		require.NoError(t, err)
+
+		_, err = reconciler.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		err = cl.Get(testCtx, req.NamespacedName, folder)
+		require.NoError(t, err)
+		require.NotEqual(t, remoteUID, folder.GetGrafanaUID())
+		assert.True(t, tk8s.HasCondition(t, folder, metav1.Condition{
+			Type:   conditionNoMatchingFolder,
+			Reason: conditionReasonLegacyFolderUID,
+		}))
+	})
 
 	It("successfully deletes folder containing AlertRuleGroup", func() {
 		folder := struct {

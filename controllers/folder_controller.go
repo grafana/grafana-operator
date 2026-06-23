@@ -142,12 +142,23 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	applyErrors := make(map[string]string)
+	legacyTrackedUID := ""
 
 	for _, grafana := range instances {
-		err = r.onFolderCreated(ctx, &grafana, cr, parentFolderUID)
+		trackedUID, err := r.onFolderCreated(ctx, &grafana, cr, parentFolderUID)
+		if legacyTrackedUID == "" && trackedUID != "" {
+			legacyTrackedUID = trackedUID
+		}
+
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
+	}
+
+	if legacyTrackedUID != "" {
+		setLegacyFolderUIDMismatch(&cr.Status.Conditions, cr.Generation, cr.Namespace, cr.Name, legacyTrackedUID, cr.GetGrafanaUID())
+	} else {
+		removeNoMatchingFolder(&cr.Status.Conditions)
 	}
 
 	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, cr.Generation, applyErrors, len(instances))
@@ -202,7 +213,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, cr *v1beta1.Graf
 	return nil
 }
 
-func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaFolder, parentFolderUID string) error {
+func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaFolder, parentFolderUID string) (string, error) {
 	log := logf.FromContext(ctx)
 
 	title := cr.GetTitle()
@@ -210,18 +221,23 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 
 	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	exists, remoteUID, remoteParent, err := r.Exists(gClient, cr)
 	if err != nil {
-		return err
+		return "", err
+	}
+
+	legacyTrackedUID := ""
+	if exists && cr.Spec.CustomUID == "" && remoteUID != uid {
+		legacyTrackedUID = remoteUID
 	}
 
 	// Update when missing, the CR is updated or parentFolder has changed.
 	if exists && cr.Unchanged() && parentFolderUID == remoteParent {
 		log.V(1).Info("folder unchanged. skipping remaining requests")
-		return nil
+		return legacyTrackedUID, nil
 	}
 
 	if exists {
@@ -234,7 +250,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 				Title:     title,
 			})
 			if err != nil {
-				return err
+				return legacyTrackedUID, err
 			}
 		}
 
@@ -243,7 +259,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 				ParentUID: parentFolderUID,
 			})
 			if err != nil {
-				return err
+				return legacyTrackedUID, err
 			}
 		}
 	} else {
@@ -255,7 +271,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 
 		_, err := gClient.Folders.CreateFolder(body) //nolint:errcheck
 		if err != nil {
-			return err
+			return legacyTrackedUID, err
 		}
 	}
 
@@ -265,17 +281,17 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 
 		err = json.Unmarshal([]byte(cr.Spec.Permissions), &permissions)
 		if err != nil {
-			return fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
+			return legacyTrackedUID, fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
 		}
 
 		_, err = gClient.Folders.UpdateFolderPermissions(uid, &permissions) //nolint:errcheck
 		if err != nil {
-			return fmt.Errorf("failed to update folder permissions: %w", err)
+			return legacyTrackedUID, fmt.Errorf("failed to update folder permissions: %w", err)
 		}
 	}
 
 	// Update grafana instance Status
-	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
+	return legacyTrackedUID, grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 }
 
 // Check if the folder exists. Matches UID first and fall back to title. Title matching only works for non-nested folders
