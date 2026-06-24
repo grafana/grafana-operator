@@ -50,6 +50,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&GrafanaNotificationPolicy{}, &GrafanaNotificationPolicyList{},
 		&GrafanaNotificationTemplate{}, &GrafanaNotificationTemplateList{},
 		&GrafanaServiceAccount{}, &GrafanaServiceAccountList{},
+		&GrafanaSilence{}, &GrafanaSilenceList{},
 		&Grafana{}, &GrafanaList{},
 	)
 
