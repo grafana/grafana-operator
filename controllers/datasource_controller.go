@@ -224,7 +224,7 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 
 		_, err = gClient.Datasources.DeleteDataSourceByUID(*uid) //nolint
 		if err != nil {
-			if IsNotErrorType[*datasources.GetDataSourceByUIDNotFound](err) {
+			if IsNotErrorType[*datasources.DeleteDataSourceByUIDNotFound](err) {
 				return fmt.Errorf("deleting datasource to update uid %s: %w", *uid, err)
 			}
 		}
