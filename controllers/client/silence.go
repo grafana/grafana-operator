@@ -99,7 +99,7 @@ func CreateOrUpdateSilence(ctx context.Context, cl client.Client, cr *v1beta1.Gr
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", fmt.Errorf("unexpected status creating silence: %s: %s", resp.Status, readErrorBody(resp.Body))
 	}
 
@@ -148,7 +148,7 @@ func GetSilence(ctx context.Context, cl client.Client, cr *v1beta1.Grafana, id s
 		return nil, nil
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("unexpected status getting silence: %s: %s", resp.Status, readErrorBody(resp.Body))
 	}
 
@@ -187,7 +187,7 @@ func DeleteSilence(ctx context.Context, cl client.Client, cr *v1beta1.Grafana, i
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusOK {
+	if resp.StatusCode == http.StatusNotFound || (resp.StatusCode >= 200 && resp.StatusCode < 300) {
 		return nil
 	}
 

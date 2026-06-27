@@ -29623,9 +29623,11 @@ GrafanaSilence is the Schema for the GrafanaSilence API
         <td><b><a href="#grafanasilencespec">spec</a></b></td>
         <td>object</td>
         <td>
-          GrafanaSilenceSpec defines the desired state of GrafanaSilence<br/>
+          GrafanaSilenceSpec defines the desired state of GrafanaSilence
+Kubernetes CEL validation cannot reference the current time, so "endsAt must be in the
+future" is enforced by the controller; here we only assert the window is well-formed.<br/>
           <br/>
-            <i>Validations</i>:<li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
+            <i>Validations</i>:<li>timestamp(self.endsAt) > timestamp(self.startsAt): spec.endsAt must be after spec.startsAt</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
         </td>
         <td>true</td>
       </tr><tr>
@@ -29645,6 +29647,8 @@ GrafanaSilence is the Schema for the GrafanaSilence API
 
 
 GrafanaSilenceSpec defines the desired state of GrafanaSilence
+Kubernetes CEL validation cannot reference the current time, so "endsAt must be in the
+future" is enforced by the controller; here we only assert the window is well-formed.
 
 <table>
     <thead>
@@ -29666,7 +29670,8 @@ GrafanaSilenceSpec defines the desired state of GrafanaSilence
         <td><b>endsAt</b></td>
         <td>string</td>
         <td>
-          EndsAt is the time the silence expires (in UTC, RFC3339)<br/>
+          EndsAt is the time the silence expires (in UTC, RFC3339). It must be after startsAt
+and in the future; Grafana rejects silences whose window has already ended.<br/>
           <br/>
             <i>Format</i>: date-time<br/>
         </td>
@@ -29684,7 +29689,12 @@ GrafanaSilenceSpec defines the desired state of GrafanaSilence
         <td><b><a href="#grafanasilencespecmatchersindex">matchers</a></b></td>
         <td>[]object</td>
         <td>
-          Matchers used to select the alerts that should be silenced<br/>
+          Matchers used to select the alerts that should be silenced.
+A matcher targeting an alert rule (name "__alert_rule_uid__") must be an exact-equality
+matcher (isEqual=true, isRegex=false), otherwise Grafana will not associate the silence
+with the rule in the silences list.<br/>
+          <br/>
+            <i>Validations</i>:<li>self.all(m, m.name != '__alert_rule_uid__' || (m.isEqual && (!has(m.isRegex) || !m.isRegex))): a matcher with name '__alert_rule_uid__' must set isEqual=true and isRegex=false</li>
         </td>
         <td>true</td>
       </tr><tr>
