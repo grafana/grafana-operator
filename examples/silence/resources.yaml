@@ -1,0 +1,45 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaSilence
+metadata:
+  name: silence-sample
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  comment: "Silencing high CPU noise during scheduled database maintenance"
+  createdBy: "DevOps Team"
+  startsAt: "2026-06-23T20:00:00Z"
+  endsAt: "2026-06-23T22:00:00Z"
+  matchers:
+    - name: alertname
+      value: HighCPUUsage
+      isEqual: true
+      isRegex: false
+    - name: env
+      value: "prod|staging"
+      isEqual: true
+      isRegex: true
+---
+# To import an existing Grafana silence instead of creating a new one, set the
+# annotation below to a JSON map of "<namespace>/<name>" Grafana instance -> silence ID.
+# The operator will then update that silence in place.
+#
+# apiVersion: grafana.integreatly.org/v1beta1
+# kind: GrafanaSilence
+# metadata:
+#   name: silence-imported
+#   annotations:
+#     grafana.integreatly.org/silence-id: '{"default/grafana":"e6a4f8c2-1b3d-4f5a-9c8e-2d7b1a0f3e6c"}'
+# spec:
+#   instanceSelector:
+#     matchLabels:
+#       dashboards: "grafana"
+#   comment: "Imported silence"
+#   createdBy: "DevOps Team"
+#   startsAt: "2026-06-23T20:00:00Z"
+#   endsAt: "2026-06-23T22:00:00Z"
+#   matchers:
+#     - name: alertname
+#       value: HighCPUUsage
+#       isEqual: true

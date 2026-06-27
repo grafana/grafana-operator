@@ -27,17 +27,31 @@ import (
 const SilenceIDAnnotation = "grafana.integreatly.org/silence-id"
 
 // GrafanaSilenceSpec defines the desired state of GrafanaSilence
+// Kubernetes CEL validation cannot reference the current time, so "endsAt must be in the
+// future" is enforced by the controller; here we only assert the window is well-formed.
+// +kubebuilder:validation:XValidation:rule="timestamp(self.endsAt) > timestamp(self.startsAt)",message="spec.endsAt must be after spec.startsAt"
 type GrafanaSilenceSpec struct {
 	GrafanaCommonSpec `json:",inline"`
 
-	// Matchers used to select the alerts that should be silenced
+	// Matchers used to select the alerts that should be silenced.
+	// A matcher targeting an alert rule (name "__alert_rule_uid__") must be an exact-equality
+	// matcher (isEqual=true, isRegex=false), otherwise Grafana will not associate the silence
+	// with the rule in the silences list.
 	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:XValidation:rule="self.all(m, m.name != '__alert_rule_uid__' || (m.isEqual && (!has(m.isRegex) || !m.isRegex)))",message="a matcher with name '__alert_rule_uid__' must set isEqual=true and isRegex=false"
 	Matchers []*SilenceMatcher `json:"matchers"`
 
 	// StartsAt is the time the silence starts taking effect (in UTC, RFC3339)
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Format=date-time
+	// +kubebuilder:validation:Required
 	StartsAt metav1.Time `json:"startsAt"`
 
-	// EndsAt is the time the silence expires (in UTC, RFC3339)
+	// EndsAt is the time the silence expires (in UTC, RFC3339). It must be after startsAt
+	// and in the future; Grafana rejects silences whose window has already ended.
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Format=date-time
+	// +kubebuilder:validation:Required
 	EndsAt metav1.Time `json:"endsAt"`
 
 	// Comment describing the reason for the silence

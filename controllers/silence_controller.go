@@ -36,7 +36,8 @@ import (
 )
 
 const (
-	conditionSilenceSynchronized = "SilenceSynchronized"
+	conditionSilenceSynchronized  = "SilenceSynchronized"
+	conditionReasonExpiredSilence = "ExpiredSilence"
 )
 
 // GrafanaSilenceReconciler reconciles a GrafanaSilence object
@@ -88,6 +89,19 @@ func (r *GrafanaSilenceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	removeSuspended(&cr.Status.Conditions)
+
+	// Kubernetes CEL validation cannot reference the current time, so enforce that the
+	// silence has not already expired here rather than in the CRD schema.
+	if !cr.Spec.EndsAt.After(time.Now()) {
+		err := fmt.Errorf("spec.endsAt %s must be in the future", cr.Spec.EndsAt.UTC().Format(time.RFC3339))
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonExpiredSilence, err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionSilenceSynchronized)
+		log.Error(err, "refusing to apply expired silence")
+
+		return ctrl.Result{}, err
+	}
+
+	removeInvalidSpec(&cr.Status.Conditions)
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
