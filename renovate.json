@@ -17,6 +17,11 @@
       "groupName": "github-actions (non-major)"
     },
     {
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["indirect"],
+      "enabled": false
+    },
+    {
       "matchManagers": [
         "custom.regex"
       ],
