@@ -187,7 +187,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	remoteReceivers, err := r.getReceiversFromName(gClient, cr)
+	remoteReceivers, err := r.getReceivers(gClient, cr)
 	if err != nil {
 		return err
 	}
@@ -312,7 +312,7 @@ func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Co
 	return allSettings, nil
 }
 
-func (r *GrafanaContactPointReconciler) getReceiversFromName(gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaContactPoint) ([]*models.EmbeddedContactPoint, error) {
+func (r *GrafanaContactPointReconciler) getReceivers(gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaContactPoint) ([]*models.EmbeddedContactPoint, error) {
 	name := cr.NameFromSpecOrMeta()
 	params := provisioning.NewGetContactpointsParams().WithName(&name)
 
@@ -340,7 +340,7 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, cr *v1beta
 			return fmt.Errorf("building grafana client: %w", err)
 		}
 
-		remoteReceivers, err := r.getReceiversFromName(gClient, cr)
+		remoteReceivers, err := r.getReceivers(gClient, cr)
 		if err != nil {
 			return err
 		}
