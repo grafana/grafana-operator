@@ -3,6 +3,7 @@ package fetchers
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"crypto/rand"
 	"embed"
 	"encoding/base64"
@@ -21,6 +22,7 @@ import (
 
 	"github.com/google/go-jsonnet"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var errJsonnetNoContent = errors.New("no jsonnet Content Found, nil or empty string")
@@ -334,20 +336,24 @@ func postJsonnetProjectBuild(buildName string) error {
 	return nil
 }
 
-func BuildProjectAndFetchJsonnetFrom(cr v1beta1.GrafanaContentResource, envs map[string]string) ([]byte, error) {
+func BuildProjectAndFetchJsonnetFrom(ctx context.Context, cr v1beta1.GrafanaContentResource, envs map[string]string) ([]byte, error) {
+	log := logf.FromContext(ctx).WithName("jsonnet-fetcher")
+
 	jsonnetProjectBuildName, err := getJSONProjectBuildRoundName(cr.GetName())
 	if err != nil {
 		return nil, fmt.Errorf("error generating jsonnet project build name: %w", err)
 	}
 
+	defer func() {
+		cleanupErr := postJsonnetProjectBuild(jsonnetProjectBuildName)
+		if cleanupErr != nil {
+			log.Error(cleanupErr, "failed to clean up jsonnet project build", "buildName", jsonnetProjectBuildName, "resource", cr.GetName())
+		}
+	}()
+
 	jsonBytes, err := buildJsonnetProject(jsonnetProjectBuildName, envs, cr)
 	if err != nil {
 		return nil, fmt.Errorf("error building jsonnet project: %w", err)
-	}
-
-	err = postJsonnetProjectBuild(jsonnetProjectBuildName)
-	if err != nil {
-		return nil, fmt.Errorf("error cleaning up jsonnet project build: %w", err)
 	}
 
 	return jsonBytes, nil

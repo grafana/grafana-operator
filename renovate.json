@@ -7,6 +7,9 @@
     "ghcr.io/grafana/grafana-operator",
     "github.com/openshift/api"
   ],
+  "ignorePaths": [
+    "hugo/**"
+  ],
   "npm": {
     "enabled": false
   },
@@ -15,6 +18,11 @@
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["minor", "patch", "digest"],
       "groupName": "github-actions (non-major)"
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["indirect"],
+      "enabled": false
     },
     {
       "matchManagers": [

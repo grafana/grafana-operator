@@ -5,6 +5,10 @@ tags:
   - Folders
 ---
 
+{{% alert title="Note" color="primary" %}}
+The GrafanaDashboard CR only supports V1 dashboards(legacy API), but it is possible to provision V2 dashboards via the [`GrafanaManifest`](https://grafana.github.io/grafana-operator/docs/examples/manifests/dashboards-v2/) resource.
+{{% /alert %}}
+
 [Dashboards](https://grafana.com/docs/grafana/latest/dashboards/) is the core feature of Grafana and of course something that you can manage through the operator.
 
 To view the entire configuration that you can do within Dashboards, look at our [API documentation](/docs/api/#grafanadashboardspec).
@@ -530,10 +534,12 @@ spec:
           name: custom-grafana-dashboard-secrets
           key: PROMETHEUS_USERNAME
   envFrom: # just example, such cm and secrets are not provided by vendor
-    - configMapRef:
+    - configMapKeyRef:
         name: custom-grafana-dashboard-cm
-    - secretRef:
+        key: GRAFANA_URL
+    - secretKeyRef:
         name: custom-grafana-dashboard-secrets
+        key: PROMETHEUS_USERNAME
   jsonnet: |
    local grafana = import 'grafonnet/grafana.libsonnet';
    local dashboard = grafana.dashboard;
@@ -635,10 +641,12 @@ spec:
           name: custom-grafana-dashboard-secrets
           key: PROMETHEUS_USERNAME
   envFrom: # just example, such cm and secrets are not provided by vendor
-    - configMapRef:
+    - configMapKeyRef:
         name: custom-grafana-dashboard-cm
-    - secretRef:
+        key: GRAFANA_URL
+    - secretKeyRef:
         name: custom-grafana-dashboard-secrets
+        key: PROMETHEUS_USERNAME
   jsonnetLib:
     jPath:
       - "vendor"
