@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -227,6 +229,99 @@ var _ = Describe("AlertRulegroup Reconciler: Provoke Conditions", func() {
 			reconcileAndValidateCondition(r, cr, tt.want, tt.wantErr)
 		})
 	}
+})
+
+var _ = Describe("AlertRulegroup Reconciler: folder fallback diagnostics", func() {
+	t := GinkgoT()
+
+	It("sets a clear condition when folderRef points to a title-fallback folder", func() {
+		const (
+			folderName = "legacy-fallback-folder-alertgroup"
+			remoteUID  = "legacy-fallback-uid-alertgroup"
+		)
+
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
+		require.NoError(t, err)
+
+		_, err = gClient.Folders.CreateFolder(&models.CreateFolderCommand{
+			Title: folderName,
+			UID:   remoteUID,
+		}) //nolint:errcheck
+		require.NoError(t, err)
+
+		folder := &v1beta1.GrafanaFolder{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      folderName,
+			},
+			Spec: v1beta1.GrafanaFolderSpec{
+				GrafanaCommonSpec: commonSpecSynchronized,
+			},
+		}
+
+		folderReq := tk8s.GetRequest(t, folder)
+		folderReconciler := &GrafanaFolderReconciler{Client: cl, Scheme: cl.Scheme()}
+
+		err = cl.Create(testCtx, folder)
+		require.NoError(t, err)
+
+		_, err = folderReconciler.Reconcile(testCtx, folderReq)
+		require.NoError(t, err)
+
+		err = cl.Get(testCtx, folderReq.NamespacedName, folder)
+		require.NoError(t, err)
+		require.NotEqual(t, remoteUID, folder.GetGrafanaUID())
+		assert.True(t, tk8s.HasCondition(t, folder, metav1.Condition{
+			Type:   conditionNoMatchingFolder,
+			Reason: conditionReasonLegacyFolderUID,
+		}))
+
+		alertRuleGroup := &v1beta1.GrafanaAlertRuleGroup{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "legacy-fallback-group",
+			},
+			Spec: v1beta1.GrafanaAlertRuleGroupSpec{
+				GrafanaCommonSpec: commonSpecSynchronized,
+				FolderRef:         folder.Name,
+				Interval:          metav1.Duration{Duration: 60 * time.Second},
+				Rules: []v1beta1.AlertRule{
+					{
+						Title:     "LegacyFallbackRule",
+						UID:       "legacy-fallback-rule",
+						Condition: "A",
+						Data: []*v1beta1.AlertQuery{
+							{
+								RefID:         "A",
+								DatasourceUID: "__expr__",
+								Model:         &apiextensionsv1.JSON{Raw: []byte(`{"expression": "1", "refId": "A"}`)},
+							},
+						},
+						ExecErrState: "Error",
+						NoDataState:  new("NoData"),
+					},
+				},
+			},
+		}
+
+		alertReq := tk8s.GetRequest(t, alertRuleGroup)
+		alertReconciler := &GrafanaAlertRuleGroupReconciler{Client: cl, Scheme: cl.Scheme()}
+
+		err = cl.Create(testCtx, alertRuleGroup)
+		require.NoError(t, err)
+
+		_, err = alertReconciler.Reconcile(testCtx, alertReq)
+		require.ErrorContains(t, err, "legacy title fallback")
+
+		err = cl.Get(testCtx, alertReq.NamespacedName, alertRuleGroup)
+		require.NoError(t, err)
+
+		hasCondition := tk8s.HasCondition(t, alertRuleGroup, metav1.Condition{
+			Type:   conditionNoMatchingFolder,
+			Reason: conditionReasonLegacyFolderUID,
+		})
+		assert.True(t, hasCondition)
+	})
 })
 
 var _ = Describe("AlertRuleGroup Controller Conversion", func() {

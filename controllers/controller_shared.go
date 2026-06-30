@@ -53,6 +53,7 @@ const (
 	conditionReasonApplySuspended  = "ApplySuspended"
 	conditionReasonEmptyAPIReply   = "EmptyAPIReply"
 	conditionReasonInvalidPatch    = "InvalidPatch"
+	conditionReasonLegacyFolderUID = "LegacyFolderUIDMismatch"
 
 	// Finalizer
 	grafanaFinalizer = "operator.grafana.com/finalizer"
@@ -193,9 +194,26 @@ func getFolderUID(ctx context.Context, cl client.Client, ref v1beta1.FolderRefer
 		return "", err
 	}
 
+	if mismatch := meta.FindStatusCondition(folder.Status.Conditions, conditionNoMatchingFolder); mismatch != nil && mismatch.Reason == conditionReasonLegacyFolderUID {
+		setNoMatchingFolder(ref.Conditions(), ref.GetGeneration(), mismatch.Reason, mismatch.Message)
+		return "", errors.New(mismatch.Message)
+	}
+
 	removeNoMatchingFolder(ref.Conditions())
 
 	return folder.GetGrafanaUID(), nil
+}
+
+func setLegacyFolderUIDMismatch(conditions *[]metav1.Condition, generation int64, namespace, name, trackedUID, resolvedUID string) {
+	message := fmt.Sprintf(
+		"GrafanaFolder %s/%s was adopted through legacy title fallback. Grafana tracks it as uid %s, but folderRef resolves it to %s. Set spec.uid on the GrafanaFolder and recreate it before referencing this folder from other resources.",
+		namespace,
+		name,
+		trackedUID,
+		resolvedUID,
+	)
+
+	setNoMatchingFolder(conditions, generation, conditionReasonLegacyFolderUID, message)
 }
 
 func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {
