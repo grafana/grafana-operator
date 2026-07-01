@@ -99,6 +99,7 @@ func CreateOrUpdateSilence(ctx context.Context, cl client.Client, cr *v1beta1.Gr
 	}
 	defer resp.Body.Close()
 
+	// API often responds with 202 so anything between 200 and 299 is considered a success.
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", fmt.Errorf("unexpected status creating silence: %s: %s", resp.Status, readErrorBody(resp.Body))
 	}
@@ -148,6 +149,7 @@ func GetSilence(ctx context.Context, cl client.Client, cr *v1beta1.Grafana, id s
 		return nil, nil
 	}
 
+	// API often responds with 202 so anything between 200 and 299 is considered a success.
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("unexpected status getting silence: %s: %s", resp.Status, readErrorBody(resp.Body))
 	}
@@ -187,6 +189,8 @@ func DeleteSilence(ctx context.Context, cl client.Client, cr *v1beta1.Grafana, i
 	}
 	defer resp.Body.Close()
 
+	// Status code not found is OK since nothing to delete
+	// API often responds with 202 so anything between 200 and 299 is considered a success.
 	if resp.StatusCode == http.StatusNotFound || (resp.StatusCode >= 200 && resp.StatusCode < 300) {
 		return nil
 	}
@@ -194,6 +198,7 @@ func DeleteSilence(ctx context.Context, cl client.Client, cr *v1beta1.Grafana, i
 	return fmt.Errorf("unexpected status deleting silence: %s: %s", resp.Status, readErrorBody(resp.Body))
 }
 
+// readErrorBody is a helper for reading the error from the response
 func readErrorBody(body io.Reader) string {
 	b, err := io.ReadAll(io.LimitReader(body, 1<<16))
 	if err != nil {
