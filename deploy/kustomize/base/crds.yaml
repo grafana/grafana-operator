@@ -8,6 +8,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaAlertRuleGroup
     listKind: GrafanaAlertRuleGroupList
@@ -412,6 +413,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaContactPoint
     listKind: GrafanaContactPointList
@@ -816,6 +818,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaDashboard
     listKind: GrafanaDashboardList
@@ -1376,6 +1379,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaDatasource
     listKind: GrafanaDatasourceList
@@ -1719,6 +1723,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaFolder
     listKind: GrafanaFolderList
@@ -1955,6 +1960,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaLibraryPanel
     listKind: GrafanaLibraryPanelList
@@ -2502,6 +2508,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaManifest
     listKind: GrafanaManifestList
@@ -2836,6 +2843,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaMuteTiming
     listKind: GrafanaMuteTimingList
@@ -3100,6 +3108,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaNotificationPolicy
     listKind: GrafanaNotificationPolicyList
@@ -3463,6 +3472,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaNotificationPolicyRoute
     listKind: GrafanaNotificationPolicyRouteList
@@ -3708,6 +3718,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaNotificationTemplate
     listKind: GrafanaNotificationTemplateList
@@ -3922,6 +3933,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: Grafana
     listKind: GrafanaList
@@ -13280,6 +13292,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaServiceAccount
     listKind: GrafanaServiceAccountList

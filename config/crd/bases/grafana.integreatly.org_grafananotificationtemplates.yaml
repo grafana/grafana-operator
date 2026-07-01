@@ -9,6 +9,7 @@ spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaNotificationTemplate
     listKind: GrafanaNotificationTemplateList
