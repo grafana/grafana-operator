@@ -115,3 +115,20 @@ spec:
             file: 17-manifest.yaml
         - assert:
             file: 17-assert.yaml
+    - name: step-18
+      try:
+        # internal: choice is configured, no external Alertmanager required
+        - patch:
+            file: 18-alertmanager-internal.yaml
+        - assert:
+            file: 18-assert-internal.yaml
+        # external: no external Alertmanager configured -> precondition fails
+        - patch:
+            file: 18-alertmanager-external.yaml
+        - assert:
+            file: 18-assert-external.yaml
+        # all: choice is configured again, instance becomes ready
+        - patch:
+            file: 18-alertmanager-all.yaml
+        - assert:
+            file: 18-assert-all.yaml

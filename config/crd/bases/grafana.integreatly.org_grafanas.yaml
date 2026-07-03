@@ -54,6 +54,14 @@ spec:
             spec:
               description: GrafanaSpec defines the desired state of Grafana
               properties:
+                alertmanager:
+                  default: all
+                  description: Alertmanager controls which Alertmanager instances Grafana uses.
+                  enum:
+                    - internal
+                    - external
+                    - all
+                  type: string
                 client:
                   description: Client defines how the grafana-operator talks to the grafana instance.
                   properties:

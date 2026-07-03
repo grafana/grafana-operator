@@ -103,7 +103,19 @@ type GrafanaSpec struct {
 	// DisableDefaultSecurityContext prevents the operator from populating securityContext on deployments
 	// +kubebuilder:validation:Enum=Pod;Container;All
 	DisableDefaultSecurityContext string `json:"disableDefaultSecurityContext,omitempty"`
+	// Alertmanager controls which Alertmanager instances Grafana uses.
+	// +kubebuilder:validation:Enum=internal;external;all
+	// +kubebuilder:default=all
+	// +optional
+	Alertmanager string `json:"alertmanager,omitempty"`
 }
+
+// Permitted values for GrafanaSpec.Alertmanager.
+const (
+	AlertmanagerInternal = "internal"
+	AlertmanagerExternal = "external"
+	AlertmanagerAll      = "all"
+)
 
 func (in *GrafanaSpec) GetAllContainers() []corev1.Container {
 	if in.Deployment == nil ||

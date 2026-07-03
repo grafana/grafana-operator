@@ -7413,6 +7413,16 @@ GrafanaSpec defines the desired state of Grafana
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>alertmanager</b></td>
+        <td>enum</td>
+        <td>
+          Alertmanager controls which Alertmanager instances Grafana uses.<br/>
+          <br/>
+            <i>Enum</i>: internal, external, all<br/>
+            <i>Default</i>: all<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecclient">client</a></b></td>
         <td>object</td>
         <td>
