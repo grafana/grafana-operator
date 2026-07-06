@@ -22,7 +22,7 @@ HUGO_VERSION = 0.151.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/kind
 KIND_VERSION = v0.32.0
 # renovate: datasource=github-tags depName=ko-build/ko
-KO_VERSION = 0.18.1
+KO_VERSION = 0.19.1
 # renovate: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.*)$
 KUSTOMIZE_VERSION = v5.8.1
 MUFFET_VERSION = v2.10.9

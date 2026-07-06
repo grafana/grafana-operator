@@ -38,7 +38,7 @@ type GrafanaNotificationPolicyRouteSpec struct {
 //+kubebuilder:subresource:status
 
 // GrafanaNotificationPolicyRoute is the Schema for the grafananotificationpolicyroutes API
-// +kubebuilder:resource:categories={grafana-operator}
+// +kubebuilder:resource:categories={all,grafana-operator}
 type GrafanaNotificationPolicyRoute struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
