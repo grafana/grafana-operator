@@ -113,10 +113,10 @@ var _ = Describe("Folder reconciler", func() {
 		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
-		_, err = gClient.Folders.CreateFolder(&models.CreateFolderCommand{
+		_, err = gClient.Folders.CreateFolder(&models.CreateFolderCommand{ //nolint:errcheck
 			Title: folderName,
 			UID:   remoteUID,
-		}) //nolint:errcheck
+		})
 		require.NoError(t, err)
 
 		folder := &v1beta1.GrafanaFolder{
@@ -142,8 +142,8 @@ var _ = Describe("Folder reconciler", func() {
 		require.NoError(t, err)
 		require.NotEqual(t, remoteUID, folder.GetGrafanaUID())
 		assert.True(t, tk8s.HasCondition(t, folder, metav1.Condition{
-			Type:   conditionNoMatchingFolder,
-			Reason: conditionReasonLegacyFolderUID,
+			Type:   conditionFolderUIDMismatch,
+			Reason: conditionReasonFolderUIDInferred,
 		}))
 	})
 

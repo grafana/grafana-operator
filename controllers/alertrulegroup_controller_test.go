@@ -243,10 +243,10 @@ var _ = Describe("AlertRulegroup Reconciler: folder fallback diagnostics", func(
 		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
-		_, err = gClient.Folders.CreateFolder(&models.CreateFolderCommand{
+		_, err = gClient.Folders.CreateFolder(&models.CreateFolderCommand{ //nolint:errcheck
 			Title: folderName,
 			UID:   remoteUID,
-		}) //nolint:errcheck
+		})
 		require.NoError(t, err)
 
 		folder := &v1beta1.GrafanaFolder{
@@ -272,8 +272,8 @@ var _ = Describe("AlertRulegroup Reconciler: folder fallback diagnostics", func(
 		require.NoError(t, err)
 		require.NotEqual(t, remoteUID, folder.GetGrafanaUID())
 		assert.True(t, tk8s.HasCondition(t, folder, metav1.Condition{
-			Type:   conditionNoMatchingFolder,
-			Reason: conditionReasonLegacyFolderUID,
+			Type:   conditionFolderUIDMismatch,
+			Reason: conditionReasonFolderUIDInferred,
 		}))
 
 		alertRuleGroup := &v1beta1.GrafanaAlertRuleGroup{
@@ -318,7 +318,7 @@ var _ = Describe("AlertRulegroup Reconciler: folder fallback diagnostics", func(
 
 		hasCondition := tk8s.HasCondition(t, alertRuleGroup, metav1.Condition{
 			Type:   conditionNoMatchingFolder,
-			Reason: conditionReasonLegacyFolderUID,
+			Reason: conditionReasonFolderUIDInferred,
 		})
 		assert.True(t, hasCondition)
 	})
