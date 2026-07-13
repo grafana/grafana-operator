@@ -3,6 +3,7 @@
   "extends": [
     "github>grafana/grafana-renovate-config//presets/base"
   ],
+  "ignorePresets": [":maintainLockFilesWeekly"],
   "ignoreDeps": [
     "ghcr.io/grafana/grafana-operator",
     "github.com/openshift/api"
