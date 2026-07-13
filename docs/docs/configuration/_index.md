@@ -10,4 +10,4 @@ All available options in the latest Grafana-Operator version.
 
 Most, if not all options should be available with all installation methods.
 
-{{< readfile file="help.txt" code="true" lang="sh" >}}
+{{< readfile file="help.txt" code="true" >}}
