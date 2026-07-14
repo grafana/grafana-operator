@@ -148,7 +148,7 @@ var _ = Describe("Dashboard type", func() {
 			require.NoError(t, err)
 
 			// edit: Enable public dashboard with new accessToken
-			dash.Spec.PublicSharing = &GrafanaDashboardPublicSharing{AccessToken: "87ff0673-dbfd-493d-8834-70a3d300b920"}
+			dash.Spec.PublicSharing = &GrafanaDashboardPublicSharing{AccessToken: "87ff0673-dbfd-493d-8834-70a3d300b920"} //#nosec G101
 			err = cl.Update(ctx, dash)
 			require.NoError(t, err)
 		})

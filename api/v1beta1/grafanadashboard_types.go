@@ -80,6 +80,9 @@ type GrafanaDashboardStatus struct {
 	GrafanaCommonStatus  `json:",inline"`
 	GrafanaContentStatus `json:",inline"`
 
+	// The resulting path where a public sharing config is available
+	PublicSharingPath string `json:"publicSharingPath,omitempty"`
+
 	// The dashboard instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
 }
