@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -102,7 +101,7 @@ var _ = Describe("Dashboard type", func() {
 
 			// edit: Add accessToken
 			// The accessToken of public dashboards must be a uuid
-			dash.Spec.PublicSharing.AccessToken = uuid.New().String()
+			dash.Spec.PublicSharing.AccessToken = "409024ac-1b3a-4e93-a6d1-94002c118530"
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)
 		})
@@ -111,7 +110,7 @@ var _ = Describe("Dashboard type", func() {
 			dash := newDashboard("existing-public-at", "dash-uid")
 
 			// create: Dashboard with accessToken
-			dash.Spec.PublicSharing.AccessToken = uuid.New().String()
+			dash.Spec.PublicSharing.AccessToken = "f6055ffe-5d8d-4073-b104-bae0ce2761fa"
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
@@ -125,12 +124,12 @@ var _ = Describe("Dashboard type", func() {
 			dash := newDashboard("removing-public-at", "dash-uid")
 
 			// create: Dashboard with accessToken
-			dash.Spec.PublicSharing.AccessToken = uuid.New().String()
+			dash.Spec.PublicSharing.AccessToken = "b2516e51-3709-4dd9-ae4b-ae641a67ade5"
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
 			// edit: Update accessToken
-			dash.Spec.PublicSharing.AccessToken = uuid.New().String()
+			dash.Spec.PublicSharing.AccessToken = "5f1393bc-d389-4eec-a416-0e738bb0f30f"
 			err = cl.Update(ctx, dash)
 			require.Error(t, err)
 		})
@@ -139,7 +138,7 @@ var _ = Describe("Dashboard type", func() {
 			dash := newDashboard("update-public-at", "dash-uid")
 
 			// create: Dashboard with accessToken
-			dash.Spec.PublicSharing.AccessToken = uuid.New().String()
+			dash.Spec.PublicSharing.AccessToken = "00ab8af7-6995-42fa-b7da-db3500ec1f9e"
 			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 
@@ -149,7 +148,7 @@ var _ = Describe("Dashboard type", func() {
 			require.NoError(t, err)
 
 			// edit: Enable public dashboard with new accessToken
-			dash.Spec.PublicSharing = &GrafanaDashboardPublicSharing{AccessToken: uuid.New().String()}
+			dash.Spec.PublicSharing = &GrafanaDashboardPublicSharing{AccessToken: "87ff0673-dbfd-493d-8834-70a3d300b920"}
 			err = cl.Update(ctx, dash)
 			require.NoError(t, err)
 		})

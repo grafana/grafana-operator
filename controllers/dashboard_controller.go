@@ -455,6 +455,8 @@ func (r *GrafanaDashboardReconciler) reconcilePublicSharing(ctx context.Context,
 
 	log.V(1).Info("retrieving public dashboard share from Grafana")
 
+	exists := true
+
 	shareMeta, err := gClient.Dashboards.GetPublicDashboardWithParams(&dashboards.GetPublicDashboardParams{
 		DashboardUID: dashUID,
 		Context:      ctx,
@@ -464,6 +466,8 @@ func (r *GrafanaDashboardReconciler) reconcilePublicSharing(ctx context.Context,
 			log.Error(err, LogMsgGettingPublicSharing)
 			return fmt.Errorf("%s: %w", LogMsgGettingPublicSharing, err)
 		}
+
+		exists = false
 	}
 
 	rawUID, err := uuid.Parse(string(cr.UID))
@@ -476,33 +480,32 @@ func (r *GrafanaDashboardReconciler) reconcilePublicSharing(ctx context.Context,
 	dto := r.getPublicSharingDTO(cr, shareUID)
 	shareUID = dto.AccessToken // Overwrite if a custom accessToken was passed
 
-	// Only Create/Update when necessary
-	publicSharingMatchesStateInGrafana, recreate := r.publicSharingMatchesStateInGrafana(cr, dto, shareMeta)
-	if publicSharingMatchesStateInGrafana {
-		log.V(1).Info("skipping public dashboard share from Grafana")
-		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, shareUID)
-	}
-
-	if !recreate {
-		log.Info("updating public dashboard share in Grafana")
-
-		_, err = gClient.Dashboards.UpdatePublicDashboard(&dashboards.UpdatePublicDashboardParams{ //nolint:errcheck
-			Body:         dto,
-			UID:          dto.UID,
-			DashboardUID: dashUID,
-			Context:      ctx,
-		})
-		if err != nil {
-			log.Error(err, LogMsgSyncingPublicSharing)
-			return fmt.Errorf("%s: %w", LogMsgSyncingPublicSharing, err)
+	if exists {
+		publicSharingMatchesStateInGrafana, requiresRecreate := r.publicSharingMatchesStateInGrafana(cr, dto, shareMeta)
+		if publicSharingMatchesStateInGrafana {
+			log.V(1).Info("skipping public dashboard share from Grafana")
+			return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, shareUID)
 		}
 
-		return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, shareUID)
-	}
+		// Update as only mutable fields changed
+		if !requiresRecreate {
+			log.Info("updating public dashboard share in Grafana")
 
-	// Maybe here???
-	if IsNotErrorType[*dashboards.GetPublicDashboardNotFound](err) && shareMeta != nil && shareMeta.Payload != nil {
-		log.V(1).Info("deleting public dashboard share from Grafana due to uid or accessToken mismatch")
+			_, err = gClient.Dashboards.UpdatePublicDashboard(&dashboards.UpdatePublicDashboardParams{ //nolint:errcheck
+				Body:         dto,
+				UID:          dto.UID,
+				DashboardUID: dashUID,
+				Context:      ctx,
+			})
+			if err != nil {
+				log.Error(err, LogMsgSyncingPublicSharing)
+				return fmt.Errorf("%s: %w", LogMsgSyncingPublicSharing, err)
+			}
+
+			return addAnnotation(ctx, r.Client, cr, annotationSyncedPublicSharing, shareUID)
+		}
+
+		log.Info("deleting public dashboard share from Grafana due to uid or accessToken mismatch")
 
 		_, err = gClient.Dashboards.DeletePublicDashboardWithParams(&dashboards.DeletePublicDashboardParams{ //nolint:errcheck
 			DashboardUID: dashUID,
@@ -623,7 +626,7 @@ func (r *GrafanaDashboardReconciler) matchesStateInGrafana(exists bool, model ma
 }
 
 // publicSharingMatchesStateInGrafana checks whether a public dashboard share exists in Grafana and its contents matches the model defined in the custom resources
-func (r *GrafanaDashboardReconciler) publicSharingMatchesStateInGrafana(cr *v1beta1.GrafanaDashboard, model *models.PublicDashboardDTO, remoteDashboard *dashboards.GetPublicDashboardOK) (matchesRemoteState, recreate bool) {
+func (r *GrafanaDashboardReconciler) publicSharingMatchesStateInGrafana(cr *v1beta1.GrafanaDashboard, model *models.PublicDashboardDTO, remoteDashboard *dashboards.GetPublicDashboardOK) (matchesRemoteState, requiresRecreation bool) {
 	if cr.Annotations != nil && cr.Annotations[annotationSyncedPublicSharing] != model.AccessToken {
 		return false, true
 	}
@@ -638,15 +641,15 @@ func (r *GrafanaDashboardReconciler) publicSharingMatchesStateInGrafana(cr *v1be
 	}
 
 	// Determine whether to update or recreate
-	recreate = model.AccessToken != remoteModel.AccessToken ||
+	requiresRecreation = model.AccessToken != remoteModel.AccessToken ||
 		model.UID != remoteModel.UID
 
 	// Only when recreate is false should a PATCH be sent, otherwise delete and recreate
-	matchesRemoteState = !recreate && *model.IsEnabled == remoteModel.IsEnabled &&
+	matchesRemoteState = !requiresRecreation && *model.IsEnabled == remoteModel.IsEnabled &&
 		*model.TimeSelectionEnabled == remoteModel.TimeSelectionEnabled &&
 		*model.AnnotationsEnabled == remoteModel.AnnotationsEnabled
 
-	return matchesRemoteState, recreate
+	return matchesRemoteState, requiresRecreation
 }
 
 func (r *GrafanaDashboardReconciler) GetOrCreateFolder(gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDashboard) (string, error) {
