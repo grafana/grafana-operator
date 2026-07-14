@@ -1390,6 +1390,9 @@ spec:
                   instances
                 format: date-time
                 type: string
+              publicSharingPath:
+                description: The resulting path where a public sharing config is available
+                type: string
               uid:
                 type: string
             type: object

@@ -2683,6 +2683,13 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>publicSharingPath</b></td>
+        <td>string</td>
+        <td>
+          The resulting path where a public sharing config is available<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>uid</b></td>
         <td>string</td>
         <td>
