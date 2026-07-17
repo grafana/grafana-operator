@@ -201,8 +201,20 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
-	// Optimize Go runtime based on CGroup limits (GOMEMLIMIT, sets a soft memory limit for the runtime)
-	memlimit.SetGoMemLimitWithOpts(memlimit.WithLogger(slogger)) //nolint:errcheck
+	// Optimize GC cycles by setting and periodically updating GOMEMLIMIT.
+	// The limit is 95% of either the CGroup (v2 or v1) with fallback to the System.
+	// Results in less cycles when there's memory to space and more when nearing the limit to reduce OOM kills.
+	memlimit.SetGoMemLimitWithOpts( //nolint:errcheck
+		memlimit.WithRatio(0.95),
+		memlimit.WithRefreshInterval(1*time.Minute),
+		memlimit.WithProvider(
+			memlimit.ApplyFallback(
+				memlimit.FromCgroup,
+				memlimit.FromSystem,
+			),
+		),
+		memlimit.WithLogger(slogger),
+	)
 
 	// Determine LeaderElectionID from
 	leHash := sha256.New()
