@@ -93,6 +93,7 @@ It's easier to just manage this configuration outside of the operator.
 | extraVolumes | list | `[]` | extra pod volumes |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
 | global.imageRegistry | string | `nil` | Overrides the Docker registry globally for all images |
+| gomemlimitRatio | string | `"0.9"` | Sets the GOMEMLIMIT variable to a percentage of either the CGroup (v2 or v1) with fallback to the System. Results in less GC cycles when there's memory to spare and more when nearing the limit to reduce OOM kills. |
 | hostUsers | bool | `true` | Set to false to opt-in to use user namespaces |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
 | image.registry | string | `"ghcr.io"` | grafana operator image registry |

@@ -78,6 +78,7 @@ spec:
             - --leader-elect
             {{- end }}
             - --max-concurrent-reconciles={{ .Values.maxConcurrentReconciles }}
+            - --gomemlimit-ratio={{ .Values.gomemlimitRatio }}
           volumeMounts:
             - name: dashboards-dir
               mountPath: /tmp/dashboards
