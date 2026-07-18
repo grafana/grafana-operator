@@ -149,11 +149,6 @@ type GrafanaContentSpec struct {
 	// +optional
 	Datasources []GrafanaContentDatasource `json:"datasources,omitempty"`
 
-	// overrides the default (current) value of named template variables in the dashboard model.
-	// Variables that are not present in the model are ignored.
-	// +optional
-	Variables []GrafanaContentVariable `json:"variables,omitempty"`
-
 	// environments variables as a map
 	// +optional
 	Envs []GrafanaContentEnv `json:"envs,omitempty"`
@@ -177,4 +172,11 @@ type GrafanaContentResource interface {
 	client.Object
 	GrafanaContentSpec() *GrafanaContentSpec
 	GrafanaContentStatus() *GrafanaContentStatus
+}
+
+// GrafanaContentVariableOverrider is implemented by content resources whose model carries template
+// variables (templating.list[]), so that only those resources take part in variable overriding.
+// +kubebuilder:object:generate=false
+type GrafanaContentVariableOverrider interface {
+	ContentVariables() []GrafanaContentVariable
 }

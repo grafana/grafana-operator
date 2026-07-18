@@ -854,11 +854,6 @@ func (in *GrafanaContentSpec) DeepCopyInto(out *GrafanaContentSpec) {
 		*out = make([]GrafanaContentDatasource, len(*in))
 		copy(*out, *in)
 	}
-	if in.Variables != nil {
-		in, out := &in.Variables, &out.Variables
-		*out = make([]GrafanaContentVariable, len(*in))
-		copy(*out, *in)
-	}
 	if in.Envs != nil {
 		in, out := &in.Envs, &out.Envs
 		*out = make([]GrafanaContentEnv, len(*in))
@@ -1030,6 +1025,11 @@ func (in *GrafanaDashboardSpec) DeepCopyInto(out *GrafanaDashboardSpec) {
 	*out = *in
 	in.GrafanaCommonSpec.DeepCopyInto(&out.GrafanaCommonSpec)
 	in.GrafanaContentSpec.DeepCopyInto(&out.GrafanaContentSpec)
+	if in.Variables != nil {
+		in, out := &in.Variables, &out.Variables
+		*out = make([]GrafanaContentVariable, len(*in))
+		copy(*out, *in)
+	}
 	if in.Plugins != nil {
 		in, out := &in.Plugins, &out.Plugins
 		*out = make(PluginList, len(*in))

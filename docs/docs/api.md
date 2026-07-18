@@ -4014,14 +4014,6 @@ Can be any string consisting of alphanumeric characters, - and _ with a maximum 
           authorization options for model from url<br/>
         </td>
         <td>false</td>
-      </tr><tr>
-        <td><b><a href="#grafanalibrarypanelspecvariablesindex">variables</a></b></td>
-        <td>[]object</td>
-        <td>
-          overrides the default (current) value of named template variables in the dashboard model.
-Variables that are not present in the model are ignored.<br/>
-        </td>
-        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -4837,43 +4829,6 @@ More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/nam
           Specify whether the Secret or its key must be defined<br/>
         </td>
         <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### GrafanaLibraryPanel.spec.variables[index]
-<sup><sup>[↩ Parent](#grafanalibrarypanelspec)</sup></sup>
-
-
-
-GrafanaContentVariable overrides the default (current) value of a named template
-variable (templating.list[]) in the resolved dashboard model.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          Name of the template variable to override, matching templating.list[].name in the model.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>value</b></td>
-        <td>string</td>
-        <td>
-          Value is the new default value. For datasource variables this is the datasource UID or
-name; for query, custom, constant and textbox variables it is the selected value.
-Multi-value (multi-select) variables are collapsed to this single value.<br/>
-        </td>
-        <td>true</td>
       </tr></tbody>
 </table>
 
