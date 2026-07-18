@@ -45,6 +45,11 @@ type GrafanaDashboardSpec struct {
 	// +optional
 	FolderRef string `json:"folderRef,omitempty"`
 
+	// overrides the default (current) value of named template variables in the dashboard model.
+	// Variables that are not present in the model are ignored.
+	// +optional
+	Variables []GrafanaContentVariable `json:"variables,omitempty"`
+
 	// plugins
 	// +optional
 	Plugins PluginList `json:"plugins,omitempty"`
@@ -144,7 +149,15 @@ func (in *GrafanaDashboard) GrafanaContentStatus() *GrafanaContentStatus {
 	return &in.Status.GrafanaContentStatus
 }
 
-var _ GrafanaContentResource = &GrafanaDashboard{}
+// ContentVariables implements GrafanaContentVariableOverrider
+func (in *GrafanaDashboard) ContentVariables() []GrafanaContentVariable {
+	return in.Spec.Variables
+}
+
+var (
+	_ GrafanaContentResource          = &GrafanaDashboard{}
+	_ GrafanaContentVariableOverrider = &GrafanaDashboard{}
+)
 
 func (in *GrafanaDashboardList) Exists(namespace, name string) bool {
 	for _, item := range in.Items {
