@@ -76,6 +76,8 @@ manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) $(YQ) ## Generate WebhookConfiguration
 	$(YQ) -i '.spec.versions[] |= del(.schema.openAPIV3Schema.properties.spec.properties.deployment.properties | .. | select(has("description")).description)' $(GRAFANA_CRD_PATH)
 	@# Append the default Grafana version in CRD field description
 	$(YQ) -i '.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.version.description += "\ndefault: $(GRAFANA_VERSION)"' $(GRAFANA_CRD_PATH)
+	@# Remove gateway api dev comments
+	perl -i -0pe "s{\s*<gateway:util:excludeFromCRD>.*?</gateway:util:excludeFromCRD>}{}gms" $(GRAFANA_CRD_PATH)
 
 	@# Replace manifests and roles in Helm chart
 	mkdir -p deploy/helm/grafana-operator/files/crds
@@ -355,6 +357,7 @@ prep-release: $(YQ)
 	sed -i.bak 's/--version 5.*/--version $(VERSION)/g' README.md
 	sed -i.bak 's/^VERSION ?= 5.*/VERSION ?= $(VERSION)/g' Makefile
 	grep -q "$(GRAFANA_VERSION)" docs/docs/versioning.md || sed -E -i.bak 's/\|-\|-\|/|-|-|\n| \`v$(VERSION)\` | \`$(GRAFANA_VERSION)\` |/' docs/docs/versioning.md
+	go run ./main.go --help > docs/docs/configuration/help.txt
 	$(YQ) -i '.images[0].newTag="v$(VERSION)"' deploy/kustomize/base/kustomization.yaml
 	$(YQ) -i '(select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select (.name == "RELATED_IMAGE_GRAFANA")).value="$(GRAFANA_IMAGE):$(GRAFANA_VERSION)"' config/manager/manager.yaml
 	make helm-docs
