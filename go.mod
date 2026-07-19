@@ -29,7 +29,7 @@ require (
 	k8s.io/client-go v0.36.2
 	oras.land/oras-go/v2 v2.6.2
 	sigs.k8s.io/controller-runtime v0.24.1
-	sigs.k8s.io/gateway-api v1.6.0
+	sigs.k8s.io/gateway-api v1.6.1
 	sigs.k8s.io/kustomize/kyaml v0.21.1
 )
 
