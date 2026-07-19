@@ -54,6 +54,10 @@ clusterDomain: ""
 # Useful when you want to either lower or raise the duration between reconciliations.
 defaultResyncPeriod: 10m
 
+# -- Sets the GOMEMLIMIT variable to a percentage of either the CGroup (v2 or v1) with fallback to the System.
+# Results in less GC cycles when there's memory to spare and more when nearing the limit to reduce OOM kills.
+gomemlimitRatio: "0.9"
+
 # -- Maximum number of concurrent reconciles per Custom Resource.
 maxConcurrentReconciles: 1
 

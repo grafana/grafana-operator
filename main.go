@@ -92,6 +92,7 @@ var operatorConfig struct {
 	PprofAddr               string        `name:"pprof-addr"                                                                help:"The address to expose the pprof server. Empty string disables the pprof server."`
 	EnableLeaderElection    bool          `name:"leader-elect"              default:"false" env:"ENABLE_LEADER_ELECTION"    help:"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager."`
 	MaxConcurrentReconciles int           `name:"max-concurrent-reconciles" default:"1"     env:"MAX_CONCURRENT_RECONCILES" help:"Maximum number of concurrent reconciles for dashboard, datasource, folder controllers."`
+	MemLimitRatio           float64       `name:"gomemlimit-ratio"          default:"0.9"   env:"GOMEMLIMIT_RATIO"          help:"The limit defaults to 90% of either the CGroup (v2 or v1) with fallback to the System. Results in less GC cycles when there's memory to spare and more when nearing the limit to reduce OOM kills."`
 	ResyncPeriod            time.Duration `name:"default-resync-period"     default:"10m"   env:"DEFAULT_RESYNC_PERIOD"     help:"Controls the default .spec.resyncPeriod when undefined on CRs."`
 
 	ZapDevel           bool   `name:"zap-devel"            default:"false"                                                         help:"Development Mode defaults(encoder=consoleEncoder,logLevel=Debug,stackTraceLevel=Warn)"`
@@ -201,8 +202,18 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
-	// Optimize Go runtime based on CGroup limits (GOMEMLIMIT, sets a soft memory limit for the runtime)
-	memlimit.SetGoMemLimitWithOpts(memlimit.WithLogger(slogger)) //nolint:errcheck
+	// Optimize GC cycles by setting and periodically updating GOMEMLIMIT.
+	memlimit.SetGoMemLimitWithOpts( //nolint:errcheck
+		memlimit.WithRatio(operatorConfig.MemLimitRatio),
+		memlimit.WithRefreshInterval(1*time.Minute),
+		memlimit.WithProvider(
+			memlimit.ApplyFallback(
+				memlimit.FromCgroup,
+				memlimit.FromSystem,
+			),
+		),
+		memlimit.WithLogger(slogger),
+	)
 
 	// Determine LeaderElectionID from
 	leHash := sha256.New()
