@@ -483,6 +483,31 @@ spec:
                         x-kubernetes-map-type: atomic
                     type: object
                 type: object
+              variables:
+                description: |-
+                  overrides the default (current) value of named template variables in the dashboard model.
+                  Variables that are not present in the model are ignored.
+                items:
+                  description: |-
+                    GrafanaContentVariable overrides the default (current) value of a named template
+                    variable (templating.list[]) in the resolved dashboard model.
+                  properties:
+                    name:
+                      description: Name of the template variable to override, matching
+                        templating.list[].name in the model.
+                      minLength: 1
+                      type: string
+                    value:
+                      description: |-
+                        Value is the new default value. For datasource variables this is the datasource UID or
+                        name; for query, custom, constant and textbox variables it is the selected value.
+                        Multi-value (multi-select) variables are collapsed to this single value.
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
             required:
             - instanceSelector
             type: object

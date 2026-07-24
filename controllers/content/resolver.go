@@ -5,14 +5,17 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
+	"sync"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
 	"github.com/grafana/grafana-operator/v5/controllers/content/fetchers"
 	"github.com/grafana/grafana-operator/v5/embeds"
+	"github.com/itchyny/gojq"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -196,6 +199,99 @@ func (h *Resolver) getReferencedValue(ctx context.Context, cr v1beta1.GrafanaCon
 	return "", "", fmt.Errorf("source couldn't be parsed source: %s", source)
 }
 
+// variableOverrideScript sets the template variable named $name to $value and reconciles its
+// options[] so the value is selected and valid. The type guards leave dashboards that omit or
+// reshape these fields untouched instead of erroring.
+const variableOverrideScript = `
+def override($v): {selected: true, text: $v, value: $v};
+
+def reconcileOptions($v):
+  if (.options | type) != "array" then .
+  else
+    (.options |= map(if type == "object" then .selected = (.value == $v) else . end))
+    | if any(.options[]; type == "object" and .value == $v) then .
+      else .options = [override($v)] + .options
+      end
+  end;
+
+if (.templating | type) == "object" and (.templating.list | type) == "array"
+then .templating.list |= map(
+  if type == "object" and .name == $name
+  then .current = override($value) | reconcileOptions($value)
+  else .
+  end)
+else .
+end`
+
+// variableOverrideCode compiles variableOverrideScript once; the script is a constant, so a failure
+// here is a bug in this package rather than something a user can provoke.
+var variableOverrideCode = sync.OnceValues(func() (*gojq.Code, error) {
+	query, err := gojq.Parse(variableOverrideScript)
+	if err != nil {
+		return nil, fmt.Errorf("parsing variable override script: %w", err)
+	}
+
+	code, err := gojq.Compile(query, gojq.WithVariables([]string{"$name", "$value"}))
+	if err != nil {
+		return nil, fmt.Errorf("compiling variable override script: %w", err)
+	}
+
+	return code, nil
+})
+
+// contentVariables returns the template variable overrides declared by the resource, or nil for
+// content resources that have no variables to override.
+func (h *Resolver) contentVariables() []v1beta1.GrafanaContentVariable {
+	overrider, ok := h.resource.(v1beta1.GrafanaContentVariableOverrider)
+	if !ok {
+		return nil
+	}
+
+	return overrider.ContentVariables()
+}
+
+// overrideVariables sets the default (current) value of named template variables in the content model.
+func (h *Resolver) overrideVariables(contentModel map[string]any) (map[string]any, error) {
+	variables := h.contentVariables()
+	if len(variables) == 0 {
+		return contentModel, nil
+	}
+
+	code, err := variableOverrideCode()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range variables {
+		contentModel, err = applyVariableOverride(code, contentModel, v)
+		if err != nil {
+			return nil, fmt.Errorf("overriding template variable %q: %w", v.Name, err)
+		}
+	}
+
+	return contentModel, nil
+}
+
+// applyVariableOverride runs variableOverrideScript for a single override. The script has no
+// generators at the top level, so it always yields exactly one model.
+func applyVariableOverride(code *gojq.Code, contentModel map[string]any, v v1beta1.GrafanaContentVariable) (map[string]any, error) {
+	result, ok := code.Run(contentModel, v.Name, v.Value).Next()
+	if !ok {
+		return nil, errors.New("script returned no result")
+	}
+
+	if err, ok := result.(error); ok {
+		return nil, fmt.Errorf("evaluating script: %w", err)
+	}
+
+	model, ok := result.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("script returned %T, expected a json object", result)
+	}
+
+	return model, nil
+}
+
 // getContentModel resolves datasources, updates uid (if needed) and converts raw json to type grafana client accepts
 func (h *Resolver) getContentModel(contentJSON []byte) (map[string]any, string, error) {
 	contentJSON, err := h.resolveDatasources(contentJSON)
@@ -205,10 +301,22 @@ func (h *Resolver) getContentModel(contentJSON []byte) (map[string]any, string, 
 
 	hash := sha256.New()
 	hash.Write(contentJSON)
+	// Variable overrides change the model after it is parsed, so fold them into the hash explicitly.
+	for _, v := range h.contentVariables() {
+		hash.Write([]byte(v.Name))
+		hash.Write([]byte{0})
+		hash.Write([]byte(v.Value))
+		hash.Write([]byte{0})
+	}
 
 	var contentModel map[string]any
 
 	err = json.Unmarshal(contentJSON, &contentModel)
+	if err != nil {
+		return map[string]any{}, "", err
+	}
+
+	contentModel, err = h.overrideVariables(contentModel)
 	if err != nil {
 		return map[string]any{}, "", err
 	}
