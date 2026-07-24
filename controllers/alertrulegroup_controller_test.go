@@ -311,7 +311,7 @@ var _ = Describe("AlertRulegroup Reconciler: folder fallback diagnostics", func(
 		require.NoError(t, err)
 
 		_, err = alertReconciler.Reconcile(testCtx, alertReq)
-		require.ErrorContains(t, err, "legacy title fallback")
+		require.ErrorContains(t, err, "UID was inferred")
 
 		err = cl.Get(testCtx, alertReq.NamespacedName, alertRuleGroup)
 		require.NoError(t, err)
