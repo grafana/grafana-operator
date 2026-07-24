@@ -238,6 +238,7 @@ type GrafanaStatus struct {
 	Folders               NamespacedResourceList `json:"folders,omitempty"`
 	LibraryPanels         NamespacedResourceList `json:"libraryPanels,omitempty"`
 	MuteTimings           NamespacedResourceList `json:"muteTimings,omitempty"`
+	Silences              NamespacedResourceList `json:"silences,omitempty"`
 	NotificationTemplates NamespacedResourceList `json:"notificationTemplates,omitempty"`
 	Manifests             NamespacedResourceList `json:"manifests,omitempty"`
 	Version               string                 `json:"version,omitempty"`
@@ -260,6 +261,8 @@ func (in *GrafanaStatus) StatusList(cr client.Object) (*NamespacedResourceList, 
 		return &in.LibraryPanels, "libraryPanels", nil
 	case *GrafanaMuteTiming:
 		return &in.MuteTimings, "muteTimings", nil
+	case *GrafanaSilence:
+		return &in.Silences, "silences", nil
 	case *GrafanaNotificationTemplate:
 		return &in.NotificationTemplates, "notificationTemplates", nil
 	case *GrafanaManifest:
