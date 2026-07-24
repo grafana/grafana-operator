@@ -195,7 +195,7 @@ func getFolderUID(ctx context.Context, cl client.Client, ref v1beta1.FolderRefer
 	}
 
 	if mismatch := meta.FindStatusCondition(folder.Status.Conditions, conditionFolderUIDMismatch); mismatch != nil && mismatch.Status == metav1.ConditionTrue {
-		setNoMatchingFolder(ref.Conditions(), ref.GetGeneration(), mismatch.Reason, "Unalbe to apply resource to folder as UID was inferred. See folder resource for more details")
+		setNoMatchingFolder(ref.Conditions(), ref.GetGeneration(), mismatch.Reason, "Unable to synchronize resource, the uid of the folder was inferred. See the GrafanaFolder resource for more details")
 		return "", errors.New(mismatch.Message)
 	}
 
