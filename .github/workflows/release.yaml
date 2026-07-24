@@ -126,7 +126,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4
+        uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -163,7 +163,7 @@ jobs:
           persist-credentials: false
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4
+        uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -247,7 +247,7 @@ jobs:
         platform: [linux/arm64, linux/amd64]
     steps:
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4
+        uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
