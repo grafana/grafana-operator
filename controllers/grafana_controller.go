@@ -336,7 +336,7 @@ func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 
 	b := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.Grafana{}, builder.WithPredicates(ignoreStatusUpdates())).
-		Owns(&appsv1.Deployment{}, builder.WithPredicates(ignoreStatusUpdates())).
+		Owns(&appsv1.Deployment{}, builder.WithPredicates(ignoreStatusUpdates(exceptDeploymentReplicas()))).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.PersistentVolumeClaim{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&corev1.Secret{}).

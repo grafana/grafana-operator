@@ -242,6 +242,8 @@ type GrafanaStatus struct {
 	Manifests             NamespacedResourceList `json:"manifests,omitempty"`
 	Version               string                 `json:"version,omitempty"`
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
+	Replicas              int32                  `json:"replicas,omitempty"`
+	Selector              string                 `json:"selector,omitempty"`
 }
 
 func (in *GrafanaStatus) StatusList(cr client.Object) (*NamespacedResourceList, string, error) {
@@ -278,6 +280,7 @@ func (in *GrafanaStatus) StatusList(cr client.Object) (*NamespacedResourceList, 
 // +kubebuilder:printcolumn:name="Stage status",type="string",JSONPath=".status.stageStatus",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 // +kubebuilder:resource:categories={all,grafana-operator}
+// +kubebuilder:subresource:scale:specpath=.spec.deployment.spec.replicas,statuspath=.status.replicas,selectorpath=.status.selector
 type Grafana struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

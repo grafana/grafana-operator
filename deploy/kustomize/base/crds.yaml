@@ -13287,6 +13287,11 @@ spec:
                 items:
                   type: string
                 type: array
+              replicas:
+                format: int32
+                type: integer
+              selector:
+                type: string
               serviceaccounts:
                 items:
                   type: string
@@ -13304,6 +13309,10 @@ spec:
     served: true
     storage: true
     subresources:
+      scale:
+        labelSelectorPath: .status.selector
+        specReplicasPath: .spec.deployment.spec.replicas
+        statusReplicasPath: .status.replicas
       status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1

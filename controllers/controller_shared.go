@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/resources"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -380,12 +381,40 @@ func removeSuspended(conditions *[]metav1.Condition) {
 	meta.RemoveStatusCondition(conditions, conditionSuspended)
 }
 
-func ignoreStatusUpdates() predicate.Predicate {
+type IgnoreStatusUpdatesOpt func(oldObj, newObj client.Object) bool
+
+func ignoreStatusUpdates(opts ...IgnoreStatusUpdatesOpt) predicate.Predicate {
 	return predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			// Ignore updates to CR status in which case metadata.Generation does not change
-			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
+			if e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration() {
+				return true
+			}
+
+			for _, opt := range opts {
+				if opt(e.ObjectOld, e.ObjectNew) {
+					return true
+				}
+			}
+
+			return false
 		},
+	}
+}
+
+func exceptDeploymentReplicas() IgnoreStatusUpdatesOpt {
+	return func(oldObj, newObj client.Object) bool {
+		oldDeployment, ok := oldObj.(*appsv1.Deployment)
+		if !ok {
+			return false
+		}
+
+		newDeployment, ok := newObj.(*appsv1.Deployment)
+		if !ok {
+			return false
+		}
+
+		return oldDeployment.Status.Replicas != newDeployment.Status.Replicas
 	}
 }
 

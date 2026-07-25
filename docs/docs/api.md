@@ -29080,6 +29080,22 @@ GrafanaStatus defines the observed state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>replicas</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>selector</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>serviceaccounts</b></td>
         <td>[]string</td>
         <td>
