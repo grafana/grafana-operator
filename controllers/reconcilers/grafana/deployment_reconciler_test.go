@@ -11,8 +11,10 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -259,5 +261,96 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 
 		require.NoError(t, err)
 		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+	})
+})
+
+var _ = Describe("Deployment reconciler scale subresource", func() {
+	t := GinkgoT()
+
+	It("sets status.selector to the deployment's pod selector", func() {
+		ctx := context.Background()
+
+		cr := &v1beta1.Grafana{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "deploy-scale-selector-grafana",
+			},
+		}
+
+		err := cl.Create(ctx, cr)
+		require.NoError(t, err)
+
+		r := NewDeploymentReconciler(cl, false)
+		vars := &v1beta1.OperatorReconcileVars{}
+
+		status, err := r.Reconcile(context.Background(), cr, vars, scheme.Scheme)
+
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+		assert.Equal(t, fmt.Sprintf("app=%s", cr.Name), cr.Status.Selector)
+	})
+
+	It("sets status.replicas from the reconciled deployment", func() {
+		ctx := context.Background()
+
+		cr := &v1beta1.Grafana{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "deploy-scale-replicas-grafana",
+			},
+		}
+
+		err := cl.Create(ctx, cr)
+		require.NoError(t, err)
+
+		r := NewDeploymentReconciler(cl, false)
+		vars := &v1beta1.OperatorReconcileVars{}
+
+		status, err := r.Reconcile(context.Background(), cr, vars, scheme.Scheme)
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+
+		deployment := &appsv1.Deployment{}
+		err = cl.Get(ctx, types.NamespacedName{Namespace: cr.Namespace, Name: cr.Name + "-deployment"}, deployment)
+		require.NoError(t, err)
+
+		assert.Equal(t, deployment.Status.Replicas, cr.Status.Replicas)
+	})
+
+	It("propagates spec.deployment.spec.replicas to the deployment", func() {
+		ctx := context.Background()
+
+		replicas := int32(3)
+
+		cr := &v1beta1.Grafana{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "deploy-scale-propagate-grafana",
+			},
+			Spec: v1beta1.GrafanaSpec{
+				Deployment: &v1beta1.DeploymentV1{
+					Spec: v1beta1.DeploymentV1Spec{
+						Replicas: &replicas,
+					},
+				},
+			},
+		}
+
+		err := cl.Create(ctx, cr)
+		require.NoError(t, err)
+
+		r := NewDeploymentReconciler(cl, false)
+		vars := &v1beta1.OperatorReconcileVars{}
+
+		status, err := r.Reconcile(context.Background(), cr, vars, scheme.Scheme)
+		require.NoError(t, err)
+		assert.Equal(t, v1beta1.OperatorStageResultSuccess, status)
+
+		deployment := &appsv1.Deployment{}
+		err = cl.Get(ctx, types.NamespacedName{Namespace: cr.Namespace, Name: cr.Name + "-deployment"}, deployment)
+		require.NoError(t, err)
+
+		require.NotNil(t, deployment.Spec.Replicas)
+		assert.Equal(t, replicas, *deployment.Spec.Replicas)
 	})
 })
