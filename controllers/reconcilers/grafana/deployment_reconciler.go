@@ -17,6 +17,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -99,7 +100,18 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 		return v1beta1.OperatorStageResultFailed, err
 	}
 
+	selector := labels.SelectorFromValidatedSet(getSelectorLabels(cr))
+
+	cr.Status.Replicas = deployment.Status.Replicas
+	cr.Status.Selector = selector.String()
+
 	return v1beta1.OperatorStageResultSuccess, nil
+}
+
+func getSelectorLabels(cr *v1beta1.Grafana) map[string]string {
+	return map[string]string{
+		appLabel: cr.Name,
+	}
 }
 
 func getResources() corev1.ResourceRequirements {
@@ -347,9 +359,7 @@ func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runti
 
 	return appsv1.DeploymentSpec{
 		Selector: &metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				appLabel: cr.Name,
-			},
+			MatchLabels: getSelectorLabels(cr),
 		},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{

@@ -37,13 +37,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	simplejson "github.com/bitly/go-simplejson"
-	"github.com/blang/semver/v4"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/provisioning"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
-	"github.com/grafana/grafana-operator/v5/controllers/config"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -189,7 +187,7 @@ func (r *GrafanaContactPointReconciler) reconcileWithInstance(ctx context.Contex
 		return fmt.Errorf("building grafana client: %w", err)
 	}
 
-	remoteReceivers, err := r.getReceivers(gClient, instance, cr)
+	remoteReceivers, err := r.getReceivers(gClient, cr)
 	if err != nil {
 		return err
 	}
@@ -314,26 +312,7 @@ func (r *GrafanaContactPointReconciler) buildContactPointSettings(ctx context.Co
 	return allSettings, nil
 }
 
-func (r *GrafanaContactPointReconciler) getReceivers(gClient *genapi.GrafanaHTTPAPI, instance *v1beta1.Grafana, cr *v1beta1.GrafanaContactPoint) ([]*models.EmbeddedContactPoint, error) {
-	version, err := semver.Parse(instance.Status.Version)
-	if err != nil {
-		version = semver.MustParse(config.GrafanaVersion)
-	}
-
-	// Versions that do not support "name" parameter in GetContactpoints API calls
-	// E.g. Amazon Managed Grafana is still pinned to <10.4.6
-	rangeChecker := semver.MustParseRange(">=10.4.0 <=10.4.5")
-	hasOldAPI := rangeChecker(version)
-
-	switch {
-	case hasOldAPI:
-		return r.getReceiversFromList(gClient, cr)
-	default:
-		return r.getReceiversFromName(gClient, cr)
-	}
-}
-
-func (r *GrafanaContactPointReconciler) getReceiversFromName(gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaContactPoint) ([]*models.EmbeddedContactPoint, error) {
+func (r *GrafanaContactPointReconciler) getReceivers(gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaContactPoint) ([]*models.EmbeddedContactPoint, error) {
 	name := cr.NameFromSpecOrMeta()
 	params := provisioning.NewGetContactpointsParams().WithName(&name)
 
@@ -343,25 +322,6 @@ func (r *GrafanaContactPointReconciler) getReceiversFromName(gClient *genapi.Gra
 	}
 
 	return remote.Payload, nil
-}
-
-func (r *GrafanaContactPointReconciler) getReceiversFromList(gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaContactPoint) ([]*models.EmbeddedContactPoint, error) {
-	params := provisioning.NewGetContactpointsParams()
-
-	remote, err := gClient.Provisioning.GetContactpoints(params)
-	if err != nil {
-		return make([]*models.EmbeddedContactPoint, 0), fmt.Errorf("getting receivers in contactpoint list: %w", err)
-	}
-
-	out := []*models.EmbeddedContactPoint{}
-
-	for _, cp := range remote.Payload {
-		if cp.Name == cr.NameFromSpecOrMeta() {
-			out = append(out, cp)
-		}
-	}
-
-	return out, nil
 }
 
 func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, cr *v1beta1.GrafanaContactPoint) error {
@@ -380,7 +340,7 @@ func (r *GrafanaContactPointReconciler) finalize(ctx context.Context, cr *v1beta
 			return fmt.Errorf("building grafana client: %w", err)
 		}
 
-		remoteReceivers, err := r.getReceivers(gClient, &instance, cr)
+		remoteReceivers, err := r.getReceivers(gClient, cr)
 		if err != nil {
 			return err
 		}

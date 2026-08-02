@@ -17,12 +17,12 @@ GOLANGCI_LINT_VERSION = v2.12.2
 # renovate: datasource=github-tags depName=norwoodj/helm-docs
 HELM_DOCS_VERSION = 1.14.2
 # renovate: datasource=github-tags depName=helm/helm
-HELM_VERSION = v4.2.2
+HELM_VERSION = v4.2.3
 HUGO_VERSION = 0.151.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/kind
 KIND_VERSION = v0.32.0
 # renovate: datasource=github-tags depName=ko-build/ko
-KO_VERSION = 0.18.1
+KO_VERSION = 0.19.1
 # renovate: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.*)$
 KUSTOMIZE_VERSION = v5.8.1
 MUFFET_VERSION = v2.10.9

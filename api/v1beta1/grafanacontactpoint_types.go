@@ -104,7 +104,7 @@ type ContactPointReceiver struct {
 // GrafanaContactPoint is the Schema for the grafanacontactpoints API
 // +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
-// +kubebuilder:resource:categories={grafana-operator}
+// +kubebuilder:resource:categories={all,grafana-operator}
 type GrafanaContactPoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

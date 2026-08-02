@@ -71,7 +71,8 @@ Resource Types:
         <td><b>{{if .TypeKey}}<a href="#{{.TypeKey}}">{{.Name}}</a>{{else}}{{.Name}}{{end}}</b></td>
         <td>{{.Type}}</td>
         <td>
-          {{.Description}}<br/>
+          {{ $cleanDesc := regexReplaceAllLiteral "(?s)<gateway:util:excludeFromCRD>.*?</gateway:util:excludeFromCRD>" .Description "" -}}
+          {{$cleanDesc}}<br/>
           {{- if or .Schema.XValidations .Schema.Format .Schema.Enum .Schema.Default .Schema.Minimum .Schema.Maximum }}
           <br/>
           {{- end}}

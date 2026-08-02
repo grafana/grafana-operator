@@ -53,7 +53,7 @@ spec:
               {{- if and .Values.namespaceScope (eq .Values.watchNamespaces "") }}
               value: {{ include "grafana-operator.namespace" . }}
               {{ else }}
-              value: {{ .Values.watchNamespaces | quote }}
+              value: {{ tpl .Values.watchNamespaces . | quote }}
               {{- end }}
             - name: WATCH_NAMESPACE_SELECTOR
               value: {{ .Values.watchNamespaceSelector | quote }}
@@ -78,6 +78,7 @@ spec:
             - --leader-elect
             {{- end }}
             - --max-concurrent-reconciles={{ .Values.maxConcurrentReconciles }}
+            - --gomemlimit-ratio={{ .Values.gomemlimitRatio }}
           volumeMounts:
             - name: dashboards-dir
               mountPath: /tmp/dashboards

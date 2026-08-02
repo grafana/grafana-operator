@@ -3,6 +3,16 @@ title: Versioning
 weight: 60
 ---
 
+## Supported versions
+
+For Grafana, the operator intends to support only the last 3 major versions.
+
+For Kubernetes, we follow its [release schedule](https://kubernetes.io/releases/). Once a particular version reaches its EOL, we remove it from our test matrix.
+
+> Depending on a controller, the operator is likely to work fine with versions outside of those boundaries, but we do not guarantee that.
+
+## Default Grafana version
+
 The Grafana version when unspecified in `Grafana#spec.version`
 
 > Only versions that have changes around Grafana image tags are mentioned below.

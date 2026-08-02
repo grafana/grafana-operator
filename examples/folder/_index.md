@@ -28,6 +28,7 @@ spec:
 {{% alert title="Note" color="primary" %}}
 The folder reconciler attempts to take control over existing folders if a folder with the same name already exists and `.spec.uid` is _empty/absent_.
 This can lead to unpredictable behavior and will be removed in future versions.
+If other resources need to use `.spec.folderRef`, set `.spec.uid` on the `GrafanaFolder` so the referenced folder keeps a stable UID.
 Please take care to make sure any managed folders are created by the operator.
 {{% /alert %}}
 
