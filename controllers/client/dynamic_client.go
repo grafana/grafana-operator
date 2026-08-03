@@ -134,8 +134,7 @@ func (c *DynamicClient) Apply(ctx context.Context, obj *unstructured.Unstructure
 		return fmt.Errorf("fetching existing resource: %w", err)
 	}
 
-	// App Platform APIs enforce optimistic concurrency: an update without the
-	// current resourceVersion is rejected, so carry it over from the live object.
+	// Carry over the resource version to ensure the object will be accepted if other updates have been made
 	obj.SetResourceVersion(existing.GetResourceVersion())
 
 	if _, err := rc.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
