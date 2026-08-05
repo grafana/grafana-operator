@@ -205,6 +205,10 @@ tolerations: []
 # -- pod affinity
 affinity: {}
 
+# -- emptyDir options for dashboards-dir
+dashboardsDir:
+  emptyDir: {}
+
 # -- extra pod volumes
 extraVolumes: []
 
