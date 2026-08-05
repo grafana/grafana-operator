@@ -122,7 +122,7 @@ func (c *DynamicClient) Apply(ctx context.Context, obj *unstructured.Unstructure
 
 	rc := c.Resource(gvr).Namespace(c.NamespaceFor(obj))
 
-	_, err = rc.Get(ctx, obj.GetName(), metav1.GetOptions{})
+	existing, err := rc.Get(ctx, obj.GetName(), metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		_, err := rc.Create(ctx, obj, metav1.CreateOptions{})
 		if err != nil {
@@ -133,6 +133,9 @@ func (c *DynamicClient) Apply(ctx context.Context, obj *unstructured.Unstructure
 	} else if err != nil {
 		return fmt.Errorf("fetching existing resource: %w", err)
 	}
+
+	// Carry over the resource version to ensure the object will be accepted if other updates have been made
+	obj.SetResourceVersion(existing.GetResourceVersion())
 
 	if _, err := rc.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("updating resource: %w", err)
