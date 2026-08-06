@@ -110,7 +110,7 @@ spec:
       volumes:
         - name: dashboards-dir
           emptyDir:
-            {{- toYaml .Values.dashboardsDir.emptyDir | nindent 12 }}
+            {{- toYaml .Values.volumes.dashboards | nindent 12 }}
         - name: kubeauth-token-volume
           projected:
             sources:
