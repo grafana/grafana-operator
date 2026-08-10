@@ -104,7 +104,3 @@ Feel free to drop into our Grafana Operator discussions on:
 ## Contributing
 
 For more information on how to contribute to the operator look at [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=grafana/grafana-operator&type=date&legend=top-left)](https://www.star-history.com/#grafana/grafana-operator&type=date&legend=top-left)

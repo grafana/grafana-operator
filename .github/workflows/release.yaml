@@ -262,7 +262,7 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
         with:
-          cosign-release: "v2.6.4"
+          cosign-release: "v3.1.3"
 
       - name: Extract platform info
         id: platform-info
@@ -285,7 +285,7 @@ jobs:
           echo "SBOM: $SBOM"
 
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
         with:
           subject-name: "ghcr.io/${{ github.repository }}"
           subject-digest: ${{ steps.platform-info.outputs.DIGEST }}
@@ -315,7 +315,7 @@ jobs:
     steps:
       - name: Get secrets
         id: secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@e46fe1e9a2bf9e618bcf8d8d32f3a7381b45c06d # get-vault-secrets/v2.0.0
+        uses: grafana/shared-workflows/actions/get-vault-secrets@2e3743a1f8abfd3e921e53a7726ec0744c11bb01 # get-vault-secrets/v2.0.1
         with:
           repo_secrets: |
             QUAY_USERNAME=quay-io:username
