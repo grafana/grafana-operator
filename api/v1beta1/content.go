@@ -13,6 +13,19 @@ type GrafanaContentDatasource struct {
 	DatasourceName string `json:"datasourceName"`
 }
 
+// GrafanaContentVariable overrides the default (current) value of a named template
+// variable (templating.list[]) in the resolved dashboard model.
+type GrafanaContentVariable struct {
+	// Name of the template variable to override, matching templating.list[].name in the model.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// Value is the new default value. For datasource variables this is the datasource UID or
+	// name; for query, custom, constant and textbox variables it is the selected value.
+	// Multi-value (multi-select) variables are collapsed to this single value.
+	Value string `json:"value"`
+}
+
 type GrafanaContentEnv struct {
 	Name string `json:"name"`
 	// Inline env value
@@ -159,4 +172,11 @@ type GrafanaContentResource interface {
 	client.Object
 	GrafanaContentSpec() *GrafanaContentSpec
 	GrafanaContentStatus() *GrafanaContentStatus
+}
+
+// GrafanaContentVariableOverrider is implemented by content resources whose model carries template
+// variables (templating.list[]), so that only those resources take part in variable overriding.
+// +kubebuilder:object:generate=false
+type GrafanaContentVariableOverrider interface {
+	ContentVariables() []GrafanaContentVariable
 }
