@@ -509,8 +509,7 @@ func getReferencedValue(ctx context.Context, cl client.Client, namespace string,
 	return getConfigMapValue(ctx, cl, namespace, source.ConfigMapKeyRef)
 }
 
-// Add finalizer through a MergePatch
-// Avoids updating the entire object and only changes the finalizers
+// Adds finalizer if missing
 func addFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
 	if controllerutil.AddFinalizer(cr, grafanaFinalizer) {
 		finalizers := cr.GetFinalizers()
@@ -528,9 +527,7 @@ func addFinalizer(ctx context.Context, cl client.Client, cr client.Object) error
 	return nil
 }
 
-// Remove finalizer through a JSONPatch
-// Only removes our own entry, overwriting the whole array re-adds finalizers owned by others (e.g. foregroundDeletion)
-// when our copy of the object is out of date, which the API server rejects once the object is being deleted.
+// Removes finalizer if present
 func removeFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
 	idx := slices.Index(cr.GetFinalizers(), grafanaFinalizer)
 	if idx == -1 {
@@ -539,6 +536,9 @@ func removeFinalizer(ctx context.Context, cl client.Client, cr client.Object) er
 
 	controllerutil.RemoveFinalizer(cr, grafanaFinalizer)
 
+	// Here, we use a JSONPatch to avoid accidental attempts to re-add finalizers (owned by other controllers)
+	// due to stale controller-runtime's cache. - Such attempts would be refused by the API server (no new finalizers
+	// can be added if the object is being deleted).
 	patch := fmt.Sprintf(`[
 		{"op":"test","path":"/metadata/finalizers/%d","value":"%s"},
 		{"op":"remove","path":"/metadata/finalizers/%d"}
