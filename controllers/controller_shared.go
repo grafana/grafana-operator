@@ -512,9 +512,17 @@ func getReferencedValue(ctx context.Context, cl client.Client, namespace string,
 // Add finalizer through a MergePatch
 // Avoids updating the entire object and only changes the finalizers
 func addFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
-	// Only update when changed
 	if controllerutil.AddFinalizer(cr, grafanaFinalizer) {
-		return patchFinalizers(ctx, cl, cr)
+		finalizers := cr.GetFinalizers()
+
+		patch, err := json.Marshal(
+			map[string]any{"metadata": map[string]any{"finalizers": finalizers}},
+		)
+		if err != nil {
+			return err
+		}
+
+		return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 	}
 
 	return nil
@@ -538,19 +546,6 @@ func removeFinalizer(ctx context.Context, cl client.Client, cr client.Object) er
 	)
 
 	return cl.Patch(ctx, cr, client.RawPatch(types.JSONPatchType, []byte(patch)))
-}
-
-// Helper func for add/remove, avoid using directly
-func patchFinalizers(ctx context.Context, cl client.Client, cr client.Object) error {
-	crFinalizers := cr.GetFinalizers()
-
-	// Create patch using slice
-	patch, err := json.Marshal(map[string]any{"metadata": map[string]any{"finalizers": crFinalizers}})
-	if err != nil {
-		return err
-	}
-
-	return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 }
 
 func addAnnotation(ctx context.Context, cl client.Client, cr client.Object, key, value string) error {
