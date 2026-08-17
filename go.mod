@@ -22,7 +22,7 @@ require (
 	github.com/openshift/api v0.0.0-20251021211107-8c9accafe91d
 	github.com/prometheus/client_golang v1.24.1
 	github.com/spyzhov/ajson v0.9.6
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.0
 	github.com/testcontainers/testcontainers-go v0.44.0
 	k8s.io/api v0.36.3
 	k8s.io/apimachinery v0.36.3
