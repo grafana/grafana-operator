@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -722,3 +723,125 @@ func TestIsNotErrorType(t *testing.T) {
 		assert.Equal(t, want, got)
 	})
 }
+
+// Finalizer owned by somebody else. Kubernetes adds foregroundDeletion itself when a
+// resource is deleted with foreground propagation, which is how Argo CD prunes.
+const foreignFinalizer = "foregroundDeletion"
+
+var _ = Describe("Finalizer patches", func() {
+	newDashboard := func(name string, finalizers []string) *v1beta1.GrafanaDashboard {
+		t := GinkgoT()
+
+		cr := &v1beta1.GrafanaDashboard{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:  "default",
+				Name:       name,
+				Finalizers: finalizers,
+			},
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+					InstanceSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{"finalizer-test": "true"},
+					},
+				},
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
+			},
+		}
+
+		require.NoError(t, cl.Create(testCtx, cr))
+
+		return cr
+	}
+
+	cleanup := func(cr *v1beta1.GrafanaDashboard) {
+		DeferCleanup(func() {
+			t := GinkgoT()
+
+			live := &v1beta1.GrafanaDashboard{}
+
+			err := cl.Get(testCtx, client.ObjectKeyFromObject(cr), live)
+			if err != nil {
+				require.True(t, apierrors.IsNotFound(err), "unexpected error during cleanup: %v", err)
+				return
+			}
+
+			live.SetFinalizers(nil)
+			require.NoError(t, cl.Update(testCtx, live))
+
+			// Dropping the last finalizer already reaps an object under deletion
+			if err := cl.Delete(testCtx, live); err != nil {
+				require.True(t, apierrors.IsNotFound(err), "unexpected error during cleanup: %v", err)
+			}
+		})
+	}
+
+	setLiveFinalizers := func(cr *v1beta1.GrafanaDashboard, finalizers []string) {
+		t := GinkgoT()
+
+		live := &v1beta1.GrafanaDashboard{}
+		require.NoError(t, cl.Get(testCtx, client.ObjectKeyFromObject(cr), live))
+
+		live.SetFinalizers(finalizers)
+		require.NoError(t, cl.Update(testCtx, live))
+	}
+
+	liveFinalizers := func(cr *v1beta1.GrafanaDashboard) []string {
+		t := GinkgoT()
+
+		live := &v1beta1.GrafanaDashboard{}
+		require.NoError(t, cl.Get(testCtx, client.ObjectKeyFromObject(cr), live))
+
+		return live.GetFinalizers()
+	}
+
+	// Overwriting the whole array from the stale copy patches
+	// metadata.finalizers back to ["foregroundDeletion"], which the API server rejects
+	// with "no new finalizers can be added if the object is being deleted".
+	It("removes our finalizer when a foreign one disappeared after we read the object", func() {
+		t := GinkgoT()
+
+		cr := newDashboard("finalizer-stale-removal", []string{grafanaFinalizer, foreignFinalizer})
+		cleanup(cr)
+
+		stale := cr.DeepCopy()
+
+		require.NoError(t, cl.Delete(testCtx, cr))
+
+		setLiveFinalizers(cr, []string{grafanaFinalizer})
+
+		require.NoError(t, removeFinalizer(testCtx, cl, stale))
+
+		err := cl.Get(testCtx, client.ObjectKeyFromObject(cr), &v1beta1.GrafanaDashboard{})
+		assert.True(t, apierrors.IsNotFound(err), "expected the dashboard to be gone, got %v", err)
+
+		assert.NotContains(t, stale.GetFinalizers(), grafanaFinalizer, "caller's copy should be kept in sync")
+	})
+
+	It("leaves a foreign finalizer we never saw untouched", func() {
+		t := GinkgoT()
+
+		cr := newDashboard("finalizer-foreign-preserved", []string{grafanaFinalizer})
+		cleanup(cr)
+
+		stale := cr.DeepCopy()
+
+		setLiveFinalizers(cr, []string{grafanaFinalizer, foreignFinalizer})
+
+		require.NoError(t, cl.Delete(testCtx, cr))
+		require.NoError(t, removeFinalizer(testCtx, cl, stale))
+
+		got := liveFinalizers(cr)
+		assert.NotContains(t, got, grafanaFinalizer)
+		assert.Contains(t, got, foreignFinalizer)
+	})
+
+	It("is a no-op when our finalizer is already gone", func() {
+		t := GinkgoT()
+
+		cr := newDashboard("finalizer-already-removed", []string{foreignFinalizer})
+		cleanup(cr)
+
+		require.NoError(t, removeFinalizer(testCtx, cl, cr.DeepCopy()))
+		assert.Equal(t, []string{foreignFinalizer}, liveFinalizers(cr))
+	})
+})

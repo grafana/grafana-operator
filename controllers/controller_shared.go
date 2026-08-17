@@ -520,15 +520,24 @@ func addFinalizer(ctx context.Context, cl client.Client, cr client.Object) error
 	return nil
 }
 
-// Remove finalizer through a MergePatch
-// Avoids updating the entire object and only changes the finalizers
+// Remove finalizer through a JSONPatch
+// Only removes our own entry, overwriting the whole array re-adds finalizers owned by others (e.g. foregroundDeletion)
+// when our copy of the object is out of date, which the API server rejects once the object is being deleted.
 func removeFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
-	// Only update when changed
-	if controllerutil.RemoveFinalizer(cr, grafanaFinalizer) {
-		return patchFinalizers(ctx, cl, cr)
+	idx := slices.Index(cr.GetFinalizers(), grafanaFinalizer)
+	if idx == -1 {
+		return nil
 	}
 
-	return nil
+	controllerutil.RemoveFinalizer(cr, grafanaFinalizer)
+
+	patch := fmt.Sprintf(`[
+		{"op":"test","path":"/metadata/finalizers/%d","value":"%s"},
+		{"op":"remove","path":"/metadata/finalizers/%d"}
+		]`, idx, grafanaFinalizer, idx,
+	)
+
+	return cl.Patch(ctx, cr, client.RawPatch(types.JSONPatchType, []byte(patch)))
 }
 
 // Helper func for add/remove, avoid using directly
