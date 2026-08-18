@@ -17,10 +17,12 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -721,4 +723,45 @@ func TestIsNotErrorType(t *testing.T) {
 		got := IsNotErrorType[errTypeA](errB)
 		assert.Equal(t, want, got)
 	})
+}
+
+func TestRemoveFinalizer(t *testing.T) {
+	t.Parallel()
+
+	const extraFinalizer = "extraFinalizer"
+
+	cr := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "test",
+			Finalizers: []string{
+				grafanaFinalizer,
+				extraFinalizer,
+			},
+		},
+	}
+
+	ctx := context.Background()
+	cl := tk8s.GetFakeClient(t)
+
+	err := cl.Create(ctx, cr)
+	require.NoError(t, err)
+
+	err = removeFinalizer(ctx, cl, cr)
+	require.NoError(t, err)
+
+	// Make sure the finalizer is removed from the object
+	assert.NotContains(t, cr.GetFinalizers(), grafanaFinalizer)
+
+	// Fetch the CR from API-server to make sure the finalizer is gone there as well
+	cr.Finalizers = []string{}
+	key := tk8s.GetRequestKey(t, cr)
+
+	err = cl.Get(ctx, key, cr)
+	require.NoError(t, err)
+
+	want := []string{extraFinalizer}
+	got := cr.GetFinalizers()
+
+	assert.Equal(t, want, got)
 }

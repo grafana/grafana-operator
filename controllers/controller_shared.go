@@ -509,39 +509,43 @@ func getReferencedValue(ctx context.Context, cl client.Client, namespace string,
 	return getConfigMapValue(ctx, cl, namespace, source.ConfigMapKeyRef)
 }
 
-// Add finalizer through a MergePatch
-// Avoids updating the entire object and only changes the finalizers
+// Adds finalizer if missing
 func addFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
-	// Only update when changed
 	if controllerutil.AddFinalizer(cr, grafanaFinalizer) {
-		return patchFinalizers(ctx, cl, cr)
+		finalizers := cr.GetFinalizers()
+
+		patch, err := json.Marshal(
+			map[string]any{"metadata": map[string]any{"finalizers": finalizers}},
+		)
+		if err != nil {
+			return err
+		}
+
+		return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 	}
 
 	return nil
 }
 
-// Remove finalizer through a MergePatch
-// Avoids updating the entire object and only changes the finalizers
+// Removes finalizer if present
 func removeFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
-	// Only update when changed
-	if controllerutil.RemoveFinalizer(cr, grafanaFinalizer) {
-		return patchFinalizers(ctx, cl, cr)
+	idx := slices.Index(cr.GetFinalizers(), grafanaFinalizer)
+	if idx == -1 {
+		return nil
 	}
 
-	return nil
-}
+	controllerutil.RemoveFinalizer(cr, grafanaFinalizer)
 
-// Helper func for add/remove, avoid using directly
-func patchFinalizers(ctx context.Context, cl client.Client, cr client.Object) error {
-	crFinalizers := cr.GetFinalizers()
+	// Here, we use a JSONPatch to avoid accidental attempts to re-add finalizers (owned by other controllers)
+	// due to stale controller-runtime's cache. - Such attempts would be refused by the API server (no new finalizers
+	// can be added if the object is being deleted).
+	patch := fmt.Sprintf(`[
+		{"op":"test","path":"/metadata/finalizers/%d","value":"%s"},
+		{"op":"remove","path":"/metadata/finalizers/%d"}
+		]`, idx, grafanaFinalizer, idx,
+	)
 
-	// Create patch using slice
-	patch, err := json.Marshal(map[string]any{"metadata": map[string]any{"finalizers": crFinalizers}})
-	if err != nil {
-		return err
-	}
-
-	return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
+	return cl.Patch(ctx, cr, client.RawPatch(types.JSONPatchType, []byte(patch)))
 }
 
 func addAnnotation(ctx context.Context, cl client.Client, cr client.Object, key, value string) error {
