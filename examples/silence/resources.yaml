@@ -10,7 +10,7 @@ spec:
   comment: "Silencing high CPU noise during scheduled database maintenance"
   createdBy: "DevOps Team"
   startsAt: "2026-06-23T20:00:00Z"
-  endsAt: "2026-06-23T22:00:00Z"
+  endsAt: "2099-06-23T22:00:00Z"
   matchers:
     - name: alertname
       value: HighCPUUsage
