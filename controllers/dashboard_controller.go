@@ -612,7 +612,7 @@ func (r *GrafanaDashboardReconciler) matchesStateInGrafana(exists bool, model ma
 		return false, nil
 	}
 
-	remoteModel, ok := (remoteDashboard.GetPayload().Dashboard).(map[string]any)
+	remoteModel, ok := remoteDashboard.GetPayload().Dashboard.(map[string]any)
 	if !ok {
 		return false, fmt.Errorf("remote dashboard is not a valid object")
 	}
