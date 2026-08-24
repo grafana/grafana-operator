@@ -95,7 +95,22 @@ jobs:
           AUTHTOKEN: ${{ steps.get-github-app-token.outputs.token }}
         run: |
           cd helm-charts
-          "${CR_TOOL_PATH}/cr" index --config ../source/deploy/helm/cr.yaml --token "$AUTHTOKEN" --index-path "${CR_INDEX_PATH}" --package-path ../source/deploy/helm/ --push
+          "${CR_TOOL_PATH}/cr" index --config ../source/deploy/helm/cr.yaml --token "$AUTHTOKEN" --index-path "${CR_INDEX_PATH}" --package-path ../source/deploy/helm/
+
+      # Publish index.yaml to gh-pages via the GitHub GraphQL `createCommitOnBranch` mutation
+      # so the commit is signed by GitHub's web-flow key (shown as Verified). The cr tool's
+      # built-in `--push` produces an unsigned commit, which breaks for repositories with
+      # "Require signed commits" branch protection. See https://github.com/helm/chart-releaser/issues/625
+      # for upstream tracking of a `cr` flag that would make this workaround unnecessary.
+      - name: Publish index.yaml to gh-pages
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
+        with:
+          commit_message: "Update index.yaml for grafana-operator"
+          repo: grafana/helm-charts
+          branch: gh-pages
+          file_pattern: index.yaml
+        env:
+          GITHUB_TOKEN: ${{ env.AUTHTOKEN }}
 
   kustomize:
     runs-on: ubuntu-latest
