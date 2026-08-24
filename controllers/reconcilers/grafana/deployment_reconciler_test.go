@@ -56,41 +56,41 @@ func TestGetGrafanaImage(t *testing.T) {
 	}
 }
 
-func TestHashResourceVersions(t *testing.T) {
+func TestAggregateHash(t *testing.T) {
 	t.Run("empty list returns empty string", func(t *testing.T) {
-		result := hashResourceVersions(nil)
+		result := aggregateHash(nil)
 		assert.Empty(t, result)
 
-		result = hashResourceVersions([]string{})
+		result = aggregateHash([]string{})
 		assert.Empty(t, result)
 	})
 
 	t.Run("same inputs produce same hash", func(t *testing.T) {
-		versions := []string{"secret/db=100", "configmap/cfg=200"}
+		versions := []string{string([]byte{1, 2, 3}), string([]byte{4, 5, 6})}
 
-		hash1 := hashResourceVersions(versions)
-		hash2 := hashResourceVersions(versions)
+		hash1 := aggregateHash(versions)
+		hash2 := aggregateHash(versions)
 
 		assert.Equal(t, hash1, hash2)
 		assert.NotEmpty(t, hash1)
 	})
 
 	t.Run("different inputs produce different hashes", func(t *testing.T) {
-		hash1 := hashResourceVersions([]string{"secret/db=100"})
-		hash2 := hashResourceVersions([]string{"secret/db=101"})
+		hash1 := aggregateHash([]string{string([]byte{1, 2, 3}), string([]byte{4, 5, 6})})
+		hash2 := aggregateHash([]string{string([]byte{1, 2, 3})})
 
 		assert.NotEqual(t, hash1, hash2)
 	})
 
 	t.Run("order-independent: same entries in different order produce same hash", func(t *testing.T) {
-		hash1 := hashResourceVersions([]string{"secret/a=1", "configmap/b=2"})
-		hash2 := hashResourceVersions([]string{"configmap/b=2", "secret/a=1"})
+		hash1 := aggregateHash([]string{string([]byte{1, 2, 3}), string([]byte{4, 5, 6})})
+		hash2 := aggregateHash([]string{string([]byte{4, 5, 6}), string([]byte{1, 2, 3})})
 
 		assert.Equal(t, hash1, hash2)
 	})
 
 	t.Run("returns a valid hex string", func(t *testing.T) {
-		result := hashResourceVersions([]string{"secret/x=42"})
+		result := aggregateHash([]string{string([]byte{1, 2, 3})})
 		assert.Regexp(t, `^[0-9a-f]{64}$`, result)
 	})
 }
