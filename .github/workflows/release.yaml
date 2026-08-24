@@ -110,7 +110,7 @@ jobs:
           branch: gh-pages
           file_pattern: index.yaml
         env:
-          GITHUB_TOKEN: ${{ env.AUTHTOKEN }}
+          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
 
   kustomize:
     runs-on: ubuntu-latest
