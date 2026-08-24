@@ -36,6 +36,11 @@ Flags:
                                   Maximum number of concurrent reconciles for
                                   dashboard, datasource, folder controllers
                                   ($MAX_CONCURRENT_RECONCILES).
+      --gomemlimit-ratio=0.9      The limit defaults to 90% of either the
+                                  CGroup (v2 or v1) with fallback to the System.
+                                  Results in less GC cycles when there's memory
+                                  to spare and more when nearing the limit to
+                                  reduce OOM kills ($GOMEMLIMIT_RATIO).
       --default-resync-period=10m
                                   Controls the default .spec.resyncPeriod when
                                   undefined on CRs ($DEFAULT_RESYNC_PERIOD).
