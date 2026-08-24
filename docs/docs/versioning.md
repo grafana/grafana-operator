@@ -19,6 +19,7 @@ The Grafana version when unspecified in `Grafana#spec.version`
 
 | Operator Version | Default Grafana Image |
 |-|-|
+| `v5.25.0` | `13.1.3` |
 | `v5.24.0` | `13.0.1` |
 | `v5.23.0` | `13.0.1` |
 | `v5.22.1` | `12.4.1` |
