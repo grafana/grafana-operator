@@ -134,32 +134,22 @@ func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.Volume {
 		{
 			// Volume to mount the config file from a config map
 			Name: cm.Name,
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: cm.Name,
-					},
-				},
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				Name: cm.Name,
 			},
 		},
 		{
 			// Volume to store the logs
-			Name: config.GrafanaLogsVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
+			Name:     config.GrafanaLogsVolumeName,
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 		{
-			Name: config.GrafanaDataVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
+			Name:     config.GrafanaDataVolumeName,
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 		{
-			Name: config.GrafanaTmpVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
+			Name:     config.GrafanaTmpVolumeName,
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 	}
 
@@ -266,10 +256,8 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 				Name: config.GrafanaAdminUserEnvVar,
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: config.GrafanaAdminUserEnvVar,
+						Name: secret.Name,
+						Key:  config.GrafanaAdminUserEnvVar,
 					},
 				},
 			},
@@ -277,10 +265,8 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 				Name: config.GrafanaAdminPasswordEnvVar,
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: config.GrafanaAdminPasswordEnvVar,
+						Name: secret.Name,
+						Key:  config.GrafanaAdminPasswordEnvVar,
 					},
 				},
 			},
@@ -328,12 +314,10 @@ func getDefaultContainerSecurityContext(disableSecurityContext string, openshift
 
 func getReadinessProbe(cr *v1beta1.Grafana) *corev1.Probe {
 	return &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path:   GrafanaHealthEndpoint,
-				Port:   intstr.FromInt(GetGrafanaPort(cr)),
-				Scheme: corev1.URISchemeHTTP,
-			},
+		HTTPGet: &corev1.HTTPGetAction{
+			Path:   GrafanaHealthEndpoint,
+			Port:   intstr.FromInt(GetGrafanaPort(cr)),
+			Scheme: corev1.URISchemeHTTP,
 		},
 		TimeoutSeconds:   ReadinessProbeTimeoutSeconds,
 		PeriodSeconds:    ReadinessProbePeriodSeconds,

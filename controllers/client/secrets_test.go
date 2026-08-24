@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGetValueFromSecretKey(t *testing.T) {
@@ -18,18 +17,14 @@ func TestGetValueFromSecretKey(t *testing.T) {
 	)
 
 	emptySecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      "empty-secret",
-		},
-		Data: nil,
+		Namespace: namespace,
+		Name:      "empty-secret",
+		Data:      nil,
 	}
 
 	secretWithData := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      "secret",
-		},
+		Namespace: namespace,
+		Name:      "secret",
 		Data: map[string][]byte{
 			key: []byte(value),
 		},

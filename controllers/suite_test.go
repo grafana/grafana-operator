@@ -133,14 +133,12 @@ func createSharedTestCRs() {
 	By("Creating Grafana CRs. One Fake and one External")
 
 	dummy := &v1beta1.Grafana{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "dummy",
-			Labels: map[string]string{
-				"apply-failed":  "test",
-				"invalid-spec":  "test",
-				"loop-detected": "test",
-			},
+		Namespace: "default",
+		Name:      "dummy",
+		Labels: map[string]string{
+			"apply-failed":  "test",
+			"invalid-spec":  "test",
+			"loop-detected": "test",
 		},
 		Spec: v1beta1.GrafanaSpec{
 			Client: &v1beta1.GrafanaClient{TimeoutSeconds: new(1)},
@@ -152,14 +150,12 @@ func createSharedTestCRs() {
 	require.NoError(t, err)
 
 	external := &v1beta1.Grafana{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      grafanaName,
-			Labels: map[string]string{
-				"synchronized":       "test",
-				"matching-instances": "test",
-				"dashboards":         "grafana",
-			},
+		Namespace: "default",
+		Name:      grafanaName,
+		Labels: map[string]string{
+			"synchronized":       "test",
+			"matching-instances": "test",
+			"dashboards":         "grafana",
 		},
 		Spec: v1beta1.GrafanaSpec{
 			External: &v1beta1.External{
@@ -215,10 +211,8 @@ func createSharedTestCRs() {
 	By("Creating GrafanaFolder for testing")
 
 	appliedFolder := &v1beta1.GrafanaFolder{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "pre-existing",
-		},
+		Namespace: "default",
+		Name:      "pre-existing",
 		Spec: v1beta1.GrafanaFolderSpec{
 			GrafanaCommonSpec: commonSpecSynchronized,
 			CustomUID:         "synchronized",
@@ -238,10 +232,8 @@ func createSharedTestCRs() {
 	By("Creating GrafanaContactPoint for testing")
 
 	contactPoint := &v1beta1.GrafanaContactPoint{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "pre-existing",
-		},
+		Namespace: "default",
+		Name:      "pre-existing",
 		Spec: v1beta1.GrafanaContactPointSpec{
 			Name:              defaultReceiver,
 			GrafanaCommonSpec: commonSpecSynchronized,

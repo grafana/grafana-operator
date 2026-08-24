@@ -21,14 +21,10 @@ func TestGrafanaStatusListMuteTiming(t *testing.T) {
 
 func newMuteTiming(name string, editable bool) *GrafanaMuteTiming {
 	return &GrafanaMuteTiming{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       "GrafanaMuteTiming",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
+		APIVersion: APIVersion,
+		Kind:       "GrafanaMuteTiming",
+		Name:       name,
+		Namespace:  "default",
 		Spec: GrafanaMuteTimingSpec{
 			Editable: editable,
 			GrafanaCommonSpec: GrafanaCommonSpec{

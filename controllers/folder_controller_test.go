@@ -120,10 +120,8 @@ var _ = Describe("Folder reconciler", func() {
 		require.NoError(t, err)
 
 		folder := &v1beta1.GrafanaFolder{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      folderName,
-			},
+			Namespace: "default",
+			Name:      folderName,
 			Spec: v1beta1.GrafanaFolderSpec{
 				GrafanaCommonSpec: commonSpecSynchronized,
 			},
@@ -152,55 +150,51 @@ var _ = Describe("Folder reconciler", func() {
 			cr  *v1beta1.GrafanaFolder
 			r   GrafanaFolderReconciler
 			req ctrl.Request
-		}{}
-
-		folder.cr = &v1beta1.GrafanaFolder{
-			ObjectMeta: metav1.ObjectMeta{
+		}{
+			cr: &v1beta1.GrafanaFolder{
 				Namespace: "default",
 				Name:      "force-delete",
+				Spec: v1beta1.GrafanaFolderSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					CustomUID:         "force-delete",
+				},
 			},
-			Spec: v1beta1.GrafanaFolderSpec{
-				GrafanaCommonSpec: commonSpecSynchronized,
-				CustomUID:         "force-delete",
-			},
+			r: GrafanaFolderReconciler{Client: cl, Scheme: cl.Scheme()},
 		}
-		folder.r = GrafanaFolderReconciler{Client: cl, Scheme: cl.Scheme()}
 		folder.req = tk8s.GetRequest(t, folder.cr)
 
 		alertRuleGroup := struct {
 			cr  *v1beta1.GrafanaAlertRuleGroup
 			r   GrafanaAlertRuleGroupReconciler
 			req ctrl.Request
-		}{}
-
-		alertRuleGroup.cr = &v1beta1.GrafanaAlertRuleGroup{
-			ObjectMeta: metav1.ObjectMeta{
+		}{
+			cr: &v1beta1.GrafanaAlertRuleGroup{
 				Namespace: "default",
 				Name:      "force-delete",
-			},
-			Spec: v1beta1.GrafanaAlertRuleGroupSpec{
-				GrafanaCommonSpec: commonSpecSynchronized,
-				FolderRef:         folder.cr.Name,
-				Interval:          metav1.Duration{Duration: 60 * time.Second},
-				Rules: []v1beta1.AlertRule{
-					{
-						Title:     "TestRule",
-						UID:       "force-delete",
-						Condition: "A",
-						Data: []*v1beta1.AlertQuery{
-							{
-								RefID:         "A",
-								DatasourceUID: "__expr__",
-								Model:         &apiextensionsv1.JSON{Raw: []byte(`{"expression": "1", "refId": "A"}`)},
+				Spec: v1beta1.GrafanaAlertRuleGroupSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					FolderRef:         folder.cr.Name,
+					Interval:          metav1.Duration{Duration: 60 * time.Second},
+					Rules: []v1beta1.AlertRule{
+						{
+							Title:     "TestRule",
+							UID:       "force-delete",
+							Condition: "A",
+							Data: []*v1beta1.AlertQuery{
+								{
+									RefID:         "A",
+									DatasourceUID: "__expr__",
+									Model:         &apiextensionsv1.JSON{Raw: []byte(`{"expression": "1", "refId": "A"}`)},
+								},
 							},
+							ExecErrState: "Error",
+							NoDataState:  new("NoData"),
 						},
-						ExecErrState: "Error",
-						NoDataState:  new("NoData"),
 					},
 				},
 			},
+			r: GrafanaAlertRuleGroupReconciler{Client: cl, Scheme: cl.Scheme()},
 		}
-		alertRuleGroup.r = GrafanaAlertRuleGroupReconciler{Client: cl, Scheme: cl.Scheme()}
 		alertRuleGroup.req = tk8s.GetRequest(t, alertRuleGroup.cr)
 
 		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)

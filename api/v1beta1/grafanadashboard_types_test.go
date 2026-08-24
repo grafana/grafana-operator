@@ -21,10 +21,8 @@ func TestGrafanaStatusListDashboard(t *testing.T) {
 
 func newDashboard(name, uid string) *GrafanaDashboard {
 	return &GrafanaDashboard{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
+		Name:      name,
+		Namespace: "default",
 		Spec: GrafanaDashboardSpec{
 			GrafanaCommonSpec: GrafanaCommonSpec{
 				InstanceSelector: &metav1.LabelSelector{

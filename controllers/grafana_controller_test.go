@@ -23,10 +23,10 @@ func TestRemoveMissingCRs(t *testing.T) {
 	dashboards := v1beta1.GrafanaDashboardList{
 		Items: []v1beta1.GrafanaDashboard{
 			{
-				ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "present"},
+				Namespace: "default", Name: "present",
 			},
 			{
-				ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "unrelated-dashboard"},
+				Namespace: "default", Name: "unrelated-dashboard",
 			},
 		},
 	}
@@ -66,10 +66,8 @@ func TestGrafanaIndexing(t *testing.T) {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-grafana",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-grafana",
 		}
 		cr.Spec.SetContainers(containers)
 
@@ -92,10 +90,8 @@ func TestGrafanaIndexing(t *testing.T) {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-grafana",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-grafana",
 		}
 
 		cr.Spec.SetContainers(containers)
@@ -119,10 +115,8 @@ func TestGrafanaIndexing(t *testing.T) {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-grafana",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-grafana",
 		}
 
 		cr.Spec.SetContainers(containers)
@@ -145,10 +139,8 @@ func TestGrafanaIndexing(t *testing.T) {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-grafana",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-grafana",
 		}
 
 		cr.Spec.SetContainers(containers)
@@ -172,10 +164,8 @@ func TestGrafanaIndexing(t *testing.T) {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-grafana",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-grafana",
 		}
 
 		cr.Spec.SetContainers(containers)
@@ -195,10 +185,8 @@ func TestGrafanaIndexing(t *testing.T) {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-grafana",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-grafana",
 		}
 
 		cr.Spec.SetVolumes(volumes)
@@ -222,10 +210,8 @@ func TestGrafanaIndexing(t *testing.T) {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-grafana",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-grafana",
 		}
 
 		cr.Spec.SetContainers(containers)
@@ -264,10 +250,8 @@ func TestGrafanaIndexing(t *testing.T) {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-grafana",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-grafana",
 		}
 
 		cr.Spec.SetContainers(containers)

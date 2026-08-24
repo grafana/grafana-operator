@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -158,9 +157,7 @@ func TestIsUpdatedUID(t *testing.T) {
 			require.NoError(t, err)
 
 			cr := &v1beta1.GrafanaDashboard{
-				ObjectMeta: metav1.ObjectMeta{
-					UID: types.UID(tt.metaUID),
-				},
+				UID: types.UID(tt.metaUID),
 				Spec: v1beta1.GrafanaDashboardSpec{
 					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
 						CustomUID: tt.customUID,

@@ -76,9 +76,9 @@ func (r *fakeRegistry) pushArtifact(t *testing.T, repo, tag string, files map[st
 			Digest:    digest.Digest(emptyDigest),
 			Size:      int64(len(emptyJSON)),
 		},
-		Layers: layers,
+		Layers:        layers,
+		SchemaVersion: 2,
 	}
-	manifest.SchemaVersion = 2
 
 	manifestBytes, err := json.Marshal(manifest)
 	require.NoError(t, err)
@@ -142,9 +142,9 @@ func (r *fakeRegistry) pushImage(t *testing.T, repo, tag string, layers []map[st
 			Digest:    digest.Digest(emptyDigest),
 			Size:      int64(len(emptyJSON)),
 		},
-		Layers: descs,
+		Layers:        descs,
+		SchemaVersion: 2,
 	}
-	manifest.SchemaVersion = 2
 
 	manifestBytes, err := json.Marshal(manifest)
 	require.NoError(t, err)

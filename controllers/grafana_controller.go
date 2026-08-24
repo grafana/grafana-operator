@@ -493,10 +493,10 @@ func (r *GrafanaReconciler) requestsForChangeByField(indexKey string) handler.Ma
 
 		var reqs []reconcile.Request
 		for _, gr := range list.Items {
-			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
+			reqs = append(reqs, reconcile.Request{
 				Namespace: gr.Namespace,
 				Name:      gr.Name,
-			}})
+			})
 		}
 
 		return reqs

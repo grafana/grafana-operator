@@ -193,10 +193,8 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaDashboard{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "url-based-dashboard",
-			},
+			Namespace: "default",
+			Name:      "url-based-dashboard",
 			Spec: v1beta1.GrafanaDashboardSpec{
 				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 					InstanceSelector: &metav1.LabelSelector{
@@ -260,10 +258,8 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaDashboard{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "url-based-dashboard-drift",
-			},
+			Namespace: "default",
+			Name:      "url-based-dashboard-drift",
 			Spec: v1beta1.GrafanaDashboardSpec{
 				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 					InstanceSelector: &metav1.LabelSelector{
@@ -340,10 +336,8 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaDashboard{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "updates-shared-dashboard",
-			},
+			Namespace: "default",
+			Name:      "updates-shared-dashboard",
 			Spec: v1beta1.GrafanaDashboardSpec{
 				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 					InstanceSelector: &metav1.LabelSelector{
