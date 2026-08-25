@@ -36,7 +36,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -821,10 +820,10 @@ func (r *GrafanaDashboardReconciler) requestsForChangeByField(indexKey string) h
 
 		var reqs []reconcile.Request
 		for _, dashboard := range list.Items {
-			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
+			reqs = append(reqs, reconcile.Request{
 				Namespace: dashboard.Namespace,
 				Name:      dashboard.Name,
-			}})
+			})
 		}
 
 		return reqs

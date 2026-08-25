@@ -21,14 +21,10 @@ func TestGrafanaStatusListLibraryPanel(t *testing.T) {
 
 func newLibraryPanel(name, uid string) *GrafanaLibraryPanel {
 	return &GrafanaLibraryPanel{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       "GrafanaLibraryPanel",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
+		APIVersion: APIVersion,
+		Kind:       "GrafanaLibraryPanel",
+		Name:       name,
+		Namespace:  "default",
 		Spec: GrafanaLibraryPanelSpec{
 			GrafanaCommonSpec: GrafanaCommonSpec{
 				InstanceSelector: &metav1.LabelSelector{

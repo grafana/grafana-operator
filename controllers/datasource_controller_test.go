@@ -50,10 +50,8 @@ func TestDatasourceIndexing(t *testing.T) {
 
 	t.Run("indexSecretSource returns correct secret references", func(t *testing.T) {
 		ds := &v1beta1.GrafanaDatasource{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-datasource",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-datasource",
 			Spec: v1beta1.GrafanaDatasourceSpec{
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
@@ -84,10 +82,8 @@ func TestDatasourceIndexing(t *testing.T) {
 
 	t.Run("indexConfigMapSource returns correct configmap references", func(t *testing.T) {
 		ds := &v1beta1.GrafanaDatasource{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-datasource",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-datasource",
 			Spec: v1beta1.GrafanaDatasourceSpec{
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
@@ -118,10 +114,8 @@ func TestDatasourceIndexing(t *testing.T) {
 
 	t.Run("indexSecretSource returns empty slice when no secret references", func(t *testing.T) {
 		ds := &v1beta1.GrafanaDatasource{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-datasource",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-datasource",
 			Spec: v1beta1.GrafanaDatasourceSpec{
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
@@ -141,10 +135,8 @@ func TestDatasourceIndexing(t *testing.T) {
 
 	t.Run("indexConfigMapSource returns empty slice when no configmap references", func(t *testing.T) {
 		ds := &v1beta1.GrafanaDatasource{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-datasource",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-datasource",
 			Spec: v1beta1.GrafanaDatasourceSpec{
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
@@ -168,29 +160,23 @@ var _ = Describe("Datasource: substitute reference values", func() {
 
 	It("Correctly substitutes valuesFrom", func() {
 		cm := &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "ds-valuesfrom-configmap",
-			},
+			Namespace: "default",
+			Name:      "ds-valuesfrom-configmap",
 			Data: map[string]string{
 				"customTraceId": "substituted",
 			},
 		}
 		sc := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "ds-values-from-secret",
-			},
+			Namespace: "default",
+			Name:      "ds-values-from-secret",
 			StringData: map[string]string{
 				"PROMETHEUS_TOKEN": "secret_token",
 				"URL":              "https://demo.promlabs.com",
 			},
 		}
 		ds := &v1beta1.GrafanaDatasource{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "substitute-reference-values",
-			},
+			Namespace: "default",
+			Name:      "substitute-reference-values",
 			Spec: v1beta1.GrafanaDatasourceSpec{
 				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 					InstanceSelector: &metav1.LabelSelector{

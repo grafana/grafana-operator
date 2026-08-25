@@ -12,7 +12,6 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -85,10 +84,8 @@ func (r *IngressReconciler) deleteIngressIfNil(ctx context.Context, cr *v1beta1.
 	ingress := resources.GetGrafanaIngress(cr, scheme)
 
 	req := ctrl.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      ingress.Name,
-			Namespace: ingress.Namespace,
-		},
+		Name:      ingress.Name,
+		Namespace: ingress.Namespace,
 	}
 
 	err := r.client.Get(ctx, req.NamespacedName, ingress)
@@ -111,10 +108,8 @@ func (r *IngressReconciler) deleteHTTPRouteIfNil(ctx context.Context, cr *v1beta
 	route := resources.GetGrafanaHTTPRoute(cr, scheme)
 
 	req := ctrl.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      route.Name,
-			Namespace: route.Namespace,
-		},
+		Name:      route.Name,
+		Namespace: route.Namespace,
 	}
 
 	err := r.client.Get(ctx, req.NamespacedName, route)
@@ -186,10 +181,8 @@ func (r *IngressReconciler) deleteRouteIfNil(ctx context.Context, cr *v1beta1.Gr
 	route := resources.GetGrafanaRoute(cr, scheme)
 
 	req := ctrl.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      route.Name,
-			Namespace: route.Namespace,
-		},
+		Name:      route.Name,
+		Namespace: route.Namespace,
 	}
 
 	err := r.client.Get(ctx, req.NamespacedName, route)
@@ -378,12 +371,8 @@ func getHTTPRouteSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) gwapiv1.HTTPR
 	port := gwapiv1.PortNumber(GetGrafanaPort(cr)) // #nosec G115
 	backendRefs := []gwapiv1.HTTPBackendRef{
 		{
-			BackendRef: gwapiv1.BackendRef{
-				BackendObjectReference: gwapiv1.BackendObjectReference{
-					Name: gwapiv1.ObjectName(service.Name),
-					Port: &port,
-				},
-			},
+			Name: gwapiv1.ObjectName(service.Name),
+			Port: &port,
 		},
 	}
 	matches := []gwapiv1.HTTPRouteMatch{
@@ -424,19 +413,17 @@ func getIngressSpec(cr *v1beta1.Grafana, scheme *runtime.Scheme) networkingv1.In
 	return networkingv1.IngressSpec{
 		Rules: []networkingv1.IngressRule{
 			{
-				IngressRuleValue: networkingv1.IngressRuleValue{
-					HTTP: &networkingv1.HTTPIngressRuleValue{
-						Paths: []networkingv1.HTTPIngressPath{
-							{
-								Path:     "/",
-								PathType: &pathType,
-								Backend: networkingv1.IngressBackend{
-									Service: &networkingv1.IngressServiceBackend{
-										Name: service.Name,
-										Port: assignedPort,
-									},
-									Resource: nil,
+				HTTP: &networkingv1.HTTPIngressRuleValue{
+					Paths: []networkingv1.HTTPIngressPath{
+						{
+							Path:     "/",
+							PathType: &pathType,
+							Backend: networkingv1.IngressBackend{
+								Service: &networkingv1.IngressServiceBackend{
+									Name: service.Name,
+									Port: assignedPort,
 								},
+								Resource: nil,
 							},
 						},
 					},

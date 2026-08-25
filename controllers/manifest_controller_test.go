@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/require"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo/v2"
 )
@@ -17,10 +16,8 @@ var _ = Describe("Manifest reconciler", func() {
 
 	It("successfully creates playlist from manifest", func() {
 		cr := &v1beta1.GrafanaManifest{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "playlist-test",
-			},
+			Namespace: "default",
+			Name:      "playlist-test",
 			Spec: v1beta1.GrafanaManifestSpec{
 				GrafanaCommonSpec: commonSpecSynchronized,
 				Template: v1beta1.GrafanaManifestTemplate{

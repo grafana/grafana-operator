@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 )
@@ -100,10 +99,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 
 	It("sets SecretsHash and checksum/secrets annotation when referenced secrets exist", func() {
 		secret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-test-secret",
-			},
+			Namespace:  "default",
+			Name:       "deploy-secrets-hash-test-secret",
 			StringData: map[string]string{"password": "s3cr3t"},
 		}
 
@@ -125,10 +122,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-test-grafana",
-			},
+			Namespace: "default",
+			Name:      "deploy-secrets-hash-test-grafana",
 		}
 		cr.Spec.SetContainers(containers)
 
@@ -149,11 +144,9 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 		ctx := context.Background()
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-no-refs",
-			},
-			Spec: v1beta1.GrafanaSpec{},
+			Namespace: "default",
+			Name:      "deploy-secrets-hash-no-refs",
+			Spec:      v1beta1.GrafanaSpec{},
 		}
 
 		err := cl.Create(ctx, cr)
@@ -173,10 +166,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 		ctx := context.Background()
 
 		secret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-rotation-secret",
-			},
+			Namespace:  "default",
+			Name:       "deploy-secrets-hash-rotation-secret",
 			StringData: map[string]string{"password": "initial"},
 		}
 
@@ -195,10 +186,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-rotation-grafana",
-			},
+			Namespace: "default",
+			Name:      "deploy-secrets-hash-rotation-grafana",
 		}
 
 		cr.Spec.SetContainers(containers)
@@ -243,10 +232,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-missing-secret",
-			},
+			Namespace: "default",
+			Name:      "deploy-secrets-hash-missing-secret",
 		}
 
 		cr.Spec.SetContainers(containers)
@@ -271,10 +258,8 @@ var _ = Describe("Deployment reconciler scale subresource", func() {
 		ctx := context.Background()
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-scale-selector-grafana",
-			},
+			Namespace: "default",
+			Name:      "deploy-scale-selector-grafana",
 		}
 
 		err := cl.Create(ctx, cr)
@@ -294,10 +279,8 @@ var _ = Describe("Deployment reconciler scale subresource", func() {
 		ctx := context.Background()
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-scale-replicas-grafana",
-			},
+			Namespace: "default",
+			Name:      "deploy-scale-replicas-grafana",
 		}
 
 		err := cl.Create(ctx, cr)
@@ -323,10 +306,8 @@ var _ = Describe("Deployment reconciler scale subresource", func() {
 		replicas := int32(3)
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-scale-propagate-grafana",
-			},
+			Namespace: "default",
+			Name:      "deploy-scale-propagate-grafana",
 			Spec: v1beta1.GrafanaSpec{
 				Deployment: &v1beta1.DeploymentV1{
 					Spec: v1beta1.DeploymentV1Spec{

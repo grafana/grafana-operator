@@ -29,7 +29,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -357,10 +356,10 @@ func (r *GrafanaLibraryPanelReconciler) requestsForChangeByField(indexKey string
 
 		var reqs []reconcile.Request
 		for _, cr := range list.Items {
-			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
+			reqs = append(reqs, reconcile.Request{
 				Namespace: cr.Namespace,
 				Name:      cr.Name,
-			}})
+			})
 		}
 
 		return reqs

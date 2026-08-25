@@ -116,9 +116,9 @@ func init() {
 }
 
 func configureZap() (zap.Options, error) {
-	opts := zap.Options{}
-
-	opts.Development = operatorConfig.ZapDevel
+	opts := zap.Options{
+		Development: operatorConfig.ZapDevel,
+	}
 	switch operatorConfig.ZapEncoder {
 	case "json":
 		opts.NewEncoder = func(eco ...zap.EncoderConfigOption) zapcore.Encoder {
@@ -178,7 +178,8 @@ func configureZap() (zap.Options, error) {
 }
 
 func main() { //nolint:gocyclo
-	kong.Parse(&operatorConfig,
+	kong.Parse(
+		&operatorConfig,
 		kong.Name("grafana-operator"),
 		kong.UsageOnError(),
 		kong.ConfigureHelp(kong.HelpOptions{
