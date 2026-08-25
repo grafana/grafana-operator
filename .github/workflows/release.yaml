@@ -76,13 +76,15 @@ jobs:
           tag_name: grafana-operator-${{ env.HELM_RELEASE_VERSION }}
           token: ${{ steps.get-github-app-token.outputs.token }}
 
-      - name: Checkout helm-charts # zizmor: ignore[artipacked] required to push using chart releaser in last step
+      - name: Checkout helm-charts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           repository: grafana/helm-charts
           path: helm-charts
+          ref: gh-pages
           token: ${{ steps.get-github-app-token.outputs.token }}
+          persist-credentials: false
 
       - name: Configure Git for helm-charts
         run: |
@@ -90,12 +92,16 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
+      # cr performs changes in a separate worktree which isn't compatible with
+      # the push approach chosen so we use a temporary location instead and
+      # overwrite the resulting file
       - name: Update helm repo index.yaml
         env:
           AUTHTOKEN: ${{ steps.get-github-app-token.outputs.token }}
         run: |
           cd helm-charts
           "${CR_TOOL_PATH}/cr" index --config ../source/deploy/helm/cr.yaml --token "$AUTHTOKEN" --index-path "${CR_INDEX_PATH}" --package-path ../source/deploy/helm/
+          cp "${CR_INDEX_PATH}/index.yaml" index.yaml
 
       # Publish index.yaml to gh-pages via the GitHub GraphQL `createCommitOnBranch` mutation
       # so the commit is signed by GitHub's web-flow key (shown as Verified). The cr tool's
