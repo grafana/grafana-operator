@@ -20,7 +20,7 @@ HELM_DOCS_VERSION = 1.14.2
 HELM_VERSION = v4.2.4
 HUGO_VERSION = 0.151.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/kind
-KIND_VERSION = v0.32.0
+KIND_VERSION = v0.33.0
 # renovate: datasource=github-tags depName=ko-build/ko
 KO_VERSION = 0.19.1
 # renovate: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.*)$
