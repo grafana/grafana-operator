@@ -3,7 +3,7 @@ module github.com/grafana/grafana-operator/v5
 go 1.27.0
 
 require (
-	github.com/KimMachineGun/automemlimit v0.7.5
+	github.com/KimMachineGun/automemlimit v1.0.0
 	github.com/alecthomas/kong v1.16.1
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/blang/semver/v4 v4.0.0
