@@ -23,8 +23,8 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"uuid"
 
-	"github.com/google/uuid"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
