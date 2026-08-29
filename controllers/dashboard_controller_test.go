@@ -21,8 +21,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -300,7 +300,8 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 				Dashboard: model,
 				FolderUID: dash.Payload.Meta.FolderUID,
 				Overwrite: true,
-			})
+			},
+		)
 		require.NoError(t, err)
 
 		dash, err = gClient.Dashboards.GetDashboardByUID(uid)
@@ -520,7 +521,7 @@ func TestGrafanaDashboardReconcilerMatchesStateInGrafana(t *testing.T) {
 }
 
 func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testing.T) {
-	uid := uuid.NewString()
+	uid := uuid.New().String()
 
 	defaultPublicDashboard := dashboards.GetPublicDashboardOK{
 		Payload: &models.PublicDashboard{
@@ -580,7 +581,7 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 			name: "AccessToken changes should recreate",
 			changes: &models.PublicDashboardDTO{
 				UID:                  uid,
-				AccessToken:          uuid.NewString(),
+				AccessToken:          uuid.New().String(),
 				IsEnabled:            new(true),
 				AnnotationsEnabled:   new(false),
 				TimeSelectionEnabled: new(false),
@@ -610,7 +611,7 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 				AnnotationsEnabled:   new(false),
 				TimeSelectionEnabled: new(false),
 			},
-			annotations:  map[string]string{annotationSyncedPublicSharing: uuid.NewString()},
+			annotations:  map[string]string{annotationSyncedPublicSharing: uuid.New().String()},
 			wantMatch:    false,
 			wantRecreate: true,
 		},
