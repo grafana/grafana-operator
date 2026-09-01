@@ -152,6 +152,47 @@ func (c *DynamicClient) ApplyObject(ctx context.Context, obj runtime.Object) err
 	return c.Apply(ctx, out)
 }
 
+func (c *DynamicClient) get(ctx context.Context, gvr schema.GroupVersionResource, name, namespace string) (*unstructured.Unstructured, error) {
+	u, err := c.Resource(gvr).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get resource: %w", err)
+	}
+
+	return u, nil
+}
+
+func (c *DynamicClient) Get(ctx context.Context, apiVersion, kind, name, namespace string) (*unstructured.Unstructured, error) {
+	gvr, err := c.LookupGVR(apiVersion, kind)
+	if err != nil {
+		return nil, fmt.Errorf("looking up api endpoints: %w", err)
+	}
+
+	// This should be safe as there are no cluster scoped resources (yet). If we
+	// ever need to support them, check if the resoure is namespaced or cluster
+	// scoped first
+	if namespace == "" {
+		namespace = c.defaultResourceNamespace
+	}
+
+	found, err := c.get(ctx, gvr, name, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return found, nil
+}
+
+func (c *DynamicClient) GetObject(ctx context.Context, name, namespace string, meta metav1.GetOptions, out *unstructured.Unstructured) error {
+	r, err := c.Get(ctx, meta.APIVersion, meta.Kind, name, namespace)
+	if err != nil {
+		return err
+	}
+
+	r.DeepCopyInto(out)
+
+	return nil
+}
+
 func (c *DynamicClient) delete(ctx context.Context, gvr schema.GroupVersionResource, name, namespace string) error {
 	err := c.Resource(gvr).Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
