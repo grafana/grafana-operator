@@ -8986,6 +8986,10 @@ spec:
                   items:
                     type: string
                   type: array
+                silences:
+                  items:
+                    type: string
+                  type: array
                 stage:
                   type: string
                 stageStatus:
