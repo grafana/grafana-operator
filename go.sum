@@ -96,8 +96,8 @@ github.com/go-openapi/runtime/server-middleware v0.33.1 h1:IAeKbwWnBnpsYTpuPVS8t
 github.com/go-openapi/runtime/server-middleware v0.33.1/go.mod h1:2Gej5fDxqeJxY+w38vxXYW0BgFASfgBsJ5rXwN1Fseg=
 github.com/go-openapi/spec v0.22.9 h1:/vKIFDcGKp0ktZWGbym/tJEWbk6/XOEmAVU0kqKMH+w=
 github.com/go-openapi/spec v0.22.9/go.mod h1:b/mNUYIOQOyIiUzUzXEE8xzyZqf93KvM9hQGP91yfl0=
-github.com/go-openapi/strfmt v0.27.0 h1:kbcTeaD9TXuXD0hhMXzuYa1sdTo6+dWGvwjW93E80IM=
-github.com/go-openapi/strfmt v0.27.0/go.mod h1:s/qhDqfY72irigXUGJmtgid2Rm+3tnz3k8hZaRmvWYc=
+github.com/go-openapi/strfmt v0.27.1 h1:6yeRws56xbMR8c75R487iLfrREpYnmnBs4g554f5hdk=
+github.com/go-openapi/strfmt v0.27.1/go.mod h1:7enjivZtYHpyqjJLetiAOh6McJziVnvIS/e7rX8/798=
 github.com/go-openapi/swag v0.26.1 h1:l5sVEyVpwj+DDYeZyo7wQI/Ebn/mKYIyGB/pFwAfGoQ=
 github.com/go-openapi/swag v0.26.1/go.mod h1:yNY38BbIVthxbkDtq1UHBCGasBqjakW3lCR6ANzdBEw=
 github.com/go-openapi/swag/cmdutils v0.26.1 h1:f2iE1ijYaJ3nuu5PaEMx3zpEhzhZFgivCJObWEObLIQ=
@@ -128,8 +128,8 @@ github.com/go-openapi/swag/yamlutils v0.28.0 h1:TV3JXH6DS46KUroDtMLAYHGkdWf5VDq3
 github.com/go-openapi/swag/yamlutils v0.28.0/go.mod h1:x0q/yndZHEgk9Rx3DyDqzFUmHy55KTvIZldvF2dTJXs=
 github.com/go-openapi/testify/enable/yaml/v2 v2.6.1 h1:Jm+/ze2rMtbD98yen92AhATGLGREDYXG56Xr4gMjEtE=
 github.com/go-openapi/testify/enable/yaml/v2 v2.6.1/go.mod h1:YDPnwCRDu38/oJBVMBVXOUDiJ9cIeBHWvfImHaXqnv4=
-github.com/go-openapi/testify/v2 v2.6.1 h1:6CNJhTjMzgaeaH8WhshcsZNPIvRemiOcFpU7seO/y7Q=
-github.com/go-openapi/testify/v2 v2.6.1/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
+github.com/go-openapi/testify/v2 v2.7.0 h1:bycOreEj6wfBvijg3YFogZ/sFjTCDmQnwSodSzHa3X8=
+github.com/go-openapi/testify/v2 v2.7.0/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
 github.com/go-openapi/validate v0.26.3 h1:OkfZgLvLDnGP2hrRGD+42WBiPWWkoHomTJ+IVI+KaDc=
 github.com/go-openapi/validate v0.26.3/go.mod h1:7DOOa4raU6NRe7A8VQSKbm3VcuUIioREYHFt+er9Sk8=
 github.com/go-task/slim-sprig/v3 v3.0.0 h1:sUs3vkvUymDpBKi3qH1YSqBQk9+9D/8M2mN1vB6EwHI=
