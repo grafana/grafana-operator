@@ -31,7 +31,7 @@ require (
 	k8s.io/klog/v2 v2.140.0
 	oras.land/oras-go/v2 v2.6.2
 	sigs.k8s.io/controller-runtime v0.24.1
-	sigs.k8s.io/gateway-api v1.6.1
+	sigs.k8s.io/gateway-api v1.6.2
 	sigs.k8s.io/kustomize/kyaml v0.21.1
 )
 
