@@ -9473,7 +9473,7 @@ spec:
                                                 Accepted Condition for the Route to `status: False`, with a
                                                 Reason of `UnsupportedValue`.
 
-                                                Support: Core
+                                                Support: statusCode 301 and 302 are Core; all others are Extended.
                                               enum:
                                               - 301
                                               - 302
@@ -11027,7 +11027,7 @@ spec:
                                           Accepted Condition for the Route to `status: False`, with a
                                           Reason of `UnsupportedValue`.
 
-                                          Support: Core
+                                          Support: statusCode 301 and 302 are Core; all others are Extended.
                                         enum:
                                         - 301
                                         - 302

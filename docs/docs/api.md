@@ -23965,7 +23965,7 @@ Unknown values here must result in the implementation setting the
 Accepted Condition for the Route to `status: False`, with a
 Reason of `UnsupportedValue`.
 
-Support: Core<br/>
+Support: statusCode 301 and 302 are Core; all others are Extended.<br/>
           <br/>
             <i>Enum</i>: 301, 302, 303, 307, 308<br/>
             <i>Default</i>: 302<br/>
@@ -25740,7 +25740,7 @@ Unknown values here must result in the implementation setting the
 Accepted Condition for the Route to `status: False`, with a
 Reason of `UnsupportedValue`.
 
-Support: Core<br/>
+Support: statusCode 301 and 302 are Core; all others are Extended.<br/>
           <br/>
             <i>Enum</i>: 301, 302, 303, 307, 308<br/>
             <i>Default</i>: 302<br/>
