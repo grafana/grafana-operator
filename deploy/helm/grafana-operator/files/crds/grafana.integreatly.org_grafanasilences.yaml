@@ -18,6 +18,9 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .status.silenceIDs
+      name: SilenceID
+      type: string
     - format: date-time
       jsonPath: .status.lastResync
       name: Last resync
@@ -182,7 +185,7 @@ spec:
               rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
                 && self.allowCrossNamespaceImport)'
           status:
-            description: The most recent observed state of a Grafana resource
+            description: GrafanaSilenceStatus defines the observed state of GrafanaSilence
             properties:
               conditions:
                 description: Results when synchronizing resource with Grafana instances
@@ -246,6 +249,15 @@ spec:
                   instances
                 format: date-time
                 type: string
+              silenceIDs:
+                additionalProperties:
+                  type: string
+                description: |-
+                  SilenceIDs maps "<instance namespace>/<instance name>" to the Grafana-assigned
+                  silence ID for that instance. Grafana assigns silence IDs randomly, unlike other
+                  Grafana resources which are addressed by a UID the operator controls, so the
+                  assigned ID must be tracked here to reconcile updates and deletions correctly.
+                type: object
             type: object
         required:
         - spec

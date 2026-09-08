@@ -123,16 +123,25 @@ func (r *GrafanaSilenceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	removeNoMatchingInstance(&cr.Status.Conditions)
 	log.V(1).Info(DbgMsgFoundMatchingInstances, "count", len(instances))
 
-	// The silence ID assigned by Grafana differs per instance and is tracked in an
-	// annotation as a JSON map of "<namespace>/<name>" instance -> silence ID.
-	silenceIDs, err := getSilenceIDs(cr)
-	if err != nil {
-		log.Error(err, "failed to read silence ID annotation, treating as empty")
-
+	// The silence ID assigned by Grafana differs per instance and is tracked in
+	// status.silenceIDs as a map of "<namespace>/<name>" instance -> silence ID.
+	silenceIDs := maps.Clone(cr.Status.SilenceIDs)
+	if silenceIDs == nil {
 		silenceIDs = map[string]string{}
 	}
 
-	originalIDs := maps.Clone(silenceIDs)
+	// Seed IDs from the adoption annotation for instances status doesn't already track, so
+	// an existing Alertmanager silence can be imported instead of a new one being created.
+	adoptedIDs, err := getAdoptedSilenceIDs(cr)
+	if err != nil {
+		log.Error(err, "failed to read silence adoption annotation, ignoring")
+	} else {
+		for key, id := range adoptedIDs {
+			if _, exists := silenceIDs[key]; !exists {
+				silenceIDs[key] = id
+			}
+		}
+	}
 
 	applyErrors := make(map[string]string)
 
@@ -143,13 +152,7 @@ func (r *GrafanaSilenceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 	}
 
-	// Persist any newly assigned silence IDs back to the annotation
-	if !maps.Equal(originalIDs, silenceIDs) {
-		if err := r.updateSilenceIDs(ctx, cr, silenceIDs); err != nil {
-			log.Error(err, "failed to persist silence ID annotation")
-			applyErrors[fmt.Sprintf("%s/%s", cr.Namespace, cr.Name)] = err.Error()
-		}
-	}
+	cr.Status.SilenceIDs = silenceIDs
 
 	condition := buildSynchronizedCondition("Silence", conditionSilenceSynchronized, cr.Generation, applyErrors, len(instances))
 	meta.SetStatusCondition(&cr.Status.Conditions, condition)
@@ -212,12 +215,7 @@ func (r *GrafanaSilenceReconciler) finalize(ctx context.Context, cr *v1beta1.Gra
 	log := logf.FromContext(ctx)
 	log.Info("Finalizing GrafanaSilence")
 
-	silenceIDs, err := getSilenceIDs(cr)
-	if err != nil {
-		log.Error(err, "failed to read silence ID annotation during finalize")
-
-		silenceIDs = map[string]string{}
-	}
+	silenceIDs := cr.Status.SilenceIDs
 
 	instances, err := GetScopedMatchingInstances(ctx, r.Client, cr)
 	if err != nil {
@@ -243,39 +241,21 @@ func (r *GrafanaSilenceReconciler) finalize(ctx context.Context, cr *v1beta1.Gra
 	return nil
 }
 
-// getSilenceIDs decodes the silence ID annotation into a map of instance key -> silence ID.
-func getSilenceIDs(cr *v1beta1.GrafanaSilence) (map[string]string, error) {
+// getAdoptedSilenceIDs decodes the silence adoption annotation into a map of instance key ->
+// silence ID.
+func getAdoptedSilenceIDs(cr *v1beta1.GrafanaSilence) (map[string]string, error) {
 	ids := map[string]string{}
 
-	raw, ok := cr.Annotations[v1beta1.SilenceIDAnnotation]
+	raw, ok := cr.Annotations[v1beta1.SilenceAdoptAnnotation]
 	if !ok || raw == "" {
 		return ids, nil
 	}
 
 	if err := json.Unmarshal([]byte(raw), &ids); err != nil {
-		return map[string]string{}, fmt.Errorf("parsing %s annotation: %w", v1beta1.SilenceIDAnnotation, err)
+		return map[string]string{}, fmt.Errorf("parsing %s annotation: %w", v1beta1.SilenceAdoptAnnotation, err)
 	}
 
 	return ids, nil
-}
-
-// updateSilenceIDs writes the silence ID map back to the annotation. Annotation changes do
-// not bump metadata.generation, so this does not trigger an additional reconcile.
-func (r *GrafanaSilenceReconciler) updateSilenceIDs(ctx context.Context, cr *v1beta1.GrafanaSilence, silenceIDs map[string]string) error {
-	encoded, err := json.Marshal(silenceIDs)
-	if err != nil {
-		return fmt.Errorf("encoding silence IDs: %w", err)
-	}
-
-	patchBase := client.MergeFrom(cr.DeepCopy())
-
-	if cr.Annotations == nil {
-		cr.Annotations = map[string]string{}
-	}
-
-	cr.Annotations[v1beta1.SilenceIDAnnotation] = string(encoded)
-
-	return r.Patch(ctx, cr, patchBase)
 }
 
 // SetupWithManager sets up the controller with the Manager.

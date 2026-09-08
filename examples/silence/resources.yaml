@@ -21,16 +21,18 @@ spec:
       isEqual: true
       isRegex: true
 ---
-# To import an existing Grafana silence instead of creating a new one, set the
-# annotation below to a JSON map of "<namespace>/<name>" Grafana instance -> silence ID.
-# The operator will then update that silence in place.
+# To adopt an existing Grafana silence instead of creating a new one, set the annotation
+# below to a JSON map of "<namespace>/<name>" Grafana instance -> silence ID. The operator
+# seeds status.silenceIDs from it on the first reconcile and updates that silence in place;
+# status.silenceIDs is the source of truth afterwards, so the annotation is ignored for any
+# instance it already tracks.
 #
 # apiVersion: grafana.integreatly.org/v1beta1
 # kind: GrafanaSilence
 # metadata:
 #   name: silence-imported
 #   annotations:
-#     grafana.integreatly.org/silence-id: '{"default/grafana":"e6a4f8c2-1b3d-4f5a-9c8e-2d7b1a0f3e6c"}'
+#     grafana.integreatly.org/adopt-silence-id: '{"default/grafana":"e6a4f8c2-1b3d-4f5a-9c8e-2d7b1a0f3e6c"}'
 # spec:
 #   instanceSelector:
 #     matchLabels:

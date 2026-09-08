@@ -29759,7 +29759,7 @@ future" is enforced by the controller; here we only assert the window is well-fo
         <td><b><a href="#grafanasilencestatus">status</a></b></td>
         <td>object</td>
         <td>
-          The most recent observed state of a Grafana resource<br/>
+          GrafanaSilenceStatus defines the observed state of GrafanaSilence<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -30004,7 +30004,7 @@ merge patch.<br/>
 
 
 
-The most recent observed state of a Grafana resource
+GrafanaSilenceStatus defines the observed state of GrafanaSilence
 
 <table>
     <thead>
@@ -30029,6 +30029,16 @@ The most recent observed state of a Grafana resource
           Last time the resource was synchronized with Grafana instances<br/>
           <br/>
             <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>silenceIDs</b></td>
+        <td>map[string]string</td>
+        <td>
+          SilenceIDs maps "<instance namespace>/<instance name>" to the Grafana-assigned
+silence ID for that instance. Grafana assigns silence IDs randomly, unlike other
+Grafana resources which are addressed by a UID the operator controls, so the
+assigned ID must be tracked here to reconcile updates and deletions correctly.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
