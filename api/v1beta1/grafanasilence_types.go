@@ -20,11 +20,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// SilenceIDAnnotation stores the Grafana-assigned silence IDs as a JSON map of
-// "<instance namespace>/<instance name>" to silence ID. The operator writes the IDs back
-// after creating a silence; users can pre-populate an entry to adopt (import) an existing
-// silence instead of creating a new one.
-const SilenceIDAnnotation = "grafana.integreatly.org/silence-id"
+// SilenceAdoptAnnotation lets a user pre-populate silence IDs for instances that don't yet
+// have one in status.silenceIDs, formatted as a JSON map of "<instance namespace>/<instance
+// name>" to silence ID. This allows an existing Alertmanager silence to be adopted instead
+// of a new one being created, which status.silenceIDs alone cannot support: the status
+// subresource can only be written by the controller, so it is not settable on creation via
+// a normal apply. The annotation is a one-time seed: once status tracks a given instance
+// key, the annotation is ignored for that key, even if it is edited afterwards. A seeded ID
+// that turns out to be missing or expired is simply replaced with a newly created silence.
+const SilenceAdoptAnnotation = "grafana.integreatly.org/adopt-silence-id"
 
 // GrafanaSilenceSpec defines the desired state of GrafanaSilence
 // Kubernetes CEL validation cannot reference the current time, so "endsAt must be in the
@@ -80,10 +84,23 @@ type SilenceMatcher struct {
 	IsEqual bool `json:"isEqual"`
 }
 
+// GrafanaSilenceStatus defines the observed state of GrafanaSilence
+type GrafanaSilenceStatus struct {
+	GrafanaCommonStatus `json:",inline"`
+
+	// SilenceIDs maps "<instance namespace>/<instance name>" to the Grafana-assigned
+	// silence ID for that instance. Grafana assigns silence IDs randomly, unlike other
+	// Grafana resources which are addressed by a UID the operator controls, so the
+	// assigned ID must be tracked here to reconcile updates and deletions correctly.
+	// +optional
+	SilenceIDs map[string]string `json:"silenceIDs,omitempty"`
+}
+
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
 // GrafanaSilence is the Schema for the GrafanaSilence API
+// +kubebuilder:printcolumn:name="SilenceID",type="string",JSONPath=".status.silenceIDs",description=""
 // +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 // +kubebuilder:resource:categories={all,grafana-operator}
@@ -91,8 +108,8 @@ type GrafanaSilence struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GrafanaSilenceSpec  `json:"spec"`
-	Status GrafanaCommonStatus `json:"status,omitempty"`
+	Spec   GrafanaSilenceSpec   `json:"spec"`
+	Status GrafanaSilenceStatus `json:"status,omitempty"`
 }
 
 var _ CommonResource = (*GrafanaSilence)(nil)
@@ -118,7 +135,7 @@ func (in *GrafanaSilence) NamespacedResource() NamespacedResource {
 }
 
 func (in *GrafanaSilence) CommonStatus() *GrafanaCommonStatus {
-	return &in.Status
+	return &in.Status.GrafanaCommonStatus
 }
 
 func (in *GrafanaSilence) Conditions() *[]metav1.Condition {
