@@ -36,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -79,6 +80,20 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := logf.FromContext(ctx).WithName("GrafanaReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
+	var res ctrl.Result
+
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		result, err := r.ReconcilerWithRetry(ctx, req)
+		res = result
+
+		return err
+	})
+
+	return res, err
+}
+
+func (r *GrafanaReconciler) ReconcilerWithRetry(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := logf.FromContext(ctx)
 	cr := &v1beta1.Grafana{}
 
 	err := r.Get(ctx, req.NamespacedName, cr)
