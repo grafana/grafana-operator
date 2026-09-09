@@ -23,7 +23,7 @@ import (
 // GrafanaServiceAccountTokenSpec defines a token for a service account
 type GrafanaServiceAccountTokenSpec struct {
 	// Name of the token
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
 
@@ -55,7 +55,7 @@ type GrafanaServiceAccountSpec struct {
 	Suspend bool `json:"suspend,omitempty"`
 
 	// Name of the Grafana instance to create the service account for
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.instanceName is immutable"
 	InstanceName string `json:"instanceName"`
@@ -66,7 +66,7 @@ type GrafanaServiceAccountSpec struct {
 	Name string `json:"name,omitempty"`
 
 	// Role of the service account (Viewer, Editor, Admin)
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:Enum=Viewer;Editor;Admin
 	Role string `json:"role"`
 

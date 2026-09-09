@@ -49,7 +49,7 @@ type GrafanaAlertRuleGroupSpec struct {
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Format=duration
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
-	// +kubebuilder:validation:Required
+	// +required
 	Interval metav1.Duration `json:"interval"`
 
 	// Whether to enable or disable editing of the alert rule group in Grafana UI
@@ -64,7 +64,7 @@ type AlertRule struct {
 
 	Condition string `json:"condition"`
 
-	// +kubebuilder:validation:Required
+	// +required
 	Data []*AlertQuery `json:"data"`
 
 	// +kubebuilder:validation:Enum=OK;Alerting;Error;KeepLast
@@ -112,7 +112,7 @@ type AlertRule struct {
 
 type NotificationSettings struct {
 	// Receiver is the name of the receiver to send notifications to.
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MinLength=1
 	Receiver string `json:"receiver"`
 	// GroupBy defines the labels by which incoming alerts are grouped together.
@@ -140,10 +140,10 @@ type NotificationSettings struct {
 }
 
 type Record struct {
-	// +kubebuilder:validation:Required
+	// +required
 	From string `json:"from"`
 
-	// +kubebuilder:validation:Required
+	// +required
 	Metric string `json:"metric"`
 
 	// +optional
