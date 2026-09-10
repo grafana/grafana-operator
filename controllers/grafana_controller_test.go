@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -8,7 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 
 	. "github.com/onsi/ginkgo/v2"
 )
@@ -316,3 +322,57 @@ var _ = Describe("Grafana Reconciler: Provoke Conditions", func() {
 		})
 	}
 })
+
+var grafanaInterceptCnt = 0
+
+func TestGrafanaReconcileRetryOnConflict(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+	cr := &v1beta1.Grafana{
+		ObjectMeta: objectMetaSuspended,
+		Spec: v1beta1.GrafanaSpec{
+			Suspend: true,
+		},
+	}
+
+	interceptFns := &interceptor.Funcs{
+		// "Get" Normally will never return a "409 Conflict".
+		// But it's a very convenient way of testing the RetryOnConflict wrapper.
+		Get: func(ctx context.Context, client client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			if grafanaInterceptCnt < 2 {
+				grafanaInterceptCnt++
+
+				return apierrors.NewConflict(schema.GroupResource{
+					Group:    obj.GetObjectKind().GroupVersionKind().Group,
+					Resource: obj.GetObjectKind().GroupVersionKind().Kind,
+				}, obj.GetName(), fmt.Errorf("Forced Conflict"))
+			}
+
+			return client.Get(ctx, key, obj, opts...)
+		},
+	}
+	cl := tk8s.GetFakeInterceptingClient(t, interceptFns)
+	err := v1beta1.AddToScheme(cl.Scheme())
+	require.NoError(t, err)
+
+	err = cl.Create(ctx, cr)
+	require.NoError(t, err)
+
+	r := GrafanaReconciler{Client: cl, Scheme: cl.Scheme()}
+	req := tk8s.GetRequest(t, cr)
+
+	// Expect Conflict
+	_, err = r.reconcile(ctx, req)
+	require.Error(t, err)
+	assert.True(t, apierrors.IsConflict(err))
+	assert.Equal(t, 1, grafanaInterceptCnt, "Should return on the first error (conflict)")
+
+	// Reset intercept count to re-enable intercept client
+	grafanaInterceptCnt = 0
+
+	// Retry multiple times until conflict disappears
+	_, err = r.Reconcile(ctx, req)
+	require.NoError(t, err)
+	assert.Equal(t, 2, grafanaInterceptCnt, "Retrying more than once is expected")
+}
