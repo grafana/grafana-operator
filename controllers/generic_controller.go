@@ -69,7 +69,7 @@ func (r *GenericReconciler[T, PT]) Reconcile(ctx context.Context, req ctrl.Reque
 	var res ctrl.Result
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		result, err := r.ReconcilerWithRetry(ctx, req)
+		result, err := r.reconcile(ctx, req)
 		res = result
 
 		return err
@@ -78,7 +78,7 @@ func (r *GenericReconciler[T, PT]) Reconcile(ctx context.Context, req ctrl.Reque
 	return res, err
 }
 
-func (r *GenericReconciler[T, PT]) ReconcilerWithRetry(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *GenericReconciler[T, PT]) reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 	cr := PT(new(T))
 

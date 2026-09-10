@@ -286,7 +286,7 @@ func TestGenericReconcileRetryOnConflict(t *testing.T) {
 	req := tk8s.GetRequest(t, cr)
 
 	// Expect Conflict
-	_, err = r.ReconcilerWithRetry(ctx, req)
+	_, err = r.reconcile(ctx, req)
 	require.Error(t, err)
 	assert.True(t, apierrors.IsConflict(err))
 	assert.Equal(t, 1, genericFolderInterceptCnt, "Should return on the first error (conflict)")

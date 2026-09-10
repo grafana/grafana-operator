@@ -83,7 +83,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	var res ctrl.Result
 
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		result, err := r.ReconcilerWithRetry(ctx, req)
+		result, err := r.reconcile(ctx, req)
 		res = result
 
 		return err
@@ -92,7 +92,7 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return res, err
 }
 
-func (r *GrafanaReconciler) ReconcilerWithRetry(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *GrafanaReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 	cr := &v1beta1.Grafana{}
 
