@@ -263,7 +263,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		return err
 	}
 
-	muteTimings := &v1beta1.GrafanaLibraryPanelList{}
+	muteTimings := &v1beta1.GrafanaMuteTimingList{}
 
 	err = r.List(ctx, muteTimings)
 	if err != nil {
