@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/blang/semver/v4"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
@@ -195,6 +196,7 @@ func getGrafanaImage(cr *v1beta1.Grafana) string {
 }
 
 func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.OperatorReconcileVars, openshiftPlatform bool) []corev1.Container {
+
 	image := getGrafanaImage(cr)
 
 	envVars := []corev1.EnvVar{
@@ -202,11 +204,6 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 			// helps to restart Grafana upon configuration changes
 			Name:  "CONFIG_HASH",
 			Value: vars.ConfigHash,
-		},
-		{
-			// helps to restart Grafana upon plugin changes
-			Name:  "GF_INSTALL_PLUGINS",
-			Value: vars.Plugins,
 		},
 		{
 			// useful for unified alerting gossiping in HA-enabled setups
@@ -217,6 +214,19 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 				},
 			},
 		},
+	}
+
+	parsedVersion, err := semver.Parse(cr.Status.Version)
+	if err == nil && parsedVersion.GE(semver.MustParse("13.0.0")) {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "GF_PLUGINS_PREINSTALL_SYNC",
+			Value: vars.Plugins.Serialize("@"),
+		})
+	} else {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "GF_INSTALL_PLUGINS",
+			Value: vars.Plugins.Serialize(" "),
+		})
 	}
 
 	container := corev1.Container{

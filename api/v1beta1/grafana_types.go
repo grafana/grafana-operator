@@ -60,7 +60,7 @@ type OperatorReconcileVars struct {
 	ConfigHash string
 
 	// env var value for installed plugins
-	Plugins string
+	Plugins PluginList
 
 	// used to restart the Grafana container when referenced secrets or configmaps change
 	SecretsHash string

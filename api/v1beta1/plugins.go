@@ -32,12 +32,12 @@ func (p GrafanaPlugin) HasInvalidVersion() bool {
 	return !p.HasValidVersion()
 }
 
-func (p GrafanaPlugin) String() string {
+func (p GrafanaPlugin) Serialize(delimiter string) string {
 	if p.Version == PluginVersionLatest {
 		return p.Name
 	}
 
-	return fmt.Sprintf("%s %s", p.Name, p.Version)
+	return fmt.Sprintf("%s%s%s", p.Name, delimiter, p.Version)
 }
 
 // Update updates the plugin to the requested version if it's valid and newer
@@ -125,11 +125,11 @@ func NewPluginMapFromList(plugins PluginList) PluginMap {
 
 type PluginList []GrafanaPlugin
 
-func (l PluginList) String() string {
+func (l PluginList) Serialize(delimiter string) string {
 	plugins := make(sort.StringSlice, 0, len(l))
 
 	for _, plugin := range l {
-		plugins = append(plugins, plugin.String())
+		plugins = append(plugins, plugin.Serialize(delimiter))
 	}
 
 	sort.Sort(plugins)
