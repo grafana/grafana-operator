@@ -494,9 +494,16 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 		return nil, "", fmt.Errorf("deserializing expanded datasource model from json: %w", err)
 	}
 
+	// Hash the API payload with stable object key ordering. ajson.Marshal iterates
+	// over maps, so its output can change even when the datasource is unchanged.
+	canonicalBytes, err := json.Marshal(&res)
+	if err != nil {
+		return nil, "", fmt.Errorf("encoding datasource model for hashing: %w", err)
+	}
+
 	// TODO Remove hashing along with the Status.Hash field
 	hash := sha256.New()
-	hash.Write(newBytes)
+	hash.Write(canonicalBytes)
 
 	return &res, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
