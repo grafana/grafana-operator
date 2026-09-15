@@ -26,7 +26,7 @@ func NewPluginsReconciler(cl client.Client) reconcilers.OperatorGrafanaReconcile
 func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	log := logf.FromContext(ctx).WithName("PluginsReconciler")
 
-	vars.Plugins = ""
+	vars.Plugins = nil
 
 	cm := resources.GetPluginsConfigMap(cr, scheme)
 
@@ -49,7 +49,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 
 	// plugins config map found, but may be empty
 	if len(cm.BinaryData) == 0 {
-		vars.Plugins = ""
+		vars.Plugins = nil
 		return v1beta1.OperatorStageResultSuccess, nil
 	}
 
@@ -67,7 +67,7 @@ func (r *PluginsReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		pm.Merge(plugins)
 	}
 
-	vars.Plugins = pm.GetPluginList().String()
+	vars.Plugins = pm.GetPluginList()
 
 	return v1beta1.OperatorStageResultSuccess, nil
 }
