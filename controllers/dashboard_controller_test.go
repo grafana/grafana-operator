@@ -30,8 +30,10 @@ import (
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/events"
 
 	. "github.com/onsi/ginkgo/v2"
 )
@@ -109,6 +111,65 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 				Reason: conditionReasonInvalidModelResolution,
 			},
 			wantErr: "resolving dashboard contents",
+		},
+		{
+			name: "Invalid patch script",
+			meta: metav1.ObjectMeta{Namespace: "default", Name: "invalid-patch-script"},
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec:  commonSpecInvalidSpec,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
+				Patch: &v1beta1.Patch{
+					Scripts: []string{".title=-"}, // incomplete, fails to parse
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidPatch,
+			},
+			wantErr: LogMsgParsingPatches,
+		},
+		{
+			name: "Patch env references a missing secret",
+			meta: metav1.ObjectMeta{Namespace: "default", Name: "invalid-patch-env"},
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec:  commonSpecInvalidSpec,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
+				Patch: &v1beta1.Patch{
+					Scripts: []string{"."},
+					Env: []v1beta1.PatchEnvVar{
+						{
+							Name: "MISSING",
+							ValueFrom: v1beta1.PatchValueFromSource{
+								SecretKeyRef: &corev1.SecretKeySelector{
+									Name: "does-not-exist",
+									Key:  "value",
+								},
+							},
+						},
+					},
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidPatch,
+			},
+			wantErr: LogMsgResolvingPatchEnv,
+		},
+		{
+			name: "Patch script fails at runtime",
+			meta: metav1.ObjectMeta{Namespace: "default", Name: "invalid-patch-runtime"},
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec:  commonSpecInvalidSpec,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
+				Patch: &v1beta1.Patch{
+					Scripts: []string{`error("boom")`},
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidPatch,
+			},
+			wantErr: LogMsgApplyingPatch,
 		},
 		{
 			name: "Successfully applied resource to instance",
@@ -317,6 +378,121 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		require.NoError(t, err)
 
 		assert.Contains(t, dash.String(), title1) // Make sure the drift is gone now
+
+		// Cleanup
+		err = cl.Delete(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+	})
+
+	It("applies a patch script to merge dashboard tags", func() {
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
+		require.NoError(t, err)
+
+		const patchedUID = "patched-tags-dashboard"
+
+		cr := &v1beta1.GrafanaDashboard{
+			Namespace: "default",
+			Name:      patchedUID,
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+					InstanceSelector: &metav1.LabelSelector{
+						MatchLabels: externalGrafanaCr.GetLabels(),
+					},
+				},
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					CustomUID: patchedUID,
+					JSON:      `{ "title": "title", "tags": ["existing"], "links": [] }`,
+				},
+				Patch: &v1beta1.Patch{
+					// Fetch existing tags, fallback to empty list,
+					// append the override tag,
+					// remove duplicates.
+					Scripts: []string{`.tags = ((.tags // []) + ["override"] | unique)`},
+				},
+			},
+		}
+
+		r := &GrafanaDashboardReconciler{Client: cl, Scheme: cl.Scheme()}
+		req := tk8s.GetRequest(t, cr)
+
+		// Create Dashboard
+		err = cl.Create(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		dash, err := gClient.Dashboards.GetDashboardByUID(patchedUID)
+		require.NoError(t, err)
+
+		model, ok := dash.GetPayload().Dashboard.(map[string]any)
+		require.True(t, ok)
+
+		// Get tags, assert patch applied
+		tags, ok := model["tags"].([]any)
+		require.True(t, ok)
+		assert.ElementsMatch(t, []any{"existing", "override"}, tags)
+
+		// Cleanup
+		err = cl.Delete(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+	})
+
+	It("restored protected fields modified by a patch; emits warning events", func() {
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
+		require.NoError(t, err)
+
+		const patchedUID = "patched-tags-dashboard"
+
+		cr := &v1beta1.GrafanaDashboard{
+			Namespace: "default",
+			Name:      patchedUID,
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+					InstanceSelector: &metav1.LabelSelector{
+						MatchLabels: externalGrafanaCr.GetLabels(),
+					},
+				},
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					CustomUID: patchedUID,
+					JSON:      `{ "title": "title", "tags": ["existing"], "links": [] }`,
+				},
+				Patch: &v1beta1.Patch{
+					// Replace "id"
+					// Replace "uid"
+					Scripts: []string{`.id = 123`, `.uid = "patched"`},
+				},
+			},
+		}
+
+		recorder := events.NewFakeRecorder(10)
+		r := &GrafanaDashboardReconciler{Client: cl, Scheme: cl.Scheme(), Recorder: recorder}
+		req := tk8s.GetRequest(t, cr)
+
+		// Create Dashboard
+		err = cl.Create(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		// Still exists by original ID
+		dash, err := gClient.Dashboards.GetDashboardByUID(patchedUID)
+		require.NoError(t, err)
+		assert.NotNil(t, dash)
+
+		// Should be one warning each for id and uid fields
+		require.Len(t, recorder.Events, 2)
+
+		for range 2 {
+			assert.Contains(t, <-recorder.Events, "ProhibitedPatchDetected")
+		}
 
 		// Cleanup
 		err = cl.Delete(testCtx, cr)

@@ -29,6 +29,7 @@ import (
 // +kubebuilder:validation:XValidation:rule="(has(self.folderUID) && !(has(self.folderRef))) || (has(self.folderRef) && !(has(self.folderUID))) || !(has(self.folderRef) && (has(self.folderUID)))", message="Only one of folderUID or folderRef can be declared at the same time"
 // +kubebuilder:validation:XValidation:rule="(has(self.folder) && !(has(self.folderRef) || has(self.folderUID))) || !(has(self.folder))", message="folder field cannot be set when folderUID or folderRef is already declared"
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.uid is immutable"
+// +kubebuilder:validation:XValidation:rule="!has(self.patch) || !has(self.patch.env) || !self.patch.env.exists(e, has(e.valueFrom.grafanaRef))", message="spec.patch.env[].valueFrom.grafanaRef is not supported for GrafanaDashboard: the dashboard model is resolved once and shared across all matching Grafana instances"
 type GrafanaDashboardSpec struct {
 	GrafanaCommonSpec  `json:",inline"`
 	GrafanaContentSpec `json:",inline"`
@@ -57,6 +58,12 @@ type GrafanaDashboardSpec struct {
 	// Allows configuration of sharing the dashboard publicly
 	// +optional
 	PublicSharing *GrafanaDashboardPublicSharing `json:"publicSharing,omitempty"`
+
+	// Patch the contents of the dashboard JSON using jq scripts.
+	// This is applied to a resolved dashboard, after variable substitution.
+	// `patch.env[].valueFrom.grafanaRef` is not supported.
+	// +optional
+	Patch *Patch `json:"patch,omitempty"`
 }
 
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.accessToken) && !has(self.accessToken)) || (has(oldSelf.accessToken) && has(self.accessToken)))", message="spec.publicDashboard.accessToken is immutable"
