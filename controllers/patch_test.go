@@ -7,6 +7,7 @@ import (
 	"github.com/itchyny/gojq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func TestParsePatches(t *testing.T) {
@@ -91,5 +92,44 @@ func TestApplyPatches(t *testing.T) {
 		got, err := ApplyPatch(compiled, tt.original, tt.env)
 		require.NoError(t, err)
 		assert.Equal(t, tt.want, got)
+	}
+}
+
+func TestRejectPatchEnvGrafanaRef(t *testing.T) {
+	tests := []struct {
+		name    string
+		env     []v1beta1.PatchEnvVar
+		wantErr error
+	}{
+		{
+			name:    "no env",
+			env:     nil,
+			wantErr: nil,
+		},
+		{
+			name: "secret and configmap refs only",
+			env: []v1beta1.PatchEnvVar{
+				{Name: "A", ValueFrom: v1beta1.PatchValueFromSource{SecretKeyRef: &corev1.SecretKeySelector{}}},
+				{Name: "B", ValueFrom: v1beta1.PatchValueFromSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{}}},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "grafanaRef present",
+			env: []v1beta1.PatchEnvVar{
+				{Name: "A", ValueFrom: v1beta1.PatchValueFromSource{GrafanaRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.name"}}},
+			},
+			wantErr: ErrGrafanaRefUnsupported,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := RejectPatchEnvGrafanaRef(tt.env)
+			if tt.wantErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorIs(t, err, tt.wantErr)
+			}
+		})
 	}
 }

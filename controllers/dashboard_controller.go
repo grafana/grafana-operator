@@ -25,6 +25,7 @@ import (
 	"strings"
 	"uuid"
 
+	"github.com/go-logr/logr"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
@@ -36,8 +37,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -66,8 +67,9 @@ const (
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
 type GrafanaDashboardReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	Cfg    *Config
+	Scheme   *runtime.Scheme
+	Cfg      *Config
+	Recorder events.EventRecorder
 }
 
 func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) { //nolint:gocyclo
@@ -148,6 +150,62 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		log.Error(err, LogMsgResolvingDashboardContents)
 
 		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingDashboardContents, err)
+	}
+
+	patches, err := ParsePatches(cr.Spec.Patch)
+	if err != nil {
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+		log.Error(err, LogMsgParsingPatches)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgParsingPatches, err)
+	}
+
+	if cr.Spec.Patch != nil {
+		if err := RejectPatchEnvGrafanaRef(cr.Spec.Patch.Env); err != nil {
+			setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
+			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+			log.Error(err, LogMsgResolvingPatchEnv)
+
+			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingPatchEnv, err)
+		}
+
+		patchEnvironment, err := CollectPatchEnv(ctx, r.Client, cr.Namespace, cr.Spec.Patch.Env)
+		if err != nil {
+			setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
+			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+			log.Error(err, LogMsgResolvingPatchEnv)
+
+			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingPatchEnv, err)
+		}
+
+		resolvedEnv := make([]string, len(patchEnvironment))
+		for idx, resolve := range patchEnvironment {
+			resolvedEnv[idx], err = resolve(nil)
+			if err != nil {
+				setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
+				meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+				log.Error(err, LogMsgResolvingPatchEnv)
+
+				return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingPatchEnv, err)
+			}
+		}
+
+		// Capture before patching
+		originalID := dashboardModel["id"]
+		originalUID, _ := dashboardModel["uid"].(string) //nolint:errcheck
+
+		dashboardModel, err = ApplyPatch(patches, dashboardModel, resolvedEnv)
+		if err != nil {
+			setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
+			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+			log.Error(err, LogMsgResolvingPatchEnv)
+
+			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgApplyingPatch, err)
+		}
+
+		preventProhibitedPatch(log, r.Recorder, cr, dashboardModel, "id", originalID)
+		preventProhibitedPatch(log, r.Recorder, cr, dashboardModel, "uid", originalUID)
 	}
 
 	dto, err := r.getPublicSharingDTO(cr)
@@ -346,6 +404,21 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	}
 
 	return nil
+}
+
+func preventProhibitedPatch(log logr.Logger, recorder events.EventRecorder, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, field string, original any) {
+	if dashboardModel[field] == original {
+		return
+	}
+
+	log.Info("Prevented prohibited patch of restricted field", "field", field)
+
+	if recorder != nil {
+		recorder.Eventf(cr, nil, corev1.EventTypeWarning, "ProhibitedPatchDetected", "ReplacedModelField",
+			"Patch modified a restricted field '%s', restored original value", field)
+	}
+
+	dashboardModel[field] = original
 }
 
 func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, folderUID string) error {

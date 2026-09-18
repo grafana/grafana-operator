@@ -1177,6 +1177,95 @@ spec:
                 - path
                 - reference
                 type: object
+              patch:
+                description: |-
+                  Patch the contents of the dashboard JSON using jq scripts.
+                  This is applied to a resolved dashboard, after variable substitution.
+                  `patch.env[].valueFrom.grafanaRef` is not supported.
+                properties:
+                  env:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        valueFrom:
+                          properties:
+                            configMapKeyRef:
+                              description: Selects a key of a ConfigMap.
+                              properties:
+                                key:
+                                  description: The key to select.
+                                  type: string
+                                name:
+                                  default: ""
+                                  description: |-
+                                    Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  type: string
+                                optional:
+                                  description: Specify whether the ConfigMap or its
+                                    key must be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            grafanaRef:
+                              description: ObjectFieldSelector selects an APIVersioned
+                                field of an object.
+                              properties:
+                                apiVersion:
+                                  description: Version of the schema the FieldPath
+                                    is written in terms of, defaults to "v1".
+                                  type: string
+                                fieldPath:
+                                  description: Path of the field to select in the
+                                    specified API version.
+                                  type: string
+                              required:
+                              - fieldPath
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            secretKeyRef:
+                              description: Selects a key of a Secret.
+                              properties:
+                                key:
+                                  description: The key of the secret to select from.  Must
+                                    be a valid secret key.
+                                  type: string
+                                name:
+                                  default: ""
+                                  description: |-
+                                    Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  type: string
+                                optional:
+                                  description: Specify whether the Secret or its key
+                                    must be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                          type: object
+                      required:
+                      - name
+                      - valueFrom
+                      type: object
+                    type: array
+                  scripts:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - scripts
+                type: object
               plugins:
                 description: plugins
                 items:
@@ -1342,6 +1431,11 @@ spec:
             - message: spec.uid is immutable
               rule: ((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) &&
                 has(self.uid)))
+            - message: 'spec.patch.env[].valueFrom.grafanaRef is not supported for
+                GrafanaDashboard: the dashboard model is resolved once and shared
+                across all matching Grafana instances'
+              rule: '!has(self.patch) || !has(self.patch.env) || !self.patch.env.exists(e,
+                has(e.valueFrom.grafanaRef))'
             - message: disabling spec.allowCrossNamespaceImport requires a recreate
                 to ensure desired state
               rule: '!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport
