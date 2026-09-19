@@ -28,7 +28,7 @@ import (
 // a normal apply. The annotation is a one-time seed: once status tracks a given instance
 // key, the annotation is ignored for that key, even if it is edited afterwards. A seeded ID
 // that turns out to be missing or expired is simply replaced with a newly created silence.
-const SilenceAdoptAnnotation = "grafana.integreatly.org/adopt-silence-id"
+const SilenceAdoptAnnotation = "operator.grafana.com/adopt-silence-id"
 
 // GrafanaSilenceSpec defines the desired state of GrafanaSilence
 // Kubernetes CEL validation cannot reference the current time, so "endsAt must be in the

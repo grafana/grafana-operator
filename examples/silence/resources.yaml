@@ -32,7 +32,7 @@ spec:
 # metadata:
 #   name: silence-imported
 #   annotations:
-#     grafana.integreatly.org/adopt-silence-id: '{"default/grafana":"e6a4f8c2-1b3d-4f5a-9c8e-2d7b1a0f3e6c"}'
+#     operator.grafana.com/adopt-silence-id: '{"default/grafana":"e6a4f8c2-1b3d-4f5a-9c8e-2d7b1a0f3e6c"}'
 # spec:
 #   instanceSelector:
 #     matchLabels:
