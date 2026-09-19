@@ -36,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -79,6 +80,20 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := logf.FromContext(ctx).WithName("GrafanaReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
+	var res ctrl.Result
+
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		result, err := r.reconcile(ctx, req)
+		res = result
+
+		return err
+	})
+
+	return res, err
+}
+
+func (r *GrafanaReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := logf.FromContext(ctx)
 	cr := &v1beta1.Grafana{}
 
 	err := r.Get(ctx, req.NamespacedName, cr)
@@ -263,7 +278,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		return err
 	}
 
-	muteTimings := &v1beta1.GrafanaLibraryPanelList{}
+	muteTimings := &v1beta1.GrafanaMuteTimingList{}
 
 	err = r.List(ctx, muteTimings)
 	if err != nil {
@@ -493,10 +508,10 @@ func (r *GrafanaReconciler) requestsForChangeByField(indexKey string) handler.Ma
 
 		var reqs []reconcile.Request
 		for _, gr := range list.Items {
-			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
+			reqs = append(reqs, reconcile.Request{
 				Namespace: gr.Namespace,
 				Name:      gr.Name,
-			}})
+			})
 		}
 
 		return reqs

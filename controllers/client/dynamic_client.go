@@ -171,6 +171,13 @@ func (c *DynamicClient) Delete(ctx context.Context, apiVersion, kind, name, name
 		return fmt.Errorf("looking up api endpoints: %w", err)
 	}
 
+	// This should be safe as there are no cluster scoped resources (yet). If we
+	// ever need to support them, check if the resoure is namespaced or cluster
+	// scoped first
+	if namespace == "" {
+		namespace = c.defaultResourceNamespace
+	}
+
 	return c.delete(ctx, gvr, name, namespace)
 }
 

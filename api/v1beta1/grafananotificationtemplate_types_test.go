@@ -21,14 +21,10 @@ func TestGrafanaStatusListNotificationTemplate(t *testing.T) {
 
 func newNotificationTemplate(name string, editable *bool) *GrafanaNotificationTemplate {
 	return &GrafanaNotificationTemplate{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       "GrafanaNotificationTemplate",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
+		APIVersion: APIVersion,
+		Kind:       "GrafanaNotificationTemplate",
+		Name:       name,
+		Namespace:  "default",
 		Spec: GrafanaNotificationTemplateSpec{
 			Editable: editable,
 			GrafanaCommonSpec: GrafanaCommonSpec{

@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
@@ -40,10 +39,8 @@ func makeDockerConfigJSON(t *testing.T, registryHost, username, password string)
 // is exercised by oras-go's own test suite and not re-tested here.
 func ociDashboard(reference, path string, pullSecretRef *corev1.LocalObjectReference) *v1beta1.GrafanaDashboard {
 	return &v1beta1.GrafanaDashboard{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test",
-			Namespace: "default",
-		},
+		Name:      "test",
+		Namespace: "default",
 		Spec: v1beta1.GrafanaDashboardSpec{
 			GrafanaContentSpec: v1beta1.GrafanaContentSpec{
 				OCI: &v1beta1.GrafanaContentOCI{
@@ -130,9 +127,10 @@ func TestFetchFromOCI(t *testing.T) {
 
 		rawCfg := makeDockerConfigJSON(t, host, "user", "pass")
 		pullSecret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Name: "regcred", Namespace: "default"},
-			Type:       corev1.SecretTypeDockerConfigJson,
-			Data:       map[string][]byte{corev1.DockerConfigJsonKey: rawCfg},
+			Name:      "regcred",
+			Namespace: "default",
+			Type:      corev1.SecretTypeDockerConfigJson,
+			Data:      map[string][]byte{corev1.DockerConfigJsonKey: rawCfg},
 		}
 		cl := tk8s.GetFakeClient(t, pullSecret)
 
@@ -157,9 +155,10 @@ func TestFetchFromOCI(t *testing.T) {
 	t.Run("wrong secret type", func(t *testing.T) {
 		_, host := newFakeRegistry(t)
 		opaqueSecret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Name: "bad-secret", Namespace: "default"},
-			Type:       corev1.SecretTypeOpaque,
-			Data:       map[string][]byte{"some-key": []byte("value")},
+			Name:      "bad-secret",
+			Namespace: "default",
+			Type:      corev1.SecretTypeOpaque,
+			Data:      map[string][]byte{"some-key": []byte("value")},
 		}
 		cl := tk8s.GetFakeClient(t, opaqueSecret)
 
@@ -214,9 +213,10 @@ func TestFetchFromOCI(t *testing.T) {
 	t.Run("malformed pull secret body", func(t *testing.T) {
 		_, host := newFakeRegistry(t)
 		badSecret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Name: "malformed", Namespace: "default"},
-			Type:       corev1.SecretTypeDockerConfigJson,
-			Data:       map[string][]byte{corev1.DockerConfigJsonKey: []byte("not json{")},
+			Name:      "malformed",
+			Namespace: "default",
+			Type:      corev1.SecretTypeDockerConfigJson,
+			Data:      map[string][]byte{corev1.DockerConfigJsonKey: []byte("not json{")},
 		}
 		cl := tk8s.GetFakeClient(t, badSecret)
 

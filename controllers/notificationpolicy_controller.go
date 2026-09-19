@@ -27,7 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -364,10 +363,8 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 			requests := make([]reconcile.Request, len(nps.Items))
 			for i, np := range nps.Items {
 				requests[i] = reconcile.Request{
-					NamespacedName: types.NamespacedName{
-						Name:      np.Name,
-						Namespace: np.Namespace,
-					},
+					Name:      np.Name,
+					Namespace: np.Namespace,
 				}
 			}
 
@@ -416,10 +413,8 @@ func (r *GrafanaNotificationPolicyReconciler) SetupWithManager(mgr ctrl.Manager)
 
 				requests = append(requests,
 					reconcile.Request{
-						NamespacedName: types.NamespacedName{
-							Name:      np.Name,
-							Namespace: np.Namespace,
-						},
+						Name:      np.Name,
+						Namespace: np.Namespace,
 					})
 			}
 

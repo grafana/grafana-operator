@@ -1148,7 +1148,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -1312,7 +1313,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -1856,7 +1858,8 @@ model from configmap
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -1972,7 +1975,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -2141,7 +2145,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -3289,7 +3294,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -4190,7 +4196,8 @@ model from configmap
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -4306,7 +4313,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -4475,7 +4483,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -5493,7 +5502,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -7640,7 +7650,7 @@ GrafanaSpec defines the desired state of Grafana
         <td>
           Version sets the tag of the default image: docker.io/grafana/grafana.
 Allows full image refs with/without sha256checksum: "registry/repo/image:tag@sha"
-default: 13.1.3<br/>
+default: 13.2.1<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -10555,6 +10565,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>protocol</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>scheme</b></td>
         <td>string</td>
         <td>
@@ -10776,6 +10793,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -11044,6 +11068,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -11095,6 +11126,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -11395,6 +11433,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -11446,6 +11491,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -12168,6 +12220,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -12219,6 +12278,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -12367,6 +12433,13 @@ Deployment sets how the deployment object should look like with your grafana ins
           <br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>bindMountOptions</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b>mountPropagation</b></td>
         <td>string</td>
@@ -13264,6 +13337,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>protocol</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>scheme</b></td>
         <td>string</td>
         <td>
@@ -13485,6 +13565,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -13753,6 +13840,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -13804,6 +13898,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -14104,6 +14205,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -14155,6 +14263,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -14877,6 +14992,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -14928,6 +15050,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -15076,6 +15205,13 @@ Deployment sets how the deployment object should look like with your grafana ins
           <br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>bindMountOptions</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b>mountPropagation</b></td>
         <td>string</td>
@@ -15954,6 +16090,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>protocol</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>scheme</b></td>
         <td>string</td>
         <td>
@@ -16175,6 +16318,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -16443,6 +16593,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -16494,6 +16651,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -16794,6 +16958,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -16845,6 +17016,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -17567,6 +17745,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -17618,6 +17803,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -17766,6 +17958,13 @@ Deployment sets how the deployment object should look like with your grafana ins
           <br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>bindMountOptions</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b>mountPropagation</b></td>
         <td>string</td>
@@ -18974,6 +19173,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>defaultUser</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexconfigmapitemsindex">items</a></b></td>
         <td>[]object</td>
         <td>
@@ -19037,6 +19245,15 @@ Deployment sets how the deployment object should look like with your grafana ins
           <br/>
           <br/>
             <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -19153,6 +19370,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>defaultUser</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexdownwardapiitemsindex">items</a></b></td>
         <td>[]object</td>
         <td>
@@ -19207,6 +19433,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>object</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -19309,6 +19544,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mode</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -20345,6 +20589,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>defaultUser</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexprojectedsourcesindex">sources</a></b></td>
         <td>[]object</td>
         <td>
@@ -20466,6 +20719,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -20629,6 +20891,15 @@ Deployment sets how the deployment object should look like with your grafana ins
             <i>Format</i>: int32<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -20704,6 +20975,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>object</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -20846,6 +21126,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>userAnnotations</b></td>
         <td>map[string]string</td>
         <td>
@@ -20938,6 +21227,15 @@ Deployment sets how the deployment object should look like with your grafana ins
             <i>Format</i>: int32<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -20974,6 +21272,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>expirationSeconds</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
         <td>integer</td>
         <td>
           <br/>
@@ -21307,6 +21614,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>defaultUser</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexsecretitemsindex">items</a></b></td>
         <td>[]object</td>
         <td>
@@ -21368,6 +21684,15 @@ Deployment sets how the deployment object should look like with your grafana ins
           <br/>
           <br/>
             <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -23967,7 +24292,7 @@ Unknown values here must result in the implementation setting the
 Accepted Condition for the Route to `status: False`, with a
 Reason of `UnsupportedValue`.
 
-Support: Core<br/>
+Support: statusCode 301 and 302 are Core; all others are Extended.<br/>
           <br/>
             <i>Enum</i>: 301, 302, 303, 307, 308<br/>
             <i>Default</i>: 302<br/>
@@ -25742,7 +26067,7 @@ Unknown values here must result in the implementation setting the
 Accepted Condition for the Route to `status: False`, with a
 Reason of `UnsupportedValue`.
 
-Support: Core<br/>
+Support: statusCode 301 and 302 are Core; all others are Extended.<br/>
           <br/>
             <i>Enum</i>: 301, 302, 303, 307, 308<br/>
             <i>Default</i>: 302<br/>
@@ -27025,11 +27350,7 @@ is to equal to the suffix (removing the first label) of the wildcard rule.<br/>
         <td><b><a href="#grafanaspecingressspecrulesindexhttp">http</a></b></td>
         <td>object</td>
         <td>
-          HTTPIngressRuleValue is a list of http selectors pointing to backends.
-In the example: http://<host>/<path>?<searchpart> -> backend where
-where parts of the url correspond to RFC 3986, this resource will be used
-to match against everything after the last '/' and before the first '?'
-or '#'.<br/>
+          http is a HTTP IngressRuleValue, which contains a list of http selectors<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -27041,11 +27362,7 @@ or '#'.<br/>
 
 
 
-HTTPIngressRuleValue is a list of http selectors pointing to backends.
-In the example: http://<host>/<path>?<searchpart> -> backend where
-where parts of the url correspond to RFC 3986, this resource will be used
-to match against everything after the last '/' and before the first '?'
-or '#'.
+http is a HTTP IngressRuleValue, which contains a list of http selectors
 
 <table>
     <thead>

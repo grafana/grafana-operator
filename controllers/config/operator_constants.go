@@ -3,7 +3,7 @@ package config
 const (
 	// Grafana
 	GrafanaImage   = "docker.io/grafana/grafana"
-	GrafanaVersion = "13.1.3"
+	GrafanaVersion = "13.2.1"
 
 	// Paths
 	GrafanaDataPath               = "/var/lib/grafana"
@@ -22,7 +22,6 @@ const (
 	DefaultAdminPassword       = "admin"
 	GrafanaAdminUserEnvVar     = "GF_SECURITY_ADMIN_USER"
 	GrafanaAdminPasswordEnvVar = "GF_SECURITY_ADMIN_PASSWORD" // #nosec G101
-	GrafanaPluginsEnvVar       = "GF_INSTALL_PLUGINS"
 
 	// grafana-operator env vars
 	GrafanaTestVersionEnvVar = "GF_TEST_CONTAINER_VERSION"

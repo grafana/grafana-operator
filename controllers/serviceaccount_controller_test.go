@@ -131,11 +131,9 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		t := GinkgoT()
 
 		cr := &v1beta1.GrafanaServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "delete-and-recreate",
-				Namespace: "default",
-			},
-			Spec: v1beta1.GrafanaServiceAccountSpec{},
+			Name:      "delete-and-recreate",
+			Namespace: "default",
+			Spec:      v1beta1.GrafanaServiceAccountSpec{},
 		}
 
 		r := createAndReconcileCR(t, cr)
@@ -160,10 +158,8 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		t := GinkgoT()
 
 		cr := &v1beta1.GrafanaServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "should-be-recreated",
-				Namespace: "default",
-			},
+			Name:      "should-be-recreated",
+			Namespace: "default",
 			Spec: v1beta1.GrafanaServiceAccountSpec{
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
 					Name: "should-be-recreated",
@@ -175,10 +171,8 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		// Fetch secret for comparison
 		originalSecret := corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      cr.Status.Account.Tokens[0].Secret.Name,
-				Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
-			},
+			Name:      cr.Status.Account.Tokens[0].Secret.Name,
+			Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
 		}
 		err := cl.Get(testCtx, types.NamespacedName{
 			Name:      cr.Status.Account.Tokens[0].Secret.Name,
@@ -199,10 +193,8 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		// Fetch new secret
 		updatedSecret := corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      cr.Status.Account.Tokens[0].Secret.Name,
-				Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
-			},
+			Name:      cr.Status.Account.Tokens[0].Secret.Name,
+			Namespace: cr.Status.Account.Tokens[0].Secret.Namespace,
 		}
 		err = cl.Get(testCtx, types.NamespacedName{
 			Name:      cr.Status.Account.Tokens[0].Secret.Name,
@@ -221,11 +213,9 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		t := GinkgoT()
 
 		cr := &v1beta1.GrafanaServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "revert-to-spec",
-				Namespace: "default",
-			},
-			Spec: v1beta1.GrafanaServiceAccountSpec{},
+			Name:      "revert-to-spec",
+			Namespace: "default",
+			Spec:      v1beta1.GrafanaServiceAccountSpec{},
 		}
 
 		r := createAndReconcileCR(t, cr)
@@ -262,10 +252,8 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		t := GinkgoT()
 
 		cr := &v1beta1.GrafanaServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "add-token",
-				Namespace: "default",
-			},
+			Name:      "add-token",
+			Namespace: "default",
 			Spec: v1beta1.GrafanaServiceAccountSpec{
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
 					Name: "first",
@@ -298,10 +286,8 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		t := GinkgoT()
 
 		cr := &v1beta1.GrafanaServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "update-token-name",
-				Namespace: "default",
-			},
+			Name:      "update-token-name",
+			Namespace: "default",
 			Spec: v1beta1.GrafanaServiceAccountSpec{
 				Name: "update-token-name",
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
@@ -333,10 +319,8 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		t := GinkgoT()
 
 		cr := &v1beta1.GrafanaServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "update-token-secret-name",
-				Namespace: "default",
-			},
+			Name:      "update-token-secret-name",
+			Namespace: "default",
 			Spec: v1beta1.GrafanaServiceAccountSpec{
 				Name: "update-token-secret-name",
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
@@ -361,10 +345,8 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 
 		// Ensure original secret was deleted
 		originalSecret := corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      originalStatus.Account.Tokens[0].Secret.Name,
-				Namespace: originalStatus.Account.Tokens[0].Secret.Namespace,
-			},
+			Name:      originalStatus.Account.Tokens[0].Secret.Name,
+			Namespace: originalStatus.Account.Tokens[0].Secret.Namespace,
 		}
 		err = cl.Get(testCtx, types.NamespacedName{
 			Name:      originalStatus.Account.Tokens[0].Secret.Name,
@@ -383,10 +365,8 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		t := GinkgoT()
 
 		cr := &v1beta1.GrafanaServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "update-token-expirations",
-				Namespace: "default",
-			},
+			Name:      "update-token-expirations",
+			Namespace: "default",
 			Spec: v1beta1.GrafanaServiceAccountSpec{
 				Name: "update-token-expirations",
 				Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{
@@ -533,10 +513,8 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 
 			// Create a GrafanaServiceAccount with a token
 			sa := &v1beta1.GrafanaServiceAccount{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: namespace,
-				},
+				Name:      name,
+				Namespace: namespace,
 				Spec: v1beta1.GrafanaServiceAccountSpec{
 					ResyncPeriod: metav1.Duration{Duration: 10 * time.Minute},
 					InstanceName: grafanaName,

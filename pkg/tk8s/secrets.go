@@ -8,9 +8,7 @@ func GetEnvFromSecretSource(t tHelper, secretName string) *corev1.SecretEnvSourc
 	t.Helper()
 
 	v := &corev1.SecretEnvSource{
-		LocalObjectReference: corev1.LocalObjectReference{
-			Name: secretName,
-		},
+		Name: secretName,
 	}
 
 	return v
@@ -21,10 +19,8 @@ func GetEnvVarSecretSource(t tHelper, secretName, key string) *corev1.EnvVarSour
 
 	v := &corev1.EnvVarSource{
 		SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: corev1.LocalObjectReference{
-				Name: secretName,
-			},
-			Key: key,
+			Name: secretName,
+			Key:  key,
 		},
 	}
 
@@ -35,10 +31,8 @@ func GetSecretKeySelector(t tHelper, secretName, key string) *corev1.SecretKeySe
 	t.Helper()
 
 	v := &corev1.SecretKeySelector{
-		LocalObjectReference: corev1.LocalObjectReference{
-			Name: secretName,
-		},
-		Key: key,
+		Name: secretName,
+		Key:  key,
 	}
 
 	return v

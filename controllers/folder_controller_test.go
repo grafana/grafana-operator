@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"context"
+	"fmt"
+	"testing"
 	"time"
 
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
@@ -11,10 +14,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 
 	. "github.com/onsi/ginkgo/v2"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var _ = Describe("Folder Reconciler: Provoke Conditions", func() {
@@ -120,10 +127,8 @@ var _ = Describe("Folder reconciler", func() {
 		require.NoError(t, err)
 
 		folder := &v1beta1.GrafanaFolder{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      folderName,
-			},
+			Namespace: "default",
+			Name:      folderName,
 			Spec: v1beta1.GrafanaFolderSpec{
 				GrafanaCommonSpec: commonSpecSynchronized,
 			},
@@ -152,55 +157,51 @@ var _ = Describe("Folder reconciler", func() {
 			cr  *v1beta1.GrafanaFolder
 			r   GrafanaFolderReconciler
 			req ctrl.Request
-		}{}
-
-		folder.cr = &v1beta1.GrafanaFolder{
-			ObjectMeta: metav1.ObjectMeta{
+		}{
+			cr: &v1beta1.GrafanaFolder{
 				Namespace: "default",
 				Name:      "force-delete",
+				Spec: v1beta1.GrafanaFolderSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					CustomUID:         "force-delete",
+				},
 			},
-			Spec: v1beta1.GrafanaFolderSpec{
-				GrafanaCommonSpec: commonSpecSynchronized,
-				CustomUID:         "force-delete",
-			},
+			r: GrafanaFolderReconciler{Client: cl, Scheme: cl.Scheme()},
 		}
-		folder.r = GrafanaFolderReconciler{Client: cl, Scheme: cl.Scheme()}
 		folder.req = tk8s.GetRequest(t, folder.cr)
 
 		alertRuleGroup := struct {
 			cr  *v1beta1.GrafanaAlertRuleGroup
 			r   GrafanaAlertRuleGroupReconciler
 			req ctrl.Request
-		}{}
-
-		alertRuleGroup.cr = &v1beta1.GrafanaAlertRuleGroup{
-			ObjectMeta: metav1.ObjectMeta{
+		}{
+			cr: &v1beta1.GrafanaAlertRuleGroup{
 				Namespace: "default",
 				Name:      "force-delete",
-			},
-			Spec: v1beta1.GrafanaAlertRuleGroupSpec{
-				GrafanaCommonSpec: commonSpecSynchronized,
-				FolderRef:         folder.cr.Name,
-				Interval:          metav1.Duration{Duration: 60 * time.Second},
-				Rules: []v1beta1.AlertRule{
-					{
-						Title:     "TestRule",
-						UID:       "force-delete",
-						Condition: "A",
-						Data: []*v1beta1.AlertQuery{
-							{
-								RefID:         "A",
-								DatasourceUID: "__expr__",
-								Model:         &apiextensionsv1.JSON{Raw: []byte(`{"expression": "1", "refId": "A"}`)},
+				Spec: v1beta1.GrafanaAlertRuleGroupSpec{
+					GrafanaCommonSpec: commonSpecSynchronized,
+					FolderRef:         folder.cr.Name,
+					Interval:          metav1.Duration{Duration: 60 * time.Second},
+					Rules: []v1beta1.AlertRule{
+						{
+							Title:     "TestRule",
+							UID:       "force-delete",
+							Condition: "A",
+							Data: []*v1beta1.AlertQuery{
+								{
+									RefID:         "A",
+									DatasourceUID: "__expr__",
+									Model:         &apiextensionsv1.JSON{Raw: []byte(`{"expression": "1", "refId": "A"}`)},
+								},
 							},
+							ExecErrState: "Error",
+							NoDataState:  new("NoData"),
 						},
-						ExecErrState: "Error",
-						NoDataState:  new("NoData"),
 					},
 				},
 			},
+			r: GrafanaAlertRuleGroupReconciler{Client: cl, Scheme: cl.Scheme()},
 		}
-		alertRuleGroup.r = GrafanaAlertRuleGroupReconciler{Client: cl, Scheme: cl.Scheme()}
 		alertRuleGroup.req = tk8s.GetRequest(t, alertRuleGroup.cr)
 
 		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
@@ -242,3 +243,59 @@ var _ = Describe("Folder reconciler", func() {
 		assert.IsType(t, &folders.GetFolderByUIDNotFound{}, err) //nolint:testifylint
 	})
 })
+
+var genericFolderInterceptCnt = 0
+
+func TestGenericReconcileRetryOnConflict(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+	cr := &v1beta1.GrafanaFolder{
+		ObjectMeta: objectMetaSuspended,
+		Spec: v1beta1.GrafanaFolderSpec{
+			Suspend: true,
+		},
+	}
+
+	interceptFns := &interceptor.Funcs{
+		// "Get" Normally will never return a "409 Conflict".
+		// But it's a very convenient way of testing the RetryOnConflict wrapper.
+		Get: func(ctx context.Context, client client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			if genericFolderInterceptCnt < 2 {
+				genericFolderInterceptCnt++
+
+				return apierrors.NewConflict(schema.GroupResource{
+					Group:    obj.GetObjectKind().GroupVersionKind().Group,
+					Resource: obj.GetObjectKind().GroupVersionKind().Kind,
+				}, obj.GetName(), fmt.Errorf("Forced Conflict"))
+			}
+
+			return client.Get(ctx, key, obj, opts...)
+		},
+	}
+	cl := tk8s.GetFakeInterceptingClient(t, interceptFns)
+	err := v1beta1.AddToScheme(cl.Scheme())
+	require.NoError(t, err)
+
+	err = cl.Create(ctx, cr)
+	require.NoError(t, err)
+
+	r := NewGenericFolderReconciler(cl, &Config{
+		ResyncPeriod: 5 * time.Second,
+	})
+	req := tk8s.GetRequest(t, cr)
+
+	// Expect Conflict
+	_, err = r.reconcile(ctx, req)
+	require.Error(t, err)
+	assert.True(t, apierrors.IsConflict(err))
+	assert.Equal(t, 1, genericFolderInterceptCnt, "Should return on the first error (conflict)")
+
+	// Reset intercept count to re-enable intercept client
+	genericFolderInterceptCnt = 0
+
+	// Retry multiple times until conflict disappears
+	_, err = r.Reconcile(ctx, req)
+	require.NoError(t, err)
+	assert.Equal(t, 2, genericFolderInterceptCnt, "Retrying more than once is expected")
+}

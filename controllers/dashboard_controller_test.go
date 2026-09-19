@@ -21,8 +21,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -193,10 +193,8 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaDashboard{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "url-based-dashboard",
-			},
+			Namespace: "default",
+			Name:      "url-based-dashboard",
 			Spec: v1beta1.GrafanaDashboardSpec{
 				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 					InstanceSelector: &metav1.LabelSelector{
@@ -260,10 +258,8 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaDashboard{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "url-based-dashboard-drift",
-			},
+			Namespace: "default",
+			Name:      "url-based-dashboard-drift",
 			Spec: v1beta1.GrafanaDashboardSpec{
 				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 					InstanceSelector: &metav1.LabelSelector{
@@ -304,7 +300,8 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 				Dashboard: model,
 				FolderUID: dash.Payload.Meta.FolderUID,
 				Overwrite: true,
-			})
+			},
+		)
 		require.NoError(t, err)
 
 		dash, err = gClient.Dashboards.GetDashboardByUID(uid)
@@ -340,10 +337,8 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaDashboard{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "updates-shared-dashboard",
-			},
+			Namespace: "default",
+			Name:      "updates-shared-dashboard",
 			Spec: v1beta1.GrafanaDashboardSpec{
 				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 					InstanceSelector: &metav1.LabelSelector{
@@ -526,7 +521,7 @@ func TestGrafanaDashboardReconcilerMatchesStateInGrafana(t *testing.T) {
 }
 
 func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testing.T) {
-	uid := uuid.NewString()
+	uid := uuid.New().String()
 
 	defaultPublicDashboard := dashboards.GetPublicDashboardOK{
 		Payload: &models.PublicDashboard{
@@ -586,7 +581,7 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 			name: "AccessToken changes should recreate",
 			changes: &models.PublicDashboardDTO{
 				UID:                  uid,
-				AccessToken:          uuid.NewString(),
+				AccessToken:          uuid.New().String(),
 				IsEnabled:            new(true),
 				AnnotationsEnabled:   new(false),
 				TimeSelectionEnabled: new(false),
@@ -616,7 +611,7 @@ func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testi
 				AnnotationsEnabled:   new(false),
 				TimeSelectionEnabled: new(false),
 			},
-			annotations:  map[string]string{annotationSyncedPublicSharing: uuid.NewString()},
+			annotations:  map[string]string{annotationSyncedPublicSharing: uuid.New().String()},
 			wantMatch:    false,
 			wantRecreate: true,
 		},

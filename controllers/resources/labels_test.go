@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestSetInheritedLabels(t *testing.T) {
@@ -57,11 +56,9 @@ func TestSetInheritedLabels(t *testing.T) {
 			maps.Copy(tt.want, GetCommonLabels())
 
 			obj := &corev1.Service{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "service",
-					Namespace: "default",
-					Labels:    tt.labels,
-				},
+				Name:      "service",
+				Namespace: "default",
+				Labels:    tt.labels,
 			}
 
 			SetInheritedLabels(obj, tt.inheritedLabels)

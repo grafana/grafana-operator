@@ -250,10 +250,8 @@ var _ = Describe("AlertRulegroup Reconciler: folder fallback diagnostics", func(
 		require.NoError(t, err)
 
 		folder := &v1beta1.GrafanaFolder{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      folderName,
-			},
+			Namespace: "default",
+			Name:      folderName,
 			Spec: v1beta1.GrafanaFolderSpec{
 				GrafanaCommonSpec: commonSpecSynchronized,
 			},
@@ -277,10 +275,8 @@ var _ = Describe("AlertRulegroup Reconciler: folder fallback diagnostics", func(
 		}))
 
 		alertRuleGroup := &v1beta1.GrafanaAlertRuleGroup{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "legacy-fallback-group",
-			},
+			Namespace: "default",
+			Name:      "legacy-fallback-group",
 			Spec: v1beta1.GrafanaAlertRuleGroupSpec{
 				GrafanaCommonSpec: commonSpecSynchronized,
 				FolderRef:         folder.Name,
@@ -340,10 +336,8 @@ var _ = Describe("AlertRuleGroup Controller Conversion", func() {
 			}
 
 			arg := &v1beta1.GrafanaAlertRuleGroup{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-group",
-					Namespace: "default",
-				},
+				Name:      "test-group",
+				Namespace: "default",
 				Spec: v1beta1.GrafanaAlertRuleGroupSpec{
 					Name:      "test-group",
 					FolderUID: "test-folder",
@@ -372,10 +366,8 @@ var _ = Describe("AlertRuleGroup Controller Conversion", func() {
 			}
 
 			arg := &v1beta1.GrafanaAlertRuleGroup{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-group",
-					Namespace: "default",
-				},
+				Name:      "test-group",
+				Namespace: "default",
 				Spec: v1beta1.GrafanaAlertRuleGroupSpec{
 					Name:      "test-group",
 					FolderUID: "test-folder",
@@ -399,10 +391,8 @@ func TestGrafanaAlertRuleGroupMatchesStateInGrafanaNormalizesEquivalentQueryMode
 	durationString := "60s"
 
 	cr := &v1beta1.GrafanaAlertRuleGroup{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-group",
-			Namespace: "default",
-		},
+		Name:      "test-group",
+		Namespace: "default",
 		Spec: v1beta1.GrafanaAlertRuleGroupSpec{
 			Name:      "test-group",
 			FolderUID: "test-folder",

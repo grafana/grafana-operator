@@ -25,14 +25,10 @@ func newAlertRuleGroup(name string, editable *bool) *GrafanaAlertRuleGroup {
 	forDurationString := "60s"
 
 	return &GrafanaAlertRuleGroup{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       "GrafanaAlertRuleGroup",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
+		APIVersion: APIVersion,
+		Kind:       "GrafanaAlertRuleGroup",
+		Name:       name,
+		Namespace:  "default",
 		Spec: GrafanaAlertRuleGroupSpec{
 			Name:      name,
 			Editable:  editable,

@@ -19,11 +19,9 @@ func TestGetDashboardEnvs(t *testing.T) {
 	cl := tk8s.GetFakeClient(t)
 
 	dashboard := v1beta1.GrafanaDashboard{
-		TypeMeta: metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-dashboard",
-			Namespace: "grafana-operator-system",
-		},
+		TypeMeta:  metav1.TypeMeta{},
+		Name:      "test-dashboard",
+		Namespace: "grafana-operator-system",
 		Spec: v1beta1.GrafanaDashboardSpec{
 			GrafanaContentSpec: v1beta1.GrafanaContentSpec{
 				Envs: []v1beta1.GrafanaContentEnv{
@@ -54,8 +52,9 @@ func TestGetDashboardEnvs(t *testing.T) {
 
 func resolverWithVariables(variables ...v1beta1.GrafanaContentVariable) *Resolver {
 	dashboard := &v1beta1.GrafanaDashboard{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-dashboard", Namespace: "grafana-operator-system"},
-		Spec:       v1beta1.GrafanaDashboardSpec{Variables: variables},
+		Name:      "test-dashboard",
+		Namespace: "grafana-operator-system",
+		Spec:      v1beta1.GrafanaDashboardSpec{Variables: variables},
 	}
 
 	return NewResolver(dashboard, nil)
@@ -246,7 +245,8 @@ func TestResolveVariables(t *testing.T) {
 
 	t.Run("leaves content resources without variables untouched", func(t *testing.T) {
 		panel := &v1beta1.GrafanaLibraryPanel{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-panel", Namespace: "grafana-operator-system"},
+			Name:      "test-panel",
+			Namespace: "grafana-operator-system",
 		}
 
 		var contentResource v1beta1.GrafanaContentResource = panel

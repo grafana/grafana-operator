@@ -29,7 +29,7 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5
         with:
-          version: v4.2.4
+          version: v4.3.0
 
       - name: Prepare
         shell: bash
@@ -59,12 +59,12 @@ jobs:
 
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        uses: grafana/shared-workflows/actions/create-github-app-token@5bbb526b1728ca57fbe1750c4c27ab6ab06171c2 # create-github-app-token/v1.0
         with:
           github_app: grafana-operator-helm-release
 
       - name: Make github release
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           body: |
             Helm chart for the [grafana-operator](https://github.com/${{ github.repository }})
@@ -76,13 +76,15 @@ jobs:
           tag_name: grafana-operator-${{ env.HELM_RELEASE_VERSION }}
           token: ${{ steps.get-github-app-token.outputs.token }}
 
-      - name: Checkout helm-charts # zizmor: ignore[artipacked] required to push using chart releaser in last step
+      - name: Checkout helm-charts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           repository: grafana/helm-charts
           path: helm-charts
+          ref: gh-pages
           token: ${{ steps.get-github-app-token.outputs.token }}
+          persist-credentials: false
 
       - name: Configure Git for helm-charts
         run: |
@@ -90,12 +92,33 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
+      # cr performs changes in a separate worktree which isn't compatible with
+      # the push approach chosen so we use a temporary location instead and
+      # overwrite the resulting file
       - name: Update helm repo index.yaml
         env:
           AUTHTOKEN: ${{ steps.get-github-app-token.outputs.token }}
         run: |
           cd helm-charts
-          "${CR_TOOL_PATH}/cr" index --config ../source/deploy/helm/cr.yaml --token "$AUTHTOKEN" --index-path "${CR_INDEX_PATH}" --package-path ../source/deploy/helm/ --push
+          "${CR_TOOL_PATH}/cr" index --config ../source/deploy/helm/cr.yaml --token "$AUTHTOKEN" --index-path "${CR_INDEX_PATH}" --package-path ../source/deploy/helm/
+          cp "${CR_INDEX_PATH}/index.yaml" index.yaml
+
+      # Publish index.yaml to gh-pages via the GitHub GraphQL `createCommitOnBranch` mutation
+      # so the commit is signed by GitHub's web-flow key (shown as Verified). The cr tool's
+      # built-in `--push` produces an unsigned commit, which breaks for repositories with
+      # "Require signed commits" branch protection. See https://github.com/helm/chart-releaser/issues/625
+      # for upstream tracking of a `cr` flag that would make this workaround unnecessary.
+      - name: Publish index.yaml to gh-pages
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
+        with:
+          commit_message: "Update index.yaml for grafana-operator"
+          repo: grafana/helm-charts
+          # subdir of the checked out repo
+          repository: "helm-charts"
+          branch: gh-pages
+          file_pattern: index.yaml
+        env:
+          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
 
   kustomize:
     runs-on: ubuntu-latest
@@ -104,7 +127,7 @@ jobs:
       packages: write
     steps:
       - name: install flux
-        uses: fluxcd/flux2/action@889be9d6cc8afa8ed639e1e1ba4ab678e3b38d8c # v2.9.4
+        uses: fluxcd/flux2/action@dd233c4fadef306a62b7893204f8e3817fecc2b2 # v2.9.5
 
       - name: Clone repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -315,7 +338,7 @@ jobs:
     steps:
       - name: Get secrets
         id: secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@2e3743a1f8abfd3e921e53a7726ec0744c11bb01 # get-vault-secrets/v2.0.1
+        uses: grafana/shared-workflows/actions/get-vault-secrets@2f1ddaf3ce1aa677356243d0dd584be33cfa35e3 # get-vault-secrets/v2.1
         with:
           repo_secrets: |
             QUAY_USERNAME=quay-io:username

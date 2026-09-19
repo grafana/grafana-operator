@@ -13,7 +13,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 
 	networkingv1 "k8s.io/api/networking/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
@@ -30,11 +29,9 @@ var _ = Describe("Ingress Reconciler", func() {
 		It("creates Ingress when only .spec.ingress is defined", func() {
 			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "ingress-on-openshift",
-					Namespace: "default",
-					Labels:    map[string]string{"openshift": "ingress"},
-				},
+				Name:      "ingress-on-openshift",
+				Namespace: "default",
+				Labels:    map[string]string{"openshift": "ingress"},
 				Spec: v1beta1.GrafanaSpec{
 					Ingress: &v1beta1.IngressNetworkingV1{},
 					Route:   nil,
@@ -64,11 +61,9 @@ var _ = Describe("Ingress Reconciler", func() {
 		It("creates Route when .spec.ingress AND .spec.route are defined", func() {
 			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "prefer-route-on-openshift",
-					Namespace: "default",
-					Labels:    map[string]string{"openshift": "route"},
-				},
+				Name:      "prefer-route-on-openshift",
+				Namespace: "default",
+				Labels:    map[string]string{"openshift": "route"},
 				Spec: v1beta1.GrafanaSpec{
 					Ingress: &v1beta1.IngressNetworkingV1{},
 					Route: &v1beta1.RouteOpenshiftV1{
@@ -99,11 +94,9 @@ var _ = Describe("Ingress Reconciler", func() {
 		It("removes Route when .spec.route is removed", func() {
 			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "route-nil",
-					Namespace: "default",
-					Labels:    map[string]string{"openshift": "route"},
-				},
+				Name:      "route-nil",
+				Namespace: "default",
+				Labels:    map[string]string{"openshift": "route"},
 				Spec: v1beta1.GrafanaSpec{
 					Route: &v1beta1.RouteOpenshiftV1{
 						Spec: &v1beta1.RouteOpenShiftV1Spec{},
@@ -157,11 +150,9 @@ var _ = Describe("Ingress Reconciler", func() {
 		It("creates Ingress when .spec.ingress is defined", func() {
 			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "ingress-on-k8s",
-					Namespace: "default",
-					Labels:    map[string]string{},
-				},
+				Name:      "ingress-on-k8s",
+				Namespace: "default",
+				Labels:    map[string]string{},
 				Spec: v1beta1.GrafanaSpec{
 					Ingress: &v1beta1.IngressNetworkingV1{},
 					Route:   nil,
@@ -191,11 +182,9 @@ var _ = Describe("Ingress Reconciler", func() {
 		It("removes Ingress when .spec.ingress is removed", func() {
 			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "ingress-nil",
-					Namespace: "default",
-					Labels:    map[string]string{},
-				},
+				Name:      "ingress-nil",
+				Namespace: "default",
+				Labels:    map[string]string{},
 				Spec: v1beta1.GrafanaSpec{
 					Ingress: &v1beta1.IngressNetworkingV1{},
 				},
@@ -240,11 +229,9 @@ var _ = Describe("Ingress Reconciler", func() {
 		It("creates HTTPRoute when .spec.httpRoute is defined", func() {
 			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "httproute-test",
-					Namespace: "default",
-					Labels:    map[string]string{"test": "httproute"},
-				},
+				Name:      "httproute-test",
+				Namespace: "default",
+				Labels:    map[string]string{"test": "httproute"},
 				Spec: v1beta1.GrafanaSpec{
 					HTTPRoute: &v1beta1.HTTPRouteV1{},
 				},
@@ -275,10 +262,8 @@ var _ = Describe("Ingress Reconciler", func() {
 		It("removes HTTPRoute when .spec.httpRoute is removed", func() {
 			r := NewIngressReconciler(cl, isOpenshift, hasHTTPRouteCRD)
 			cr := &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "httproute-nil",
-					Namespace: "default",
-				},
+				Name:      "httproute-nil",
+				Namespace: "default",
 				Spec: v1beta1.GrafanaSpec{
 					HTTPRoute: &v1beta1.HTTPRouteV1{
 						Spec: gwapiv1.HTTPRouteSpec{},

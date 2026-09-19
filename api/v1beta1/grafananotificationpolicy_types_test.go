@@ -22,14 +22,10 @@ func TestGrafanaStatusListNotificationPolicy(t *testing.T) {
 
 func newNotificationPolicy(name string, editable *bool) *GrafanaNotificationPolicy {
 	return &GrafanaNotificationPolicy{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       "GrafanaNotificationPolicy",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
+		APIVersion: APIVersion,
+		Kind:       "GrafanaNotificationPolicy",
+		Name:       name,
+		Namespace:  "default",
 		Spec: GrafanaNotificationPolicySpec{
 			Editable: editable,
 			GrafanaCommonSpec: GrafanaCommonSpec{
@@ -40,11 +36,9 @@ func newNotificationPolicy(name string, editable *bool) *GrafanaNotificationPoli
 				},
 			},
 			Route: &TopLevelRoute{
-				PartialRoute: PartialRoute{
-					Receiver: "empty",
-					GroupBy:  []string{"group_name", "alert_name"},
-					Routes:   []*Route{},
-				},
+				Receiver: "empty",
+				GroupBy:  []string{"group_name", "alert_name"},
+				Routes:   []*Route{},
 			},
 		},
 	}
@@ -206,15 +200,11 @@ func TestIsRouteSelectorMutuallyExclusive(t *testing.T) {
 			route: &PartialRoute{
 				Routes: []*Route{
 					{
-						PartialRoute: PartialRoute{
-							RouteSelector: &metav1.LabelSelector{},
-						},
+						RouteSelector: &metav1.LabelSelector{},
 					},
 					{
-						PartialRoute: PartialRoute{
-							Routes: []*Route{
-								{},
-							},
+						Routes: []*Route{
+							{},
 						},
 					},
 				},
@@ -226,11 +216,9 @@ func TestIsRouteSelectorMutuallyExclusive(t *testing.T) {
 			route: &PartialRoute{
 				Routes: []*Route{
 					{
-						PartialRoute: PartialRoute{
-							RouteSelector: &metav1.LabelSelector{},
-							Routes: []*Route{
-								{},
-							},
+						RouteSelector: &metav1.LabelSelector{},
+						Routes: []*Route{
+							{},
 						},
 					},
 				},

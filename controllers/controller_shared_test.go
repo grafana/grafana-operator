@@ -550,10 +550,8 @@ func TestGetGrafanaRefValue(t *testing.T) {
 		{
 			name: "Get value with dots",
 			instance: &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{
-						"foo.bar/baz": "some-value",
-					},
+				Annotations: map[string]string{
+					"foo.bar/baz": "some-value",
 				},
 			},
 			selector: &corev1.ObjectFieldSelector{
@@ -588,14 +586,12 @@ func TestGetGrafanaRefValue(t *testing.T) {
 var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	t := GinkgoT()
 
-	ns := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
+	ns := corev1.Namespace{
 		Name: "matching-instances",
-	}}
+	}
 	allowFolder := v1beta1.GrafanaFolder{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: ns.Name,
-			Name:      "allow-cross-namespace",
-		},
+		Namespace: ns.Name,
+		Name:      "allow-cross-namespace",
 		Spec: v1beta1.GrafanaFolderSpec{
 			GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 				AllowCrossNamespaceImport: true,
@@ -615,12 +611,10 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	matchAllFolder.Spec.InstanceSelector = &metav1.LabelSelector{} // InstanceSelector is never nil
 
 	BaseGrafana := v1beta1.Grafana{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: ns.Name,
-			Name:      "instance",
-			Labels:    map[string]string{"matching-instances": "test"},
-		},
-		Spec: v1beta1.GrafanaSpec{},
+		Namespace: ns.Name,
+		Name:      "instance",
+		Labels:    map[string]string{"matching-instances": "test"},
+		Spec:      v1beta1.GrafanaSpec{},
 	}
 	matchesNothingGrafana := BaseGrafana.DeepCopy()
 	matchesNothingGrafana.Name = "no-labels-instance"
@@ -731,13 +725,11 @@ func TestRemoveFinalizer(t *testing.T) {
 	const extraFinalizer = "extraFinalizer"
 
 	cr := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "test",
-			Finalizers: []string{
-				grafanaFinalizer,
-				extraFinalizer,
-			},
+		Namespace: "default",
+		Name:      "test",
+		Finalizers: []string{
+			grafanaFinalizer,
+			extraFinalizer,
 		},
 	}
 

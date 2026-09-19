@@ -190,10 +190,8 @@ var _ = Describe("ContactPoint valuesFrom configurations", Ordered, func() {
 	t := GinkgoT()
 
 	sc := corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "contacts",
-		},
+		Namespace: "default",
+		Name:      "contacts",
 		StringData: map[string]string{
 			"one": "one@example.invalid",
 			"two": "two@example.invalid",
@@ -326,10 +324,8 @@ func TestContactPointIndexing(t *testing.T) {
 
 	t.Run("indexSecretSource returns correct secret references", func(t *testing.T) {
 		cp := &v1beta1.GrafanaContactPoint{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-contactpoint",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-contactpoint",
 			Spec: v1beta1.GrafanaContactPointSpec{
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
@@ -360,10 +356,8 @@ func TestContactPointIndexing(t *testing.T) {
 
 	t.Run("indexConfigMapSource returns correct configmap references", func(t *testing.T) {
 		cp := &v1beta1.GrafanaContactPoint{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-contactpoint",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-contactpoint",
 			Spec: v1beta1.GrafanaContactPointSpec{
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
@@ -394,10 +388,8 @@ func TestContactPointIndexing(t *testing.T) {
 
 	t.Run("indexSecretSource returns empty slice when no secret references", func(t *testing.T) {
 		cp := &v1beta1.GrafanaContactPoint{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-contactpoint",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-contactpoint",
 			Spec: v1beta1.GrafanaContactPointSpec{
 				ValuesFrom: []v1beta1.ValueFrom{
 					{
@@ -417,10 +409,8 @@ func TestContactPointIndexing(t *testing.T) {
 
 	t.Run("indexConfigMapSource returns empty slice when no configmap references", func(t *testing.T) {
 		cp := &v1beta1.GrafanaContactPoint{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-				Name:      "test-contactpoint",
-			},
+			Namespace: "test-namespace",
+			Name:      "test-contactpoint",
 			Spec: v1beta1.GrafanaContactPointSpec{
 				ValuesFrom: []v1beta1.ValueFrom{
 					{

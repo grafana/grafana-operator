@@ -22,10 +22,8 @@ func TestGrafanaStatusListContactPoint(t *testing.T) {
 
 func newContactPoint(name string) *GrafanaContactPoint {
 	return &GrafanaContactPoint{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
+		Name:      name,
+		Namespace: "default",
 		Spec: GrafanaContactPointSpec{
 			GrafanaCommonSpec: GrafanaCommonSpec{
 				InstanceSelector: &metav1.LabelSelector{},

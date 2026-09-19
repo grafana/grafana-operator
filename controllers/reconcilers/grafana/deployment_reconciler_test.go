@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 )
@@ -56,41 +55,41 @@ func TestGetGrafanaImage(t *testing.T) {
 	}
 }
 
-func TestHashResourceVersions(t *testing.T) {
+func TestAggregateHash(t *testing.T) {
 	t.Run("empty list returns empty string", func(t *testing.T) {
-		result := hashResourceVersions(nil)
+		result := aggregateHash(nil)
 		assert.Empty(t, result)
 
-		result = hashResourceVersions([]string{})
+		result = aggregateHash([]string{})
 		assert.Empty(t, result)
 	})
 
 	t.Run("same inputs produce same hash", func(t *testing.T) {
-		versions := []string{"secret/db=100", "configmap/cfg=200"}
+		versions := []string{string([]byte{1, 2, 3}), string([]byte{4, 5, 6})}
 
-		hash1 := hashResourceVersions(versions)
-		hash2 := hashResourceVersions(versions)
+		hash1 := aggregateHash(versions)
+		hash2 := aggregateHash(versions)
 
 		assert.Equal(t, hash1, hash2)
 		assert.NotEmpty(t, hash1)
 	})
 
 	t.Run("different inputs produce different hashes", func(t *testing.T) {
-		hash1 := hashResourceVersions([]string{"secret/db=100"})
-		hash2 := hashResourceVersions([]string{"secret/db=101"})
+		hash1 := aggregateHash([]string{string([]byte{1, 2, 3}), string([]byte{4, 5, 6})})
+		hash2 := aggregateHash([]string{string([]byte{1, 2, 3})})
 
 		assert.NotEqual(t, hash1, hash2)
 	})
 
 	t.Run("order-independent: same entries in different order produce same hash", func(t *testing.T) {
-		hash1 := hashResourceVersions([]string{"secret/a=1", "configmap/b=2"})
-		hash2 := hashResourceVersions([]string{"configmap/b=2", "secret/a=1"})
+		hash1 := aggregateHash([]string{string([]byte{1, 2, 3}), string([]byte{4, 5, 6})})
+		hash2 := aggregateHash([]string{string([]byte{4, 5, 6}), string([]byte{1, 2, 3})})
 
 		assert.Equal(t, hash1, hash2)
 	})
 
 	t.Run("returns a valid hex string", func(t *testing.T) {
-		result := hashResourceVersions([]string{"secret/x=42"})
+		result := aggregateHash([]string{string([]byte{1, 2, 3})})
 		assert.Regexp(t, `^[0-9a-f]{64}$`, result)
 	})
 }
@@ -100,10 +99,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 
 	It("sets SecretsHash and checksum/secrets annotation when referenced secrets exist", func() {
 		secret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-test-secret",
-			},
+			Namespace:  "default",
+			Name:       "deploy-secrets-hash-test-secret",
 			StringData: map[string]string{"password": "s3cr3t"},
 		}
 
@@ -125,10 +122,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-test-grafana",
-			},
+			Namespace: "default",
+			Name:      "deploy-secrets-hash-test-grafana",
 		}
 		cr.Spec.SetContainers(containers)
 
@@ -149,11 +144,9 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 		ctx := context.Background()
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-no-refs",
-			},
-			Spec: v1beta1.GrafanaSpec{},
+			Namespace: "default",
+			Name:      "deploy-secrets-hash-no-refs",
+			Spec:      v1beta1.GrafanaSpec{},
 		}
 
 		err := cl.Create(ctx, cr)
@@ -173,10 +166,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 		ctx := context.Background()
 
 		secret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-rotation-secret",
-			},
+			Namespace:  "default",
+			Name:       "deploy-secrets-hash-rotation-secret",
 			StringData: map[string]string{"password": "initial"},
 		}
 
@@ -195,10 +186,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-rotation-grafana",
-			},
+			Namespace: "default",
+			Name:      "deploy-secrets-hash-rotation-grafana",
 		}
 
 		cr.Spec.SetContainers(containers)
@@ -243,10 +232,8 @@ var _ = Describe("Deployment reconciler secrets hash", func() {
 		}
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-secrets-hash-missing-secret",
-			},
+			Namespace: "default",
+			Name:      "deploy-secrets-hash-missing-secret",
 		}
 
 		cr.Spec.SetContainers(containers)
@@ -271,10 +258,8 @@ var _ = Describe("Deployment reconciler scale subresource", func() {
 		ctx := context.Background()
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-scale-selector-grafana",
-			},
+			Namespace: "default",
+			Name:      "deploy-scale-selector-grafana",
 		}
 
 		err := cl.Create(ctx, cr)
@@ -294,10 +279,8 @@ var _ = Describe("Deployment reconciler scale subresource", func() {
 		ctx := context.Background()
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-scale-replicas-grafana",
-			},
+			Namespace: "default",
+			Name:      "deploy-scale-replicas-grafana",
 		}
 
 		err := cl.Create(ctx, cr)
@@ -323,10 +306,8 @@ var _ = Describe("Deployment reconciler scale subresource", func() {
 		replicas := int32(3)
 
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "deploy-scale-propagate-grafana",
-			},
+			Namespace: "default",
+			Name:      "deploy-scale-propagate-grafana",
 			Spec: v1beta1.GrafanaSpec{
 				Deployment: &v1beta1.DeploymentV1{
 					Spec: v1beta1.DeploymentV1Spec{

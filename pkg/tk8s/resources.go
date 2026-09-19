@@ -18,10 +18,8 @@ func GetRequest(t tHelper, obj client.Object) ctrl.Request {
 	t.Helper()
 
 	v := ctrl.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      obj.GetName(),
-			Namespace: obj.GetNamespace(),
-		},
+		Name:      obj.GetName(),
+		Namespace: obj.GetNamespace(),
 	}
 
 	return v

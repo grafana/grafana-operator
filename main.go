@@ -116,9 +116,9 @@ func init() {
 }
 
 func configureZap() (zap.Options, error) {
-	opts := zap.Options{}
-
-	opts.Development = operatorConfig.ZapDevel
+	opts := zap.Options{
+		Development: operatorConfig.ZapDevel,
+	}
 	switch operatorConfig.ZapEncoder {
 	case "json":
 		opts.NewEncoder = func(eco ...zap.EncoderConfigOption) zapcore.Encoder {
@@ -178,7 +178,8 @@ func configureZap() (zap.Options, error) {
 }
 
 func main() { //nolint:gocyclo
-	kong.Parse(&operatorConfig,
+	kong.Parse(
+		&operatorConfig,
 		kong.Name("grafana-operator"),
 		kong.UsageOnError(),
 		kong.ConfigureHelp(kong.HelpOptions{
@@ -193,6 +194,8 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
+	ctx := ctrl.SetupSignalHandler()
+
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 	slogger := slog.New(logr.ToSlogHandler(setupLog))
 	slog.SetDefault(slogger)
@@ -203,9 +206,9 @@ func main() { //nolint:gocyclo
 	}
 
 	// Optimize GC cycles by setting and periodically updating GOMEMLIMIT.
-	memlimit.SetGoMemLimitWithOpts( //nolint:errcheck
+	memlimit.Set( //nolint:errcheck
 		memlimit.WithRatio(operatorConfig.MemLimitRatio),
-		memlimit.WithRefreshInterval(1*time.Minute),
+		memlimit.WithRefreshInterval(ctx, 1*time.Minute),
 		memlimit.WithProvider(
 			memlimit.ApplyFallback(
 				memlimit.FromCgroup,
@@ -307,7 +310,6 @@ func main() { //nolint:gocyclo
 		}
 	}
 
-	ctx := ctrl.SetupSignalHandler()
 	ctx = klog.NewContext(ctx, setupLog) // Leader election logger is set through the ctx
 
 	// Determine Operator scope
