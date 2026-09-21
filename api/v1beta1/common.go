@@ -56,7 +56,7 @@ type GrafanaCommonSpec struct {
 	// +optional
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
-	ResyncPeriod metav1.Duration `json:"resyncPeriod,omitempty"`
+	ResyncPeriod *metav1.Duration `json:"resyncPeriod,omitempty"`
 
 	// Selects Grafana instances for import
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.instanceSelector is immutable"

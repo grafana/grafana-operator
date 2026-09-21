@@ -270,7 +270,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		}
 
 		// Make it long enough, so we can play with reconciliation
-		cr.Spec.ResyncPeriod.Duration = 5 * time.Minute
+		cr.Spec.ResyncPeriod = &metav1.Duration{Duration: 5 * time.Minute}
 
 		r := &GrafanaDashboardReconciler{Client: cl, Scheme: cl.Scheme()}
 		req := tk8s.GetRequest(t, cr)
