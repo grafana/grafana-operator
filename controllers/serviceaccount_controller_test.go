@@ -117,7 +117,7 @@ var _ = Describe("ServiceAccount Reconciler: Provoke Conditions", func() {
 				Spec:       tt.spec,
 			}
 			cr.Spec.Role = "Viewer"
-			cr.Spec.ResyncPeriod = metav1.Duration{Duration: 60 * time.Second}
+			cr.Spec.ResyncPeriod = &metav1.Duration{Duration: 60 * time.Second}
 
 			r := &GrafanaServiceAccountReconciler{Client: cl, Scheme: cl.Scheme()}
 
@@ -415,7 +415,7 @@ func createAndReconcileCR(t FullGinkgoTInterface, cr *v1beta1.GrafanaServiceAcco
 	// Apply defaults
 	cr.Spec.InstanceName = grafanaName
 	cr.Spec.Role = "Viewer"
-	cr.Spec.ResyncPeriod = metav1.Duration{Duration: time.Minute}
+	cr.Spec.ResyncPeriod = &metav1.Duration{Duration: time.Minute}
 
 	err := cl.Create(testCtx, cr)
 	require.NoError(t, err)
@@ -516,7 +516,7 @@ var _ = Describe("ServiceAccount Controller: Integration Tests", func() {
 				Name:      name,
 				Namespace: namespace,
 				Spec: v1beta1.GrafanaServiceAccountSpec{
-					ResyncPeriod: metav1.Duration{Duration: 10 * time.Minute},
+					ResyncPeriod: &metav1.Duration{Duration: 10 * time.Minute},
 					InstanceName: grafanaName,
 					Role:         "Admin",
 					Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{

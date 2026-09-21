@@ -47,7 +47,7 @@ type GrafanaServiceAccountSpec struct {
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
 	// +kubebuilder:validation:XValidation:rule="duration(self) > duration('0s')",message="spec.resyncPeriod must be greater than 0"
-	ResyncPeriod metav1.Duration `json:"resyncPeriod,omitempty"`
+	ResyncPeriod *metav1.Duration `json:"resyncPeriod,omitempty"`
 
 	// Suspend pauses reconciliation of the service account
 	// +optional
