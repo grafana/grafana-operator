@@ -166,8 +166,8 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 				},
 			},
 			want: metav1.Condition{
-				Type:   conditionInvalidSpec,
-				Reason: conditionReasonInvalidPatch,
+				Type:   conditionDashboardSynchronized,
+				Reason: conditionReasonApplyFailed,
 			},
 			wantErr: LogMsgApplyingPatch,
 		},

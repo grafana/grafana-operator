@@ -111,14 +111,3 @@ func ApplyPatch(patches []*gojq.Query, resource map[string]any, env []string) (m
 
 	return work, nil
 }
-
-var ErrGrafanaRefUnsupported = fmt.Errorf("spec.patch.env[].valueFrom.grafanaRef is not supported for GrafanaDashboard: the dashboard model is resolved once and shared across all matching Grafana instances")
-
-func RejectPatchEnvGrafanaRef(env []v1beta1.PatchEnvVar) error {
-	for _, e := range env {
-		if e.ValueFrom.GrafanaRef != nil {
-			return ErrGrafanaRefUnsupported
-		}
-	}
-	return nil
-}

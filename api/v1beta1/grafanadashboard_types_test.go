@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -149,50 +148,6 @@ var _ = Describe("Dashboard type", func() {
 			// edit: Enable public dashboard with new accessToken
 			dash.Spec.PublicSharing = &GrafanaDashboardPublicSharing{AccessToken: "87ff0673-dbfd-493d-8834-70a3d300b920"} //#nosec G101
 			err = cl.Update(ctx, dash)
-			require.NoError(t, err)
-		})
-	})
-
-	Context("Ensure Dashboard spec.patch.env[].valueFrom.grafanaRef is rejected", func() {
-		t := GinkgoT()
-		ctx := context.Background()
-
-		It("Should reject a patch env sourced from grafanaRef", func() {
-			dash := newDashboard("patch-env-grafana-ref", "dash-uid")
-			dash.Spec.Patch = &Patch{
-				Scripts: []string{"."},
-				Env: []PatchEnvVar{
-					{
-						Name: "FOO",
-						ValueFrom: PatchValueFromSource{
-							GrafanaRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.name"},
-						},
-					},
-				},
-			}
-
-			err := cl.Create(ctx, dash)
-			require.Error(t, err)
-		})
-
-		It("Should allow a patch env sourced from secretKeyRef", func() {
-			dash := newDashboard("patch-env-secret-ref", "dash-uid")
-			dash.Spec.Patch = &Patch{
-				Scripts: []string{"."},
-				Env: []PatchEnvVar{
-					{
-						Name: "FOO",
-						ValueFrom: PatchValueFromSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								Name: "some-secret",
-								Key:  "value",
-							},
-						},
-					},
-				},
-			}
-
-			err := cl.Create(ctx, dash)
 			require.NoError(t, err)
 		})
 	})

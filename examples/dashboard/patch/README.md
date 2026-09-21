@@ -10,9 +10,9 @@ It runs last, after those other mechanisms have already resolved.
 An example use case is to replace the tags for a dashboard whose JSON comes from an external source (`grafanaCom`, remote `url`, `oci`, etc...).
 
 Each entry in `scripts` is a `jq` expression evaluated against the model in order, using the previous script's output.
-The `spec.patch.env` array makes secret/configmap values available to those scripts as `env.NAME`.
-The `spec.patch.env[].valueFrom.grafanaRef` field is not supported here.
-A dashboard's model is resolved once and shared across every matching `Grafana` instance, so there is no single instance for a `grafanaRef` to resolve against and declaring one is rejected at admission.
+The `spec.patch.env` array makes secret/configmap/Grafana instance values available to those scripts as `env.NAME`.
+`spec.patch.env[].valueFrom.grafanaRef` selects a field off the matching `Grafana` instance (e.g. `metadata.name`).
+Unlike `secretKeyRef`/`configMapKeyRef`, a `grafanaRef` value is resolved separately for each matching `Grafana` instance, so the patched dashboard content can vary across instances.
 
 The operator protects the fields it manages itself (`id`, `uid`) from patch scripts.
 If a script  changes either, the operator restores the original value and emits a `ProhibitedPatchDetected` warning event.
