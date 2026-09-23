@@ -33,7 +33,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/events"
 
 	. "github.com/onsi/ginkgo/v2"
 )
@@ -444,7 +443,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		require.NoError(t, err)
 	})
 
-	It("restored protected fields modified by a patch; emits warning events", func() {
+	It("restores the uid field when modified by a patch", func() {
 		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
 		require.NoError(t, err)
 
@@ -464,15 +463,13 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 					JSON:      `{ "title": "title", "tags": ["existing"], "links": [] }`,
 				},
 				Patch: &v1beta1.Patch{
-					// Replace "id"
 					// Replace "uid"
-					Scripts: []string{`.id = 123`, `.uid = "patched"`},
+					Scripts: []string{`.uid = "patched"`},
 				},
 			},
 		}
 
-		recorder := events.NewFakeRecorder(10)
-		r := &GrafanaDashboardReconciler{Client: cl, Scheme: cl.Scheme(), Recorder: recorder}
+		r := &GrafanaDashboardReconciler{Client: cl, Scheme: cl.Scheme()}
 		req := tk8s.GetRequest(t, cr)
 
 		// Create Dashboard
@@ -482,17 +479,10 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		_, err = r.Reconcile(testCtx, req)
 		require.NoError(t, err)
 
-		// Still exists by original ID
+		// Still exists by original uid, since the patch to "uid" is reverted
 		dash, err := gClient.Dashboards.GetDashboardByUID(patchedUID)
 		require.NoError(t, err)
 		assert.NotNil(t, dash)
-
-		// Should be one warning each for id and uid fields
-		require.Len(t, recorder.Events, 2)
-
-		for range 2 {
-			assert.Contains(t, <-recorder.Events, "ProhibitedPatchDetected")
-		}
 
 		// Cleanup
 		err = cl.Delete(testCtx, cr)

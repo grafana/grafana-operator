@@ -14,7 +14,7 @@ The `spec.patch.env` array makes secret/configmap/Grafana instance values availa
 `spec.patch.env[].valueFrom.grafanaRef` selects a field off the matching `Grafana` instance (e.g. `metadata.name`).
 Unlike `secretKeyRef`/`configMapKeyRef`, a `grafanaRef` value is resolved separately for each matching `Grafana` instance, so the patched dashboard content can vary across instances.
 
-The operator protects the fields it manages itself (`id`, `uid`) from patch scripts.
-If a script  changes either, the operator restores the original value and emits a `ProhibitedPatchDetected` warning event.
+The operator protects the `uid` field it manages itself from patch scripts.
+If a script changes it, the operator restores the original value.
 
 {{< readfile file="resources.yaml" code="true" lang="yaml" >}}

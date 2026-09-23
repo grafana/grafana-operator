@@ -39,7 +39,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -68,9 +67,8 @@ const (
 // GrafanaDashboardReconciler reconciles a GrafanaDashboard object
 type GrafanaDashboardReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Cfg      *Config
-	Recorder events.EventRecorder
+	Scheme *runtime.Scheme
+	Cfg    *Config
 }
 
 func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) { //nolint:gocyclo
@@ -380,8 +378,7 @@ func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, 
 	}
 
 	// Captured before patching
-	originalID := dashboardModel["id"]
-	originalUID, _ := dashboardModel["uid"].(string) //nolint:errcheck
+	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 
 	resolvedEnv := make([]string, len(patchEnvironment))
 
@@ -399,8 +396,7 @@ func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, 
 		return fmt.Errorf("%s: %w", LogMsgApplyingPatch, err)
 	}
 
-	preventProhibitedPatch(log, r.Recorder, cr, dashboardModel, "id", originalID)
-	preventProhibitedPatch(log, r.Recorder, cr, dashboardModel, "uid", originalUID)
+	preventProhibitedPatch(log, dashboardModel, "uid", uid)
 
 	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
@@ -414,7 +410,6 @@ func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, 
 		}
 	}
 
-	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 	title := fmt.Sprintf("%s", dashboardModel["title"])
 	remoteUID := uid
 
@@ -481,17 +476,12 @@ func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, 
 	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 }
 
-func preventProhibitedPatch(log logr.Logger, recorder events.EventRecorder, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, field string, original any) {
+func preventProhibitedPatch(log logr.Logger, dashboardModel map[string]any, field string, original any) {
 	if dashboardModel[field] == original {
 		return
 	}
 
 	log.Info("Prevented prohibited patch of restricted field", "field", field)
-
-	if recorder != nil {
-		recorder.Eventf(cr, nil, corev1.EventTypeWarning, "ProhibitedPatchDetected", "ReplacedModelField",
-			"Patch modified a restricted field '%s', restored original value", field)
-	}
 
 	dashboardModel[field] = original
 }
