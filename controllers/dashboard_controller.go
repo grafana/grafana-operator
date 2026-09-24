@@ -25,6 +25,7 @@ import (
 	"strings"
 	"uuid"
 
+	"github.com/go-logr/logr"
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
@@ -33,10 +34,10 @@ import (
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	"github.com/grafana/grafana-operator/v5/controllers/content"
+	"github.com/itchyny/gojq"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -185,6 +186,27 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingFolderUID, err)
 	}
 
+	patches, err := ParsePatches(cr.Spec.Patch)
+	if err != nil {
+		setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
+		meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+		log.Error(err, LogMsgParsingPatches)
+
+		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgParsingPatches, err)
+	}
+
+	patchEnvironment := []patchEnvResolver{}
+	if cr.Spec.Patch != nil {
+		patchEnvironment, err = CollectPatchEnv(ctx, r.Client, cr.Namespace, cr.Spec.Patch.Env)
+		if err != nil {
+			setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidPatch, err.Error())
+			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+			log.Error(err, LogMsgResolvingPatchEnv)
+
+			return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingPatchEnv, err)
+		}
+	}
+
 	applyHomeErrors := make(map[string]string)
 	publicShareErrors := make(map[string]string)
 	pluginErrors := make(map[string]string)
@@ -202,7 +224,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 
 		// then import the dashboard into the matching grafana instances
-		err = r.reconcileWithInstance(ctx, &grafana, cr, dashboardModel, folderUID)
+		err = r.reconcileWithInstance(ctx, &grafana, cr, dashboardModel, folderUID, patches, patchEnvironment)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
 		}
@@ -348,12 +370,33 @@ func (r *GrafanaDashboardReconciler) finalize(ctx context.Context, cr *v1beta1.G
 	return nil
 }
 
-func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, folderUID string) error {
+func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dashboardModel map[string]any, folderUID string, patches []*gojq.Query, patchEnvironment []patchEnvResolver) error {
 	log := logf.FromContext(ctx)
 
 	if grafana.IsExternal() && cr.Spec.Plugins != nil {
 		return fmt.Errorf("external grafana instances don't support plugins, please remove spec.plugins from your dashboard cr")
 	}
+
+	// Captured before patching
+	uid := fmt.Sprintf("%s", dashboardModel["uid"])
+
+	resolvedEnv := make([]string, len(patchEnvironment))
+
+	for idx, resolve := range patchEnvironment {
+		var err error
+
+		resolvedEnv[idx], err = resolve(grafana)
+		if err != nil {
+			return fmt.Errorf("%s: %w", LogMsgResolvingPatchEnv, err)
+		}
+	}
+
+	dashboardModel, err := ApplyPatch(patches, dashboardModel, resolvedEnv)
+	if err != nil {
+		return fmt.Errorf("%s: %w", LogMsgApplyingPatch, err)
+	}
+
+	preventProhibitedPatch(log, dashboardModel, "uid", uid)
 
 	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
@@ -367,7 +410,6 @@ func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, 
 		}
 	}
 
-	uid := fmt.Sprintf("%s", dashboardModel["uid"])
 	title := fmt.Sprintf("%s", dashboardModel["title"])
 	remoteUID := uid
 
@@ -432,6 +474,16 @@ func (r *GrafanaDashboardReconciler) reconcileWithInstance(ctx context.Context, 
 
 	// Update grafana instance Status
 	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
+}
+
+func preventProhibitedPatch(log logr.Logger, dashboardModel map[string]any, field string, original any) {
+	if dashboardModel[field] == original {
+		return
+	}
+
+	log.Info("Prevented prohibited patch of restricted field", "field", field)
+
+	dashboardModel[field] = original
 }
 
 func (r *GrafanaDashboardReconciler) reconcilePublicSharing(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaDashboard, dto *models.PublicDashboardDTO, dashUID string) error {

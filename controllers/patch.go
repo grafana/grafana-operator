@@ -12,6 +12,7 @@ import (
 const (
 	LogMsgParsingPatches    = "failed to parse patch scripts"
 	LogMsgResolvingPatchEnv = "failed to resolve patch environment"
+	LogMsgApplyingPatch     = "failed to apply patch"
 )
 
 func ParsePatches(p *v1beta1.Patch) ([]*gojq.Query, error) {
