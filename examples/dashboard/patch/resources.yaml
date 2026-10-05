@@ -1,0 +1,41 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+spec:
+  config:
+    log:
+      mode: "console"
+    auth:
+      disable_login_form: "false"
+    security:
+      admin_user: root
+      admin_password: secret
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-patch
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  # Externally sourced, with its own tags that we can't modify in-line.
+  grafanaCom:
+    id: 1860
+  # Patch scripts are jq expressions that evaluate against the resolved dashboard JSON.
+  # They run in order, each seeing the output of the previous script.
+  # This script amends the existing tags with an "override" tag and the name of
+  # the Grafana instance it was applied to. grafanaRef is resolved separately for
+  # each matching Grafana instance, so the tag can vary across instances.
+  patch:
+    env:
+      - name: INSTANCE_NAME
+        valueFrom:
+          grafanaRef:
+            fieldPath: metadata.name
+    scripts:
+      - '.tags = ((.tags // []) + ["override", "instance-" + env.INSTANCE_NAME]) | .tags |= unique'

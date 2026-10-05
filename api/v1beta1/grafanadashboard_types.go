@@ -57,6 +57,11 @@ type GrafanaDashboardSpec struct {
 	// Allows configuration of sharing the dashboard publicly
 	// +optional
 	PublicSharing *GrafanaDashboardPublicSharing `json:"publicSharing,omitempty"`
+
+	// Patch the contents of the dashboard JSON using jq scripts.
+	// This is applied to a resolved dashboard, after variable substitution.
+	// +optional
+	Patch *Patch `json:"patch,omitempty"`
 }
 
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.accessToken) && !has(self.accessToken)) || (has(oldSelf.accessToken) && has(self.accessToken)))", message="spec.publicDashboard.accessToken is immutable"
