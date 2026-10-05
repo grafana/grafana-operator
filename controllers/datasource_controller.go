@@ -474,6 +474,7 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 
 			substitution := strings.ReplaceAll(currentValue, fmt.Sprintf("${%v}", key), val)
 			substitution = strings.ReplaceAll(substitution, fmt.Sprintf("$%v", key), val)
+
 			log.V(1).Info("overriding value", "key", override.TargetPath)
 
 			if err := n.SetString(substitution); err != nil {
