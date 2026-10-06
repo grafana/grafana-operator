@@ -186,13 +186,10 @@ func (r *fakeRegistry) handler() http.Handler {
 
 		switch {
 		case strings.Contains(rest, "/manifests/"):
-			idx := strings.LastIndex(rest, "/manifests/")
-			repo := rest[:idx]
-			ref := rest[idx+len("/manifests/"):]
+			repo, ref, _ := strings.CutLast(rest, "/manifests/")
 			r.serveManifest(w, req, repo, ref)
 		case strings.Contains(rest, "/blobs/"):
-			idx := strings.LastIndex(rest, "/blobs/")
-			ref := rest[idx+len("/blobs/"):]
+			_, ref, _ := strings.CutLast(rest, "/blobs/")
 			r.serveBlob(w, req, ref)
 		default:
 			http.NotFound(w, req)
