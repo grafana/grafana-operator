@@ -3,6 +3,7 @@ kind: GrafanaDashboard
 metadata:
   name: grafana-dashboard
 status:
+  publicSharingPath: "/public-dashboards/a2cd6a23cc0f4b4ebb06beb088829ef3"
   conditions:
     - type: DashboardSynchronized
       reason: ApplySuccessful

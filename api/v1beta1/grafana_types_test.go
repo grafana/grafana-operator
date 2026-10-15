@@ -168,12 +168,8 @@ func TestGrafanaSpecSetVolumes(t *testing.T) {
 	volumes := []corev1.Volume{
 		{
 			Name: "test-volume",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: "test-volume-cm",
-					},
-				},
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				Name: "test-volume-cm",
 			},
 		},
 	}
@@ -286,12 +282,10 @@ var _ = Describe("Grafana status NamespacedResourceList all CRs works", func() {
 		}
 
 		crGrafana := &Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "status-patch-all-crs",
-				Namespace: "default",
-				Labels: map[string]string{
-					"test": "status-patch",
-				},
+			Name:      "status-patch-all-crs",
+			Namespace: "default",
+			Labels: map[string]string{
+				"test": "status-patch",
 			},
 			Spec: GrafanaSpec{},
 		}
@@ -361,12 +355,10 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 	// Prep
 	ctx := context.Background()
 	g := &Grafana{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "status-patch",
-			Namespace: "default",
-			Labels: map[string]string{
-				"test": "status-patch",
-			},
+		Name:      "status-patch",
+		Namespace: "default",
+		Labels: map[string]string{
+			"test": "status-patch",
 		},
 		Spec: GrafanaSpec{},
 	}
@@ -401,10 +393,8 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 
 	Context("Create, Update, Delete entries in a NamespacedResourceList", Ordered, func() {
 		lp1 := &GrafanaLibraryPanel{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "librarypanel-one-on-status",
-				Namespace: "default",
-			},
+			Name:      "librarypanel-one-on-status",
+			Namespace: "default",
 			Spec: GrafanaLibraryPanelSpec{
 				GrafanaContentSpec: GrafanaContentSpec{
 					CustomUID: "lp-one-unique-identifier",
@@ -412,10 +402,8 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 			},
 		}
 		lp2 := &GrafanaLibraryPanel{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "librarypanel-two-on-status",
-				Namespace: "default",
-			},
+			Name:      "librarypanel-two-on-status",
+			Namespace: "default",
 			Spec: GrafanaLibraryPanelSpec{
 				GrafanaContentSpec: GrafanaContentSpec{
 					CustomUID: "lp-two-unique-identifier",
@@ -423,10 +411,8 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 			},
 		}
 		lp3 := &GrafanaLibraryPanel{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "librarypanel-three-on-status",
-				Namespace: "default",
-			},
+			Name:      "librarypanel-three-on-status",
+			Namespace: "default",
 			Spec: GrafanaLibraryPanelSpec{
 				GrafanaContentSpec: GrafanaContentSpec{
 					CustomUID: "lp-three-unique-identifier",
@@ -561,28 +547,22 @@ var _ = Describe("Grafana Status NamespacedResourceList CRUD", Ordered, func() {
 
 	Context("Update entry in NamespacedResourceList", Ordered, func() {
 		ds1 := &GrafanaDatasource{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "datasource-one-on-status",
-				Namespace: "default",
-			},
+			Name:      "datasource-one-on-status",
+			Namespace: "default",
 			Spec: GrafanaDatasourceSpec{
 				CustomUID: "ds-one-unique-identifier",
 			},
 		}
 		ds2 := &GrafanaDatasource{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "datasource-two-on-status",
-				Namespace: "default",
-			},
+			Name:      "datasource-two-on-status",
+			Namespace: "default",
 			Spec: GrafanaDatasourceSpec{
 				CustomUID: "ds-two-unique-identifier",
 			},
 		}
 		ds3 := &GrafanaDatasource{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "datasource-three-on-status",
-				Namespace: "default",
-			},
+			Name:      "datasource-three-on-status",
+			Namespace: "default",
 			Spec: GrafanaDatasourceSpec{
 				CustomUID: "ds-three-unique-identifier",
 			},
@@ -774,10 +754,8 @@ var _ = Describe("Grafana URL validation", func() {
 		for _, tt := range tests {
 			It(tt.name, func() {
 				cr := &Grafana{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "url-validation",
-						Namespace: "default",
-					},
+					Name:      "url-validation",
+					Namespace: "default",
 					Spec: GrafanaSpec{
 						External: &External{
 							URL: tt.url,

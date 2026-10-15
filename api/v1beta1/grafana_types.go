@@ -60,7 +60,7 @@ type OperatorReconcileVars struct {
 	ConfigHash string
 
 	// env var value for installed plugins
-	Plugins string
+	Plugins PluginList
 
 	// used to restart the Grafana container when referenced secrets or configmaps change
 	SecretsHash string
@@ -182,7 +182,7 @@ type External struct {
 	// defaults to `default`
 	// +kubebuilder:default=default
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
-	TenantNamespace string `json:"tenantNamespace"`
+	TenantNamespace string `json:"tenantNamespace,omitempty"`
 }
 
 // TLSConfig specifies options to use when communicating with the Grafana endpoint
@@ -238,10 +238,13 @@ type GrafanaStatus struct {
 	Folders               NamespacedResourceList `json:"folders,omitempty"`
 	LibraryPanels         NamespacedResourceList `json:"libraryPanels,omitempty"`
 	MuteTimings           NamespacedResourceList `json:"muteTimings,omitempty"`
+	Silences              NamespacedResourceList `json:"silences,omitempty"`
 	NotificationTemplates NamespacedResourceList `json:"notificationTemplates,omitempty"`
 	Manifests             NamespacedResourceList `json:"manifests,omitempty"`
 	Version               string                 `json:"version,omitempty"`
 	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
+	Replicas              int32                  `json:"replicas,omitempty"`
+	Selector              string                 `json:"selector,omitempty"`
 }
 
 func (in *GrafanaStatus) StatusList(cr client.Object) (*NamespacedResourceList, string, error) {
@@ -260,6 +263,8 @@ func (in *GrafanaStatus) StatusList(cr client.Object) (*NamespacedResourceList, 
 		return &in.LibraryPanels, "libraryPanels", nil
 	case *GrafanaMuteTiming:
 		return &in.MuteTimings, "muteTimings", nil
+	case *GrafanaSilence:
+		return &in.Silences, "silences", nil
 	case *GrafanaNotificationTemplate:
 		return &in.NotificationTemplates, "notificationTemplates", nil
 	case *GrafanaManifest:
@@ -277,7 +282,8 @@ func (in *GrafanaStatus) StatusList(cr client.Object) (*NamespacedResourceList, 
 // +kubebuilder:printcolumn:name="Stage",type="string",JSONPath=".status.stage",description=""
 // +kubebuilder:printcolumn:name="Stage status",type="string",JSONPath=".status.stageStatus",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
-// +kubebuilder:resource:categories={grafana-operator}
+// +kubebuilder:resource:categories={all,grafana-operator}
+// +kubebuilder:subresource:scale:specpath=.spec.deployment.spec.replicas,statuspath=.status.replicas,selectorpath=.status.selector
 type Grafana struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -292,10 +298,6 @@ type GrafanaList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Grafana `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&Grafana{}, &GrafanaList{})
 }
 
 func (in *Grafana) GetConfigSection(name string) map[string]string {
@@ -345,8 +347,8 @@ func (in *Grafana) AddNamespacedResource(ctx context.Context, cl client.Client, 
 		// Create list if previously empty or append to the end
 		jsonPatch = []any{map[string]any{
 			"op":    "add",
-			"path":  fmt.Sprintf("/status/%s", kind),
-			"value": []string{string(r)},
+			"path":  fmt.Sprintf("/status/%s", kind), //nolint:goconst
+			"value": []string{string(r)},             //nolint:goconst
 		}}
 	case idx == -1:
 		// Add resource to the end of the status list

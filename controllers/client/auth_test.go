@@ -16,16 +16,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func TestGetExternalAdminCredentials(t *testing.T) {
 	credSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "grafana-credentials",
-		},
+		Namespace: "default",
+		Name:      "grafana-credentials",
 		Data: map[string][]byte{
 			"user": []byte("root"),
 			"pass": []byte("secret"),
@@ -88,11 +85,9 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				cr := &v1beta1.Grafana{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "grafana",
-					},
-					Spec: tt.spec,
+					Namespace: "default",
+					Name:      "grafana",
+					Spec:      tt.spec,
 				}
 
 				adminUser, err := getExternalAdminUser(testCtx, cl, cr)
@@ -109,10 +104,8 @@ func TestGetExternalAdminCredentials(t *testing.T) {
 
 	t.Run("with undefined credentials", func(t *testing.T) {
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "grafana",
-			},
+			Namespace: "default",
+			Name:      "grafana",
 			Spec: v1beta1.GrafanaSpec{
 				External: &v1beta1.External{},
 			},
@@ -139,10 +132,8 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 	)
 
 	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      secretName,
-		},
+		Namespace: "default",
+		Name:      secretName,
 		Data: map[string][]byte{
 			usernameKey: []byte(username),
 			passwordKey: []byte(password),
@@ -158,10 +149,8 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 
 	t.Run("non-existent deployment", func(t *testing.T) {
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "grafana-env-credentials",
-			},
+			Namespace: "default",
+			Name:      "grafana-env-credentials",
 		}
 
 		got, err := getContainerEnvCredentials(ctx, cl, cr)
@@ -271,10 +260,8 @@ func TestGetContainerEnvCredentials(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cr := &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "grafana-env-credentials",
-				},
+				Namespace: "default",
+				Name:      "grafana-env-credentials",
 			}
 
 			deployment := resources.GetGrafanaDeployment(cr, nil)
@@ -317,10 +304,8 @@ func createAndCleanupResources(t *testing.T, ctx context.Context, c client.WithW
 // TODO currently only tests code paths for external grafanas
 func TestGetAdminCredentials(t *testing.T) {
 	credSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "grafana-credentials",
-		},
+		Namespace: "default",
+		Name:      "grafana-credentials",
 		Data: map[string][]byte{
 			"token": []byte("service-account-key"),
 			"user":  []byte("root"),
@@ -363,10 +348,8 @@ func TestGetAdminCredentials(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				cr := &v1beta1.Grafana{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "grafana",
-					},
+					Namespace: "default",
+					Name:      "grafana",
 					Spec: v1beta1.GrafanaSpec{
 						Config: map[string]map[string]string{
 							"security": {
@@ -388,10 +371,8 @@ func TestGetAdminCredentials(t *testing.T) {
 
 	t.Run("with undefined credentials", func(t *testing.T) {
 		cr := &v1beta1.Grafana{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "grafana",
-			},
+			Namespace: "default",
+			Name:      "grafana",
 			Spec: v1beta1.GrafanaSpec{
 				External: &v1beta1.External{},
 			},

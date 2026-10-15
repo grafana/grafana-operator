@@ -118,14 +118,14 @@ type Route struct {
 }
 
 type Matcher struct {
-	// is equal
+	// Deprecated: Does nothing and is not exported by Grafana
 	IsEqual bool `json:"isEqual,omitempty"`
 
-	// is regex
+	// Deprecated: Does nothing and is not exported by Grafana
 	IsRegex bool `json:"isRegex"`
 
 	// name
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	// value
 	Value string `json:"value"`
@@ -136,10 +136,8 @@ func (m Matchers) ToModelMatchers() models.Matchers {
 	out := make(models.Matchers, len(m))
 	for i, v := range m {
 		out[i] = &models.Matcher{
-			IsEqual: v.IsEqual,
-			IsRegex: &v.IsRegex,
-			Name:    v.Name,
-			Value:   &v.Value,
+			Name:  v.Name,
+			Value: v.Value,
 		}
 	}
 
@@ -235,7 +233,7 @@ type GrafanaNotificationPolicyStatus struct {
 // GrafanaNotificationPolicy is the Schema for the GrafanaNotificationPolicy API
 // +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
-// +kubebuilder:resource:categories={grafana-operator}
+// +kubebuilder:resource:categories={all,grafana-operator}
 type GrafanaNotificationPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -281,8 +279,4 @@ func (in *GrafanaNotificationPolicy) CommonStatus() *GrafanaCommonStatus {
 
 func (in *GrafanaNotificationPolicy) Conditions() *[]metav1.Condition {
 	return &in.Status.Conditions
-}
-
-func init() {
-	SchemeBuilder.Register(&GrafanaNotificationPolicy{}, &GrafanaNotificationPolicyList{})
 }

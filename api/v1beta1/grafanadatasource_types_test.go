@@ -21,14 +21,10 @@ func TestGrafanaStatusListDatasource(t *testing.T) {
 
 func newDatasource(name, uid string) *GrafanaDatasource {
 	return &GrafanaDatasource{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       "GrafanaDatasource",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
+		APIVersion: APIVersion,
+		Kind:       "GrafanaDatasource",
+		Name:       name,
+		Namespace:  "default",
 		Spec: GrafanaDatasourceSpec{
 			CustomUID: uid,
 			GrafanaCommonSpec: GrafanaCommonSpec{
@@ -104,14 +100,10 @@ var _ = Describe("Fail on field behavior changes", func() {
 	t := GinkgoT()
 
 	emptyDatasource := &GrafanaDatasource{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       "GrafanaDatasource",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-nil-datasource",
-			Namespace: "default",
-		},
+		APIVersion: APIVersion,
+		Kind:       "GrafanaDatasource",
+		Name:       "test-nil-datasource",
+		Namespace:  "default",
 		Spec: GrafanaDatasourceSpec{
 			GrafanaCommonSpec: GrafanaCommonSpec{
 				InstanceSelector: &metav1.LabelSelector{},

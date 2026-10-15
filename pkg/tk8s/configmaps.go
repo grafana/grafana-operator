@@ -6,9 +6,7 @@ func GetEnvFromConfigMapSource(t tHelper, configMapName string) *corev1.ConfigMa
 	t.Helper()
 
 	v := &corev1.ConfigMapEnvSource{
-		LocalObjectReference: corev1.LocalObjectReference{
-			Name: configMapName,
-		},
+		Name: configMapName,
 	}
 
 	return v
@@ -19,10 +17,8 @@ func GetEnvVarConfigMapSource(t tHelper, configMapName, key string) *corev1.EnvV
 
 	v := &corev1.EnvVarSource{
 		ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-			LocalObjectReference: corev1.LocalObjectReference{
-				Name: configMapName,
-			},
-			Key: key,
+			Name: configMapName,
+			Key:  key,
 		},
 	}
 
@@ -33,10 +29,8 @@ func GetConfigMapKeySelector(t tHelper, configMapName, key string) *corev1.Confi
 	t.Helper()
 
 	v := &corev1.ConfigMapKeySelector{
-		LocalObjectReference: corev1.LocalObjectReference{
-			Name: configMapName,
-		},
-		Key: key,
+		Name: configMapName,
+		Key:  key,
 	}
 
 	return v
@@ -47,9 +41,7 @@ func GetVolumeConfigMapSource(t tHelper, configMapName string) corev1.VolumeSour
 
 	v := corev1.VolumeSource{
 		ConfigMap: &corev1.ConfigMapVolumeSource{
-			LocalObjectReference: corev1.LocalObjectReference{
-				Name: configMapName,
-			},
+			Name: configMapName,
 		},
 	}
 

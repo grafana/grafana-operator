@@ -21,6 +21,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/grafana/grafana-openapi-client-go/client/dashboards"
 	"github.com/grafana/grafana-openapi-client-go/models"
@@ -29,6 +30,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -110,6 +112,99 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 			wantErr: "resolving dashboard contents",
 		},
 		{
+			name: "Invalid patch script",
+			meta: metav1.ObjectMeta{Namespace: "default", Name: "invalid-patch-script"},
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec:  commonSpecInvalidSpec,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
+				Patch: &v1beta1.Patch{
+					Scripts: []string{".title=-"}, // incomplete, fails to parse
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidPatch,
+			},
+			wantErr: LogMsgParsingPatches,
+		},
+		{
+			name: "Patch env references a missing secret",
+			meta: metav1.ObjectMeta{Namespace: "default", Name: "invalid-patch-env"},
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec:  commonSpecInvalidSpec,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
+				Patch: &v1beta1.Patch{
+					Scripts: []string{"."},
+					Env: []v1beta1.PatchEnvVar{
+						{
+							Name: "MISSING",
+							ValueFrom: v1beta1.PatchValueFromSource{
+								SecretKeyRef: &corev1.SecretKeySelector{
+									Name: "does-not-exist",
+									Key:  "value",
+								},
+							},
+						},
+					},
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidPatch,
+			},
+			wantErr: LogMsgResolvingPatchEnv,
+		},
+		{
+			name: "Patch script fails at runtime",
+			meta: metav1.ObjectMeta{Namespace: "default", Name: "invalid-patch-runtime"},
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec:  commonSpecInvalidSpec,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{JSON: "{}"},
+				Patch: &v1beta1.Patch{
+					Scripts: []string{`error("boom")`},
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionDashboardSynchronized,
+				Reason: conditionReasonApplyFailed,
+			},
+			wantErr: LogMsgApplyingPatch,
+		},
+		{
+			name: "v2 dashboard resource rejected: apiVersion at root",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "invalid-spec-v2-apiversion",
+			},
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					JSON: `{"apiVersion":"dashboard.grafana.app/v2","kind":"Dashboard","metadata":{"name":"my-dashboard"},"spec":{}}`,
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidModelResolution,
+			},
+		},
+		{
+			name: "v2 dashboard resource rejected: kind at root",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "invalid-spec-v2-kind",
+			},
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					JSON: `{"kind":"Dashboard","metadata":{"name":"my-dashboard"},"spec":{}}`,
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidModelResolution,
+			},
+		},
+		{
 			name: "Successfully applied resource to instance",
 			meta: objectMetaSynchronized,
 			spec: v1beta1.GrafanaDashboardSpec{
@@ -120,6 +215,24 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 							"links": []
 						}`,
 				},
+			},
+			want: metav1.Condition{
+				Type:   conditionDashboardSynchronized,
+				Reason: conditionReasonApplySuccessful,
+			},
+		},
+		{
+			name: "Successfully applied shared dashboard",
+			meta: objectMetaSynchronized,
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: commonSpecSynchronized,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					JSON: `{
+							"title": "Minimal Dashboard With sharing",
+							"links": []
+						}`,
+				},
+				PublicSharing: &v1beta1.GrafanaDashboardPublicSharing{},
 			},
 			want: metav1.Condition{
 				Type:   conditionDashboardSynchronized,
@@ -174,10 +287,8 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaDashboard{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "url-based-dashboard",
-			},
+			Namespace: "default",
+			Name:      "url-based-dashboard",
 			Spec: v1beta1.GrafanaDashboardSpec{
 				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 					InstanceSelector: &metav1.LabelSelector{
@@ -241,10 +352,8 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaDashboard{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "url-based-dashboard-drift",
-			},
+			Namespace: "default",
+			Name:      "url-based-dashboard-drift",
 			Spec: v1beta1.GrafanaDashboardSpec{
 				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 					InstanceSelector: &metav1.LabelSelector{
@@ -255,7 +364,7 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		}
 
 		// Make it long enough, so we can play with reconciliation
-		cr.Spec.ResyncPeriod.Duration = 5 * time.Minute
+		cr.Spec.ResyncPeriod = &metav1.Duration{Duration: 5 * time.Minute}
 
 		r := &GrafanaDashboardReconciler{Client: cl, Scheme: cl.Scheme()}
 		req := tk8s.GetRequest(t, cr)
@@ -285,7 +394,8 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 				Dashboard: model,
 				FolderUID: dash.Payload.Meta.FolderUID,
 				Overwrite: true,
-			})
+			},
+		)
 		require.NoError(t, err)
 
 		dash, err = gClient.Dashboards.GetDashboardByUID(uid)
@@ -301,6 +411,226 @@ var _ = Describe("Dashboard Reconciler", Ordered, func() {
 		require.NoError(t, err)
 
 		assert.Contains(t, dash.String(), title1) // Make sure the drift is gone now
+
+		// Cleanup
+		err = cl.Delete(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+	})
+
+	It("applies a patch script to merge dashboard tags", func() {
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
+		require.NoError(t, err)
+
+		const patchedUID = "patched-tags-dashboard"
+
+		cr := &v1beta1.GrafanaDashboard{
+			Namespace: "default",
+			Name:      patchedUID,
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+					InstanceSelector: &metav1.LabelSelector{
+						MatchLabels: externalGrafanaCr.GetLabels(),
+					},
+				},
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					CustomUID: patchedUID,
+					JSON:      `{ "title": "title", "tags": ["existing"], "links": [] }`,
+				},
+				Patch: &v1beta1.Patch{
+					// Fetch existing tags, fallback to empty list,
+					// append the override tag,
+					// remove duplicates.
+					Scripts: []string{`.tags = ((.tags // []) + ["override"] | unique)`},
+				},
+			},
+		}
+
+		r := &GrafanaDashboardReconciler{Client: cl, Scheme: cl.Scheme()}
+		req := tk8s.GetRequest(t, cr)
+
+		// Create Dashboard
+		err = cl.Create(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		dash, err := gClient.Dashboards.GetDashboardByUID(patchedUID)
+		require.NoError(t, err)
+
+		model, ok := dash.GetPayload().Dashboard.(map[string]any)
+		require.True(t, ok)
+
+		// Get tags, assert patch applied
+		tags, ok := model["tags"].([]any)
+		require.True(t, ok)
+		assert.ElementsMatch(t, []any{"existing", "override"}, tags)
+
+		// Cleanup
+		err = cl.Delete(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+	})
+
+	It("restores the uid field when modified by a patch", func() {
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
+		require.NoError(t, err)
+
+		const patchedUID = "patched-tags-dashboard"
+
+		cr := &v1beta1.GrafanaDashboard{
+			Namespace: "default",
+			Name:      patchedUID,
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+					InstanceSelector: &metav1.LabelSelector{
+						MatchLabels: externalGrafanaCr.GetLabels(),
+					},
+				},
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					CustomUID: patchedUID,
+					JSON:      `{ "title": "title", "tags": ["existing"], "links": [] }`,
+				},
+				Patch: &v1beta1.Patch{
+					// Replace "uid"
+					Scripts: []string{`.uid = "patched"`},
+				},
+			},
+		}
+
+		r := &GrafanaDashboardReconciler{Client: cl, Scheme: cl.Scheme()}
+		req := tk8s.GetRequest(t, cr)
+
+		// Create Dashboard
+		err = cl.Create(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		// Still exists by original uid, since the patch to "uid" is reverted
+		dash, err := gClient.Dashboards.GetDashboardByUID(patchedUID)
+		require.NoError(t, err)
+		assert.NotNil(t, dash)
+
+		// Cleanup
+		err = cl.Delete(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+	})
+})
+
+var _ = Describe("Dashboard Reconciler", Ordered, func() {
+	t := GinkgoT()
+
+	const uid = "has-public-dashboard"
+
+	It("reconciles drift of publicDashboard", func() {
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
+		require.NoError(t, err)
+
+		cr := &v1beta1.GrafanaDashboard{
+			Namespace: "default",
+			Name:      "updates-shared-dashboard",
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+					InstanceSelector: &metav1.LabelSelector{
+						MatchLabels: externalGrafanaCr.GetLabels(),
+					},
+				},
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					CustomUID: uid,
+					JSON:      `{ "title": "title", "links": [] }`,
+				},
+				PublicSharing: &v1beta1.GrafanaDashboardPublicSharing{},
+			},
+		}
+
+		r := &GrafanaDashboardReconciler{Client: cl, Scheme: cl.Scheme()}
+		req := tk8s.GetRequest(t, cr)
+
+		// Create dashboard
+		err = cl.Create(testCtx, cr)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		// Create dashboard
+		err = cl.Get(testCtx, req.NamespacedName, cr)
+		require.NoError(t, err)
+
+		dash, err := gClient.Dashboards.GetDashboardByUID(uid)
+		require.NoError(t, err)
+		assert.NotNil(t, dash)
+
+		remoteDTO, err := gClient.Dashboards.GetPublicDashboard(uid)
+		require.NoError(t, err)
+		assert.NotNil(t, remoteDTO)
+		assert.NotNil(t, remoteDTO.Payload)
+
+		metaUID, err := uuid.Parse(string(cr.UID))
+		require.NoError(t, err)
+
+		tokenUUID := fmt.Sprintf("%x", metaUID[:])
+
+		expectedDTO := &models.PublicDashboardDTO{
+			UID:                  string(cr.UID),
+			AccessToken:          tokenUUID,
+			IsEnabled:            new(true),
+			TimeSelectionEnabled: new(false),
+			AnnotationsEnabled:   new(false),
+		}
+
+		matches, recreate := r.publicSharingMatchesStateInGrafana(cr, expectedDTO, remoteDTO)
+		assert.True(t, matches)
+		assert.False(t, recreate)
+
+		// Invert all booleans and update ignored field UID
+		_, err = gClient.Dashboards.UpdatePublicDashboard(&dashboards.UpdatePublicDashboardParams{ //nolint:errcheck
+			Body: &models.PublicDashboardDTO{
+				UID:                  "ignored-by-grafana",
+				IsEnabled:            new(false),
+				AnnotationsEnabled:   new(true),
+				TimeSelectionEnabled: new(true),
+			},
+			DashboardUID: uid,
+			UID:          string(cr.UID),
+		})
+		require.NoError(t, err)
+
+		// Make sure the drift is there
+		remoteDTO, err = gClient.Dashboards.GetPublicDashboard(uid)
+		require.NoError(t, err)
+		assert.NotNil(t, remoteDTO)
+		assert.NotNil(t, remoteDTO.Payload)
+
+		// Should not match
+		// Recreate is unnecessary as only mutable fields changed (UID ignored).
+		matches, recreate = r.publicSharingMatchesStateInGrafana(cr, expectedDTO, remoteDTO)
+		assert.False(t, matches)
+		assert.False(t, recreate)
+
+		// Reconcile again to fix the drift
+		_, err = r.Reconcile(testCtx, req)
+		require.NoError(t, err)
+
+		// Make sure the drift is gone now
+		remoteDTO, err = gClient.Dashboards.GetPublicDashboard(uid)
+		require.NoError(t, err)
+		assert.NotNil(t, remoteDTO)
+		assert.NotNil(t, remoteDTO.Payload)
+
+		matches, _ = r.publicSharingMatchesStateInGrafana(cr, expectedDTO, remoteDTO)
+		assert.True(t, matches)
+		assert.False(t, recreate)
 
 		// Cleanup
 		err = cl.Delete(testCtx, cr)
@@ -387,5 +717,135 @@ func TestGrafanaDashboardReconcilerMatchesStateInGrafana(t *testing.T) {
 		require.ErrorContains(t, err, "remote dashboard is not a valid object")
 
 		assert.False(t, got)
+	})
+}
+
+func TestGrafanaDashboardReconcilerPublicDashboardMatchesStateInGrafana(t *testing.T) {
+	uid := uuid.New().String()
+
+	defaultPublicDashboard := dashboards.GetPublicDashboardOK{
+		Payload: &models.PublicDashboard{
+			UID:                  uid,
+			AccessToken:          uid,
+			IsEnabled:            true,
+			AnnotationsEnabled:   false,
+			TimeSelectionEnabled: false,
+		},
+	}
+
+	tests := []struct {
+		name         string
+		changes      *models.PublicDashboardDTO
+		annotations  map[string]string
+		wantMatch    bool
+		wantRecreate bool
+	}{
+		{
+			name: "no drift",
+			changes: &models.PublicDashboardDTO{
+				UID:                  uid,
+				AccessToken:          uid,
+				AnnotationsEnabled:   new(false),
+				IsEnabled:            new(true),
+				TimeSelectionEnabled: new(false),
+			},
+			wantMatch:    true,
+			wantRecreate: false,
+		},
+		{
+			name: "mutable fields trigger update",
+			changes: &models.PublicDashboardDTO{
+				UID:                  uid,
+				AccessToken:          uid,
+				IsEnabled:            new(false),
+				AnnotationsEnabled:   new(true),
+				TimeSelectionEnabled: new(true),
+			},
+			wantMatch:    false,
+			wantRecreate: false,
+		},
+		{
+			// In case the cr is recreated without running the finalizer or EtcD state is lost, we need to recover
+			name: "UID changes should recreate",
+			changes: &models.PublicDashboardDTO{
+				UID:                  "changed-uid",
+				AccessToken:          uid,
+				IsEnabled:            new(true),
+				AnnotationsEnabled:   new(false),
+				TimeSelectionEnabled: new(false),
+			},
+			wantMatch:    false,
+			wantRecreate: true,
+		},
+		{
+			name: "AccessToken changes should recreate",
+			changes: &models.PublicDashboardDTO{
+				UID:                  uid,
+				AccessToken:          uuid.New().String(),
+				IsEnabled:            new(true),
+				AnnotationsEnabled:   new(false),
+				TimeSelectionEnabled: new(false),
+			},
+			wantMatch:    false,
+			wantRecreate: true,
+		},
+		{
+			name: "status annotation is empty",
+			changes: &models.PublicDashboardDTO{
+				UID:                  uid,
+				AccessToken:          uid,
+				IsEnabled:            new(true),
+				AnnotationsEnabled:   new(false),
+				TimeSelectionEnabled: new(false),
+			},
+			annotations:  map[string]string{annotationSyncedPublicSharing: ""},
+			wantMatch:    false,
+			wantRecreate: true,
+		},
+		{
+			name: "status annotation does not match",
+			changes: &models.PublicDashboardDTO{
+				UID:                  uid,
+				AccessToken:          uid,
+				IsEnabled:            new(true),
+				AnnotationsEnabled:   new(false),
+				TimeSelectionEnabled: new(false),
+			},
+			annotations:  map[string]string{annotationSyncedPublicSharing: uuid.New().String()},
+			wantMatch:    false,
+			wantRecreate: true,
+		},
+		{
+			name: "status annotation matches uid",
+			changes: &models.PublicDashboardDTO{
+				UID:                  uid,
+				AccessToken:          uid,
+				IsEnabled:            new(true),
+				AnnotationsEnabled:   new(false),
+				TimeSelectionEnabled: new(false),
+			},
+			annotations:  map[string]string{annotationSyncedPublicSharing: uid},
+			wantMatch:    true,
+			wantRecreate: false,
+		},
+	}
+
+	cr := &v1beta1.GrafanaDashboard{}
+	r := &GrafanaDashboardReconciler{}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cr.Annotations = tt.annotations
+
+			matches, recreate := r.publicSharingMatchesStateInGrafana(cr, tt.changes, &defaultPublicDashboard)
+			assert.Equal(t, tt.wantMatch, matches, "'matches' did not match 'wantMatches'")
+			assert.Equal(t, tt.wantRecreate, recreate, "'recreate' did not match 'wantRecreate'")
+		})
+	}
+
+	t.Run("remote model is nil", func(t *testing.T) {
+		matches, recreate := r.publicSharingMatchesStateInGrafana(cr, &models.PublicDashboardDTO{UID: uid, AccessToken: uid}, nil)
+		assert.False(t, matches)
+		assert.True(t, recreate)
 	})
 }

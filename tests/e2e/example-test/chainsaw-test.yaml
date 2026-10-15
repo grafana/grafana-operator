@@ -115,3 +115,9 @@ spec:
             file: 17-manifest.yaml
         - assert:
             file: 17-assert.yaml
+    - name: step-18
+      try:
+        - apply:
+            file: 18-silence.yaml
+        - assert:
+            file: 18-assert.yaml

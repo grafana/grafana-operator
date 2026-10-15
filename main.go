@@ -64,6 +64,7 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/resources"
 	"github.com/grafana/grafana-operator/v5/embeds"
 	"github.com/grafana/grafana-operator/v5/pkg/autodetect"
+	"github.com/grafana/grafana-operator/v5/pkg/featureflags"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -91,6 +92,7 @@ var operatorConfig struct {
 	PprofAddr               string        `name:"pprof-addr"                                                                help:"The address to expose the pprof server. Empty string disables the pprof server."`
 	EnableLeaderElection    bool          `name:"leader-elect"              default:"false" env:"ENABLE_LEADER_ELECTION"    help:"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager."`
 	MaxConcurrentReconciles int           `name:"max-concurrent-reconciles" default:"1"     env:"MAX_CONCURRENT_RECONCILES" help:"Maximum number of concurrent reconciles for dashboard, datasource, folder controllers."`
+	MemLimitRatio           float64       `name:"gomemlimit-ratio"          default:"0.9"   env:"GOMEMLIMIT_RATIO"          help:"The limit defaults to 90% of either the CGroup (v2 or v1) with fallback to the System. Results in less GC cycles when there's memory to spare and more when nearing the limit to reduce OOM kills."`
 	ResyncPeriod            time.Duration `name:"default-resync-period"     default:"10m"   env:"DEFAULT_RESYNC_PERIOD"     help:"Controls the default .spec.resyncPeriod when undefined on CRs."`
 
 	ZapDevel           bool   `name:"zap-devel"            default:"false"                                                         help:"Development Mode defaults(encoder=consoleEncoder,logLevel=Debug,stackTraceLevel=Warn)"`
@@ -98,6 +100,8 @@ var operatorConfig struct {
 	ZapLogLevel        string `name:"zap-log-level"        default:"info"                                                          help:"Zap Level to configure the verbosity of logging. Can be one of 'debug', 'info', 'error', 'panic' or any integer value > 0 which corresponds to custom debug levels of increasing verbosity"`
 	ZapTimeEncoding    string `name:"zap-time-encoding"    default:"iso8601" enum:"epoch,millis,nanos,iso8601,rfc3339,rfc3339nano" help:"Zap time encoding ('epoch', 'millis', 'nanos', 'iso8601', 'rfc3339' or 'rfc3339nano')."`
 	ZapStacktraceLevel string `name:"zap-stacktrace-level" default:"error"   enum:"info,error,panic"                               help:"Zap Level at and above which stacktraces are captured (one of 'info', 'error', 'panic')."`
+
+	FeatureFlags string `env:"FEATURE_FLAGS" name:"feature-flags" help:"Specify feature flags to be enabled or disabled. Comma separated"`
 }
 
 func init() {
@@ -112,9 +116,9 @@ func init() {
 }
 
 func configureZap() (zap.Options, error) {
-	opts := zap.Options{}
-
-	opts.Development = operatorConfig.ZapDevel
+	opts := zap.Options{
+		Development: operatorConfig.ZapDevel,
+	}
 	switch operatorConfig.ZapEncoder {
 	case "json":
 		opts.NewEncoder = func(eco ...zap.EncoderConfigOption) zapcore.Encoder {
@@ -174,7 +178,8 @@ func configureZap() (zap.Options, error) {
 }
 
 func main() { //nolint:gocyclo
-	kong.Parse(&operatorConfig,
+	kong.Parse(
+		&operatorConfig,
 		kong.Name("grafana-operator"),
 		kong.UsageOnError(),
 		kong.ConfigureHelp(kong.HelpOptions{
@@ -189,12 +194,29 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
+	ctx := ctrl.SetupSignalHandler()
+
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 	slogger := slog.New(logr.ToSlogHandler(setupLog))
 	slog.SetDefault(slogger)
 
-	// Optimize Go runtime based on CGroup limits (GOMEMLIMIT, sets a soft memory limit for the runtime)
-	memlimit.SetGoMemLimitWithOpts(memlimit.WithLogger(slogger)) //nolint:errcheck
+	if err := featureflags.SetActiveFromArg(operatorConfig.FeatureFlags); err != nil {
+		setupLog.Error(err, "failed to parse feature flags")
+		os.Exit(1)
+	}
+
+	// Optimize GC cycles by setting and periodically updating GOMEMLIMIT.
+	memlimit.Set( //nolint:errcheck
+		memlimit.WithRatio(operatorConfig.MemLimitRatio),
+		memlimit.WithRefreshInterval(ctx, 1*time.Minute),
+		memlimit.WithProvider(
+			memlimit.ApplyFallback(
+				memlimit.FromCgroup,
+				memlimit.FromSystem,
+			),
+		),
+		memlimit.WithLogger(slogger),
+	)
 
 	// Determine LeaderElectionID from
 	leHash := sha256.New()
@@ -288,7 +310,6 @@ func main() { //nolint:gocyclo
 		}
 	}
 
-	ctx := ctrl.SetupSignalHandler()
 	ctx = klog.NewContext(ctx, setupLog) // Leader election logger is set through the ctx
 
 	// Determine Operator scope
@@ -361,11 +382,17 @@ func main() { //nolint:gocyclo
 		os.Exit(1)
 	}
 
-	if err = (&controllers.GrafanaFolderReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Cfg:    ctrlCfg,
-	}).SetupWithManager(mgr); err != nil {
+	if featureflags.IsEnabled(featureflags.FoldersUseNewAPI) {
+		err = controllers.NewGenericFolderReconciler(mgr.GetClient(), ctrlCfg).SetupWithManager(mgr)
+	} else {
+		err = (&controllers.GrafanaFolderReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+			Cfg:    ctrlCfg,
+		}).SetupWithManager(mgr)
+	}
+
+	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaFolder")
 		os.Exit(1)
 	}
@@ -422,6 +449,15 @@ func main() { //nolint:gocyclo
 		Cfg:    ctrlCfg,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GrafanaMuteTiming")
+		os.Exit(1)
+	}
+
+	if err = (&controllers.GrafanaSilenceReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Cfg:    ctrlCfg,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GrafanaSilence")
 		os.Exit(1)
 	}
 

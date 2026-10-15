@@ -82,7 +82,7 @@ type TimeRange struct {
 // GrafanaMuteTiming is the Schema for the GrafanaMuteTiming API
 // +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
-// +kubebuilder:resource:categories={grafana-operator}
+// +kubebuilder:resource:categories={all,grafana-operator}
 type GrafanaMuteTiming struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -138,8 +138,4 @@ func (in *GrafanaMuteTimingList) Exists(namespace, name string) bool {
 	}
 
 	return false
-}
-
-func init() {
-	SchemeBuilder.Register(&GrafanaMuteTiming{}, &GrafanaMuteTimingList{})
 }

@@ -36,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -79,6 +80,20 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := logf.FromContext(ctx).WithName("GrafanaReconciler")
 	ctx = logf.IntoContext(ctx, log)
 
+	var res ctrl.Result
+
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		result, err := r.reconcile(ctx, req)
+		res = result
+
+		return err
+	})
+
+	return res, err
+}
+
+func (r *GrafanaReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := logf.FromContext(ctx)
 	cr := &v1beta1.Grafana{}
 
 	err := r.Get(ctx, req.NamespacedName, cr)
@@ -170,13 +185,15 @@ func (r *GrafanaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-func (r *GrafanaReconciler) setDefaultGrafanaVersion(ctx context.Context, cr client.Object) error {
+func (r *GrafanaReconciler) setDefaultGrafanaVersion(ctx context.Context, cr *v1beta1.Grafana) error {
 	// For clusters where RELATED_IMAGE_GRAFANA is set to an image hash,
 	// we want to set version to the value of the variable to support airgapped clusters as well
 	targetVersion := config.GrafanaVersion
 	if envVersion := os.Getenv("RELATED_IMAGE_GRAFANA"); isImageSHA256(envVersion) {
 		targetVersion = envVersion
 	}
+
+	cr.Spec.Version = targetVersion
 
 	// Create patch with the target version
 	patch, err := json.Marshal(map[string]any{"spec": map[string]any{"version": targetVersion}})
@@ -261,7 +278,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		return err
 	}
 
-	muteTimings := &v1beta1.GrafanaLibraryPanelList{}
+	muteTimings := &v1beta1.GrafanaMuteTimingList{}
 
 	err = r.List(ctx, muteTimings)
 	if err != nil {
@@ -282,6 +299,13 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		return err
 	}
 
+	silences := &v1beta1.GrafanaSilenceList{}
+
+	err = r.List(ctx, silences)
+	if err != nil {
+		return err
+	}
+
 	// delete resources from grafana statuses that no longer have a CR
 	statusUpdates := 0
 
@@ -297,6 +321,7 @@ func (r *GrafanaReconciler) syncStatuses(ctx context.Context) error {
 		removeMissingCRs(&grafana.Status.MuteTimings, muteTimings, &updateStatus)
 		removeMissingCRs(&grafana.Status.NotificationTemplates, notificationTemplates, &updateStatus)
 		removeMissingCRs(&grafana.Status.Manifests, manifests, &updateStatus)
+		removeMissingCRs(&grafana.Status.Silences, silences, &updateStatus)
 
 		if updateStatus {
 			statusUpdates++
@@ -334,7 +359,7 @@ func (r *GrafanaReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 
 	b := ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.Grafana{}, builder.WithPredicates(ignoreStatusUpdates())).
-		Owns(&appsv1.Deployment{}, builder.WithPredicates(ignoreStatusUpdates())).
+		Owns(&appsv1.Deployment{}, builder.WithPredicates(ignoreStatusUpdates(exceptDeploymentReplicas()))).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.PersistentVolumeClaim{}, builder.WithPredicates(ignoreStatusUpdates())).
 		Owns(&corev1.Secret{}).
@@ -491,10 +516,10 @@ func (r *GrafanaReconciler) requestsForChangeByField(indexKey string) handler.Ma
 
 		var reqs []reconcile.Request
 		for _, gr := range list.Items {
-			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
+			reqs = append(reqs, reconcile.Request{
 				Namespace: gr.Namespace,
 				Name:      gr.Name,
-			}})
+			})
 		}
 
 		return reqs

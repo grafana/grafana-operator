@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/embeds"
@@ -50,10 +49,8 @@ func TestFetchJsonnet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cr := &v1beta1.GrafanaDashboard{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "grafanadashboard-jsonnet",
-					Namespace: "grafana",
-				},
+				Name:      "grafanadashboard-jsonnet",
+				Namespace: "grafana",
 				Spec: v1beta1.GrafanaDashboardSpec{
 					GrafanaContentSpec: v1beta1.GrafanaContentSpec{
 						Jsonnet: tt.jsonnet,
@@ -70,10 +67,8 @@ func TestFetchJsonnet(t *testing.T) {
 
 	t.Run("Empty Jsonnet Content", func(t *testing.T) {
 		cr := &v1beta1.GrafanaDashboard{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "grafanadashboard-jsonnet",
-				Namespace: "grafana",
-			},
+			Name:      "grafanadashboard-jsonnet",
+			Namespace: "grafana",
 			Spec: v1beta1.GrafanaDashboardSpec{
 				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
 					Jsonnet: "",
@@ -93,10 +88,8 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 
 	t.Run("Successful Jsonnet Evaluation with jsonnet build", func(t *testing.T) {
 		cr := &v1beta1.GrafanaDashboard{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "grafanadashboard-jsonnet",
-				Namespace: "grafana",
-			},
+			Name:      "grafanadashboard-jsonnet",
+			Namespace: "grafana",
 			Spec: v1beta1.GrafanaDashboardSpec{
 				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
 					JsonnetProjectBuild: &v1beta1.JsonnetProjectBuild{
@@ -114,10 +107,53 @@ func TestBuildProjectAndFetchJsonnetFrom(t *testing.T) {
 
 		want := []byte("{\n    \"env\" : \"123\"   \n}")
 
-		got, err := BuildProjectAndFetchJsonnetFrom(cr, envs)
+		got, err := BuildProjectAndFetchJsonnetFrom(t.Context(), cr, envs)
 		require.NoError(t, err)
 
 		assert.JSONEq(t, string(want), string(got))
+	})
+
+	t.Run("Cleans up temporary files when jsonnet evaluation fails", func(t *testing.T) {
+		cr := &v1beta1.GrafanaDashboard{
+			Name:      "grafanadashboard-jsonnet",
+			Namespace: "grafana",
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					JsonnetProjectBuild: &v1beta1.JsonnetProjectBuild{
+						JPath:              []string{"/testing/jsonnetProjectWithRuntimeRaw"},
+						FileName:           "testing/jsonnetProjectWithRuntimeRaw/does-not-exist.jsonnet",
+						GzipJsonnetProject: embeds.TestJsonnetProjectBuildFolderGzip,
+					},
+				},
+			},
+		}
+
+		got, err := BuildProjectAndFetchJsonnetFrom(t.Context(), cr, map[string]string{"TEST_ENV": "123"})
+		require.Nil(t, got)
+		require.Error(t, err)
+
+		entries, readErr := os.ReadDir(config.GrafanaDashboardsRuntimeBuild)
+		require.NoError(t, readErr)
+		assert.Empty(t, entries)
+	})
+
+	t.Run("Prevents path traversal attacks", func(t *testing.T) {
+		cr := &v1beta1.GrafanaDashboard{
+			Name:      "grafanadashboard-jsonnet",
+			Namespace: "grafana",
+			Spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					JsonnetProjectBuild: &v1beta1.JsonnetProjectBuild{
+						JPath:              []string{""},
+						FileName:           "main.jsonnet",
+						GzipJsonnetProject: embeds.TestJsonnetProjectPathTraversalGzip,
+					},
+				},
+			},
+		}
+
+		_, err := BuildProjectAndFetchJsonnetFrom(t.Context(), cr, nil)
+		require.ErrorContains(t, err, "path escapes from parent")
 	})
 }
 

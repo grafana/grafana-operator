@@ -37,6 +37,8 @@ Resource Types:
 
 - [GrafanaServiceAccount](#grafanaserviceaccount)
 
+- [GrafanaSilence](#grafanasilence)
+
 
 
 
@@ -1146,7 +1148,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -1310,7 +1313,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -1680,10 +1684,34 @@ GrafanaDashboardSpec defines the desired state of GrafanaDashboard
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanadashboardspecoci">oci</a></b></td>
+        <td>object</td>
+        <td>
+          model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecpatch">patch</a></b></td>
+        <td>object</td>
+        <td>
+          Patch the contents of the dashboard JSON using jq scripts.
+This is applied to a resolved dashboard, after variable substitution.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanadashboardspecpluginsindex">plugins</a></b></td>
         <td>[]object</td>
         <td>
           plugins<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecpublicsharing">publicSharing</a></b></td>
+        <td>object</td>
+        <td>
+          Allows configuration of sharing the dashboard publicly<br/>
+          <br/>
+            <i>Validations</i>:<li>((!has(oldSelf.accessToken) && !has(self.accessToken)) || (has(oldSelf.accessToken) && has(self.accessToken))): spec.publicDashboard.accessToken is immutable</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1722,6 +1750,14 @@ Can be any string consisting of alphanumeric characters, - and _ with a maximum 
         <td>object</td>
         <td>
           authorization options for model from url<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecvariablesindex">variables</a></b></td>
+        <td>[]object</td>
+        <td>
+          overrides the default (current) value of named template variables in the dashboard model.
+Variables that are not present in the model are ignored.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1830,7 +1866,8 @@ model from configmap
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -1946,7 +1983,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -2115,7 +2153,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -2266,6 +2305,333 @@ Jsonnet project build
 </table>
 
 
+### GrafanaDashboard.spec.oci
+<sup><sup>[↩ Parent](#grafanadashboardspec)</sup></sup>
+
+
+
+model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          Path is the path of the file to extract from the artifact.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reference</b></td>
+        <td>string</td>
+        <td>
+          Reference is the full OCI artifact reference including a tag or digest,
+e.g. "ghcr.io/team/dashboards:v1.4.7" or
+"ghcr.io/team/dashboards@sha256:abc123...". Prefer a digest for
+reproducible deployments.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>insecurePlainHTTP</b></td>
+        <td>boolean</td>
+        <td>
+          InsecurePlainHTTP switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+Intended for in-cluster or test registries; HTTPS registries with self-signed
+certificates are not supported. Default false.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecocipullsecretref">pullSecretRef</a></b></td>
+        <td>object</td>
+        <td>
+          PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+If omitted, anonymous pull is attempted.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.oci.pullSecretRef
+<sup><sup>[↩ Parent](#grafanadashboardspecoci)</sup></sup>
+
+
+
+PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+If omitted, anonymous pull is attempted.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.patch
+<sup><sup>[↩ Parent](#grafanadashboardspec)</sup></sup>
+
+
+
+Patch the contents of the dashboard JSON using jq scripts.
+This is applied to a resolved dashboard, after variable substitution.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>scripts</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecpatchenvindex">env</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.patch.env[index]
+<sup><sup>[↩ Parent](#grafanadashboardspecpatch)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecpatchenvindexvaluefrom">valueFrom</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.patch.env[index].valueFrom
+<sup><sup>[↩ Parent](#grafanadashboardspecpatchenvindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanadashboardspecpatchenvindexvaluefromconfigmapkeyref">configMapKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key of a ConfigMap.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecpatchenvindexvaluefromgrafanaref">grafanaRef</a></b></td>
+        <td>object</td>
+        <td>
+          ObjectFieldSelector selects an APIVersioned field of an object.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanadashboardspecpatchenvindexvaluefromsecretkeyref">secretKeyRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key of a Secret.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.patch.env[index].valueFrom.configMapKeyRef
+<sup><sup>[↩ Parent](#grafanadashboardspecpatchenvindexvaluefrom)</sup></sup>
+
+
+
+Selects a key of a ConfigMap.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the ConfigMap or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.patch.env[index].valueFrom.grafanaRef
+<sup><sup>[↩ Parent](#grafanadashboardspecpatchenvindexvaluefrom)</sup></sup>
+
+
+
+ObjectFieldSelector selects an APIVersioned field of an object.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>fieldPath</b></td>
+        <td>string</td>
+        <td>
+          Path of the field to select in the specified API version.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>apiVersion</b></td>
+        <td>string</td>
+        <td>
+          Version of the schema the FieldPath is written in terms of, defaults to "v1".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.patch.env[index].valueFrom.secretKeyRef
+<sup><sup>[↩ Parent](#grafanadashboardspecpatchenvindexvaluefrom)</sup></sup>
+
+
+
+Selects a key of a Secret.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key of the secret to select from.  Must be a valid secret key.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the Secret or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### GrafanaDashboard.spec.plugins[index]
 <sup><sup>[↩ Parent](#grafanadashboardspec)</sup></sup>
 
@@ -2296,6 +2662,58 @@ Jsonnet project build
           <br/>
         </td>
         <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDashboard.spec.publicSharing
+<sup><sup>[↩ Parent](#grafanadashboardspec)</sup></sup>
+
+
+
+Allows configuration of sharing the dashboard publicly
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>accessToken</b></td>
+        <td>string</td>
+        <td>
+          Optional. Unique access token. If empty it will generate a new access token per instance.<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.publicDashboard.accessToken is immutable</li><li>!format.uuid().validate(self).hasValue(): spec.publicDashboard.accessToken must be a valid uuid</li>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>annotationsEnabled</b></td>
+        <td>boolean</td>
+        <td>
+          Optional. When set to true, shows annotations. The default value is false.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          Optional. Set to false to disable sharing, the public dashboard is still created. The default value is true.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>timeSelectionEnabled</b></td>
+        <td>boolean</td>
+        <td>
+          Optional. when set to true, the time picker is enabled in the shared dashboard. The default value is false.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -2455,6 +2873,43 @@ More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/nam
 </table>
 
 
+### GrafanaDashboard.spec.variables[index]
+<sup><sup>[↩ Parent](#grafanadashboardspec)</sup></sup>
+
+
+
+GrafanaContentVariable overrides the default (current) value of a named template
+variable (templating.list[]) in the resolved dashboard model.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the template variable to override, matching templating.list[].name in the model.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          Value is the new default value. For datasource variables this is the datasource UID or
+name; for query, custom, constant and textbox variables it is the selected value.
+Multi-value (multi-select) variables are collapsed to this single value.<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
 ### GrafanaDashboard.status
 <sup><sup>[↩ Parent](#grafanadashboard)</sup></sup>
 
@@ -2524,6 +2979,13 @@ GrafanaDashboardStatus defines the observed state of GrafanaDashboard
           Last time the resource was synchronized with Grafana instances<br/>
           <br/>
             <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>publicSharingPath</b></td>
+        <td>string</td>
+        <td>
+          The resulting path where a public sharing config is available<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3079,7 +3541,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -3823,6 +4286,13 @@ GrafanaLibraryPanelSpec defines the desired state of GrafanaLibraryPanel
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecoci">oci</a></b></td>
+        <td>object</td>
+        <td>
+          model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanalibrarypanelspecpluginsindex">plugins</a></b></td>
         <td>[]object</td>
         <td>
@@ -3973,7 +4443,8 @@ model from configmap
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -4089,7 +4560,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -4258,7 +4730,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -4403,6 +4876,94 @@ Jsonnet project build
         <td>[]string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.oci
+<sup><sup>[↩ Parent](#grafanalibrarypanelspec)</sup></sup>
+
+
+
+model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          Path is the path of the file to extract from the artifact.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reference</b></td>
+        <td>string</td>
+        <td>
+          Reference is the full OCI artifact reference including a tag or digest,
+e.g. "ghcr.io/team/dashboards:v1.4.7" or
+"ghcr.io/team/dashboards@sha256:abc123...". Prefer a digest for
+reproducible deployments.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>insecurePlainHTTP</b></td>
+        <td>boolean</td>
+        <td>
+          InsecurePlainHTTP switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+Intended for in-cluster or test registries; HTTPS registries with self-signed
+certificates are not supported. Default false.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#grafanalibrarypanelspecocipullsecretref">pullSecretRef</a></b></td>
+        <td>object</td>
+        <td>
+          PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+If omitted, anonymous pull is attempted.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaLibraryPanel.spec.oci.pullSecretRef
+<sup><sup>[↩ Parent](#grafanalibrarypanelspecoci)</sup></sup>
+
+
+
+PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+If omitted, anonymous pull is attempted.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5188,7 +5749,8 @@ Selects a key of a ConfigMap.
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The key to select.<br/>
+          The key to select from the ConfigMap's Data field.
+Keys in the BinaryData field are not currently propagated to container env vars.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -6181,7 +6743,7 @@ mutually exclusive with Routes<br/>
         <td><b>isRegex</b></td>
         <td>boolean</td>
         <td>
-          is regex<br/>
+          Deprecated: Does nothing and is not exported by Grafana<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -6195,7 +6757,7 @@ mutually exclusive with Routes<br/>
         <td><b>isEqual</b></td>
         <td>boolean</td>
         <td>
-          is equal<br/>
+          Deprecated: Does nothing and is not exported by Grafana<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6604,7 +7166,7 @@ mutually exclusive with Routes<br/>
         <td><b>isRegex</b></td>
         <td>boolean</td>
         <td>
-          is regex<br/>
+          Deprecated: Does nothing and is not exported by Grafana<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -6618,7 +7180,7 @@ mutually exclusive with Routes<br/>
         <td><b>isEqual</b></td>
         <td>boolean</td>
         <td>
-          is equal<br/>
+          Deprecated: Does nothing and is not exported by Grafana<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7335,7 +7897,7 @@ GrafanaSpec defines the desired state of Grafana
         <td>
           Version sets the tag of the default image: docker.io/grafana/grafana.
 Allows full image refs with/without sha256checksum: "registry/repo/image:tag@sha"
-default: 13.0.1<br/>
+default: 13.2.3<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -10250,6 +10812,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>protocol</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>scheme</b></td>
         <td>string</td>
         <td>
@@ -10471,6 +11040,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -10739,6 +11315,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -10790,6 +11373,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -11090,6 +11680,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -11141,6 +11738,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -11863,6 +12467,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -11914,6 +12525,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -12062,6 +12680,13 @@ Deployment sets how the deployment object should look like with your grafana ins
           <br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>bindMountOptions</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b>mountPropagation</b></td>
         <td>string</td>
@@ -12959,6 +13584,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>protocol</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>scheme</b></td>
         <td>string</td>
         <td>
@@ -13180,6 +13812,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -13448,6 +14087,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -13499,6 +14145,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -13799,6 +14452,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -13850,6 +14510,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -14572,6 +15239,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -14623,6 +15297,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -14771,6 +15452,13 @@ Deployment sets how the deployment object should look like with your grafana ins
           <br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>bindMountOptions</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b>mountPropagation</b></td>
         <td>string</td>
@@ -15649,6 +16337,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>protocol</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>scheme</b></td>
         <td>string</td>
         <td>
@@ -15870,6 +16565,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -16138,6 +16840,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -16189,6 +16898,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -16489,6 +17205,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -16540,6 +17263,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -17262,6 +17992,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>service</b></td>
         <td>string</td>
         <td>
@@ -17313,6 +18050,13 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
         <td>string</td>
         <td>
           <br/>
@@ -17461,6 +18205,13 @@ Deployment sets how the deployment object should look like with your grafana ins
           <br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>bindMountOptions</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b>mountPropagation</b></td>
         <td>string</td>
@@ -18669,6 +19420,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>defaultUser</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexconfigmapitemsindex">items</a></b></td>
         <td>[]object</td>
         <td>
@@ -18732,6 +19492,15 @@ Deployment sets how the deployment object should look like with your grafana ins
           <br/>
           <br/>
             <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -18848,6 +19617,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>defaultUser</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexdownwardapiitemsindex">items</a></b></td>
         <td>[]object</td>
         <td>
@@ -18902,6 +19680,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>object</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -19004,6 +19791,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mode</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -20040,6 +20836,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>defaultUser</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexprojectedsourcesindex">sources</a></b></td>
         <td>[]object</td>
         <td>
@@ -20161,6 +20966,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -20324,6 +21138,15 @@ Deployment sets how the deployment object should look like with your grafana ins
             <i>Format</i>: int32<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -20399,6 +21222,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>object</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -20541,6 +21373,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>userAnnotations</b></td>
         <td>map[string]string</td>
         <td>
@@ -20633,6 +21474,15 @@ Deployment sets how the deployment object should look like with your grafana ins
             <i>Format</i>: int32<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -20669,6 +21519,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         <td>false</td>
       </tr><tr>
         <td><b>expirationSeconds</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
         <td>integer</td>
         <td>
           <br/>
@@ -21002,6 +21861,15 @@ Deployment sets how the deployment object should look like with your grafana ins
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>defaultUser</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanaspecdeploymentspectemplatespecvolumesindexsecretitemsindex">items</a></b></td>
         <td>[]object</td>
         <td>
@@ -21063,6 +21931,15 @@ Deployment sets how the deployment object should look like with your grafana ins
           <br/>
           <br/>
             <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int64<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -21218,17 +22095,6 @@ External enables you to configure external grafana instances that is not managed
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>tenantNamespace</b></td>
-        <td>string</td>
-        <td>
-          TenantNamespace is used as the `namespace` value for GrafanaManifest resources in multi-tenant scenarios
-defaults to `default`<br/>
-          <br/>
-            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
-            <i>Default</i>: default<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>url</b></td>
         <td>string</td>
         <td>
@@ -21254,6 +22120,17 @@ defaults to `default`<br/>
         <td>object</td>
         <td>
           The API key to talk to the external grafana instance, you need to define ether apiKey or adminUser/adminPassword.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tenantNamespace</b></td>
+        <td>string</td>
+        <td>
+          TenantNamespace is used as the `namespace` value for GrafanaManifest resources in multi-tenant scenarios
+defaults to `default`<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: Value is immutable</li>
+            <i>Default</i>: default<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -21687,7 +22564,6 @@ connections originating from the same namespace as the Route, for which
 the intended destination of the connections are a Service targeted as a
 ParentRef of the Route.
 </gateway:experimental:description>
-
 <gateway:standard:validation:XValidation:message="sectionName must be specified when parentRefs includes 2 or more references to the same parent",rule="self.all(p1, self.all(p2, p1.group == p2.group && p1.kind == p2.kind && p1.name == p2.name && (((!has(p1.__namespace__) || p1.__namespace__ == '') && (!has(p2.__namespace__) || p2.__namespace__ == '')) || (has(p1.__namespace__) && has(p2.__namespace__) && p1.__namespace__ == p2.__namespace__ )) ? ((!has(p1.sectionName) || p1.sectionName == '') == (!has(p2.sectionName) || p2.sectionName == '')) : true))">
 <gateway:standard:validation:XValidation:message="sectionName must be unique when parentRefs includes 2 or more references to the same parent",rule="self.all(p1, self.exists_one(p2, p1.group == p2.group && p1.kind == p2.kind && p1.name == p2.name && (((!has(p1.__namespace__) || p1.__namespace__ == '') && (!has(p2.__namespace__) || p2.__namespace__ == '')) || (has(p1.__namespace__) && has(p2.__namespace__) && p1.__namespace__ == p2.__namespace__ )) && (((!has(p1.sectionName) || p1.sectionName == '') && (!has(p2.sectionName) || p2.sectionName == '')) || (has(p1.sectionName) && has(p2.sectionName) && p1.sectionName == p2.sectionName))))">
 <gateway:experimental:validation:XValidation:message="sectionName or port must be specified when parentRefs includes 2 or more references to the same parent",rule="self.all(p1, self.all(p2, p1.group == p2.group && p1.kind == p2.kind && p1.name == p2.name && (((!has(p1.__namespace__) || p1.__namespace__ == '') && (!has(p2.__namespace__) || p2.__namespace__ == '')) || (has(p1.__namespace__) && has(p2.__namespace__) && p1.__namespace__ == p2.__namespace__)) ? ((!has(p1.sectionName) || p1.sectionName == '') == (!has(p2.sectionName) || p2.sectionName == '') && (!has(p1.port) || p1.port == 0) == (!has(p2.port) || p2.port == 0)): true))">
@@ -22480,9 +23356,9 @@ Header names are not case-sensitive.
 Multiple header names in the value of the `Access-Control-Allow-Headers`
 response header are separated by a comma (",").
 
-When the `AllowHeaders` field is configured with one or more headers, the
+When the `allowHeaders` field is configured with one or more headers, the
 gateway must return the `Access-Control-Allow-Headers` response header
-which value is present in the `AllowHeaders` field.
+which value is present in the `allowHeaders` field.
 
 If any header name in the `Access-Control-Request-Headers` request header
 is not included in the list of header names specified by the response
@@ -22494,21 +23370,20 @@ does not recognize by the client, it will also occur an error on the
 client side.
 
 A wildcard indicates that the requests with all HTTP headers are allowed.
-If config contains the wildcard "*" in allowHeaders and the request is
-not credentialed, the `Access-Control-Allow-Headers` response header
-can either use the `*` wildcard or the value of
-Access-Control-Request-Headers from the request.
 
-When the request is credentialed, the gateway must not specify the `*`
-wildcard in the `Access-Control-Allow-Headers` response header. When
-also the `AllowCredentials` field is true and `AllowHeaders` field
-is specified with the `*` wildcard, the gateway must specify one or more
-HTTP headers in the value of the `Access-Control-Allow-Headers` response
-header. The value of the header `Access-Control-Allow-Headers` is same as
-the `Access-Control-Request-Headers` header provided by the client. If
-the header `Access-Control-Request-Headers` is not included in the
-request, the gateway will omit the `Access-Control-Allow-Headers`
-response header, instead of specifying the `*` wildcard.
+If the configuration contains the wildcard `*` in `allowHeaders` and
+`allowCredentials` is set to `false`, the `Access-Control-Allow-Headers`
+response header may either contain the wildcard `*` or echo the value
+of the `Access-Control-Request-Headers` request header.
+
+If the configuration contains the wildcard `*` in `allowHeaders` and
+`allowCredentials` is set to `true`, the gateway must not return `*`
+in the `Access-Control-Allow-Headers` response header. Instead, it must
+return one or more header names matching the value of the
+`Access-Control-Request-Headers` request header.
+If the `Access-Control-Request-Headers` header is not present in the
+request, the gateway must omit the `Access-Control-Allow-Headers`
+response header.
 
 Support: Extended<br/>
           <br/>
@@ -22534,32 +23409,29 @@ response header are separated by a comma (",").
 A CORS-safelisted method is a method that is `GET`, `HEAD`, or `POST`.
 (See https://fetch.spec.whatwg.org/#cors-safelisted-method) The
 CORS-safelisted methods are always allowed, regardless of whether they
-are specified in the `AllowMethods` field.
+are specified in the `allowMethods` field.
 
-When the `AllowMethods` field is configured with one or more methods, the
+When the `allowMethods` field is configured with one or more methods, the
 gateway must return the `Access-Control-Allow-Methods` response header
-which value is present in the `AllowMethods` field.
+which value is present in the `allowMethods` field.
 
 If the HTTP method of the `Access-Control-Request-Method` request header
 is not included in the list of methods specified by the response header
 `Access-Control-Allow-Methods`, it will present an error on the client
 side.
 
-If config contains the wildcard "*" in allowMethods and the request is
-not credentialed, the `Access-Control-Allow-Methods` response header
-can either use the `*` wildcard or the value of
-Access-Control-Request-Method from the request.
+If the configuration contains the wildcard `*` in `allowMethods` and
+`allowCredentials` is set to `false`, the `Access-Control-Allow-Methods`
+response header may either contain the wildcard `*` or echo the value
+of the `Access-Control-Request-Method` request header.
 
-When the request is credentialed, the gateway must not specify the `*`
-wildcard in the `Access-Control-Allow-Methods` response header. When
-also the `AllowCredentials` field is true and `AllowMethods` field
-specified with the `*` wildcard, the gateway must specify one HTTP method
-in the value of the Access-Control-Allow-Methods response header. The
-value of the header `Access-Control-Allow-Methods` is same as the
-`Access-Control-Request-Method` header provided by the client. If the
-header `Access-Control-Request-Method` is not included in the request,
-the gateway will omit the `Access-Control-Allow-Methods` response header,
-instead of specifying the `*` wildcard.
+If the configuration contains the wildcard `*` in `allowMethods` and
+`allowCredentials` is set to `true`, the gateway must not return `*`
+in the `Access-Control-Allow-Methods` response header. Instead, it must
+return a single HTTP method matching the value of the
+`Access-Control-Request-Method` request header.
+If the `Access-Control-Request-Method` header is not present in the request,
+the gateway must omit the `Access-Control-Allow-Methods` response header.
 
 Support: Extended<br/>
           <br/>
@@ -22596,7 +23468,7 @@ wildcard characters behave as follows:
 An origin value that includes _only_ the `*` character indicates requests
 from all `Origin`s are allowed.
 
-When the `AllowOrigins` field is configured with multiple origins, it
+When the `allowOrigins` field is configured with multiple origins, it
 means the server supports clients from multiple origins. If the request
 `Origin` matches the configured allowed origins, the gateway must return
 the given `Origin` and sets value of the header
@@ -22618,19 +23490,15 @@ allowed origins, the gateway sets the response header
 `Access-Control-Allow-Origin` to the same value as the `Origin`
 header provided by the client.
 
-When config has the wildcard ("*") in allowOrigins, and the request
-is not credentialed (e.g., it is a preflight request), the
-`Access-Control-Allow-Origin` response header either contains the
-wildcard as well or the Origin from the request.
+If the configuration contains the wildcard `*` in `allowOrigins` and
+`allowCredentials` is set to `false`, the `Access-Control-Allow-Origin`
+response header may either contain the wildcard `*` or echo the value
+of the `Origin` request header.
 
-When the request is credentialed, the gateway must not specify the `*`
-wildcard in the `Access-Control-Allow-Origin` response header. When
-also the `AllowCredentials` field is true and `AllowOrigins` field
-specified with the `*` wildcard, the gateway must return a single origin
-in the value of the `Access-Control-Allow-Origin` response header,
-instead of specifying the `*` wildcard. The value of the header
-`Access-Control-Allow-Origin` is same as the `Origin` header provided by
-the client.
+If the configuration contains the wildcard `*` in `allowOrigins` and
+`allowCredentials` is set to `true`, the gateway must not return `*`
+in the `Access-Control-Allow-Origin` response header. Instead, it must
+return a single origin matching the value of the `Origin` request header.
 
 Support: Extended<br/>
           <br/>
@@ -22657,7 +23525,7 @@ The CORS-safelisted response headers include the following headers:
 (See https://fetch.spec.whatwg.org/#cors-safelisted-response-header-name)
 The CORS-safelisted response headers are exposed to client by default.
 
-When an HTTP header name is specified using the `ExposeHeaders` field,
+When an HTTP header name is specified using the `exposeHeaders` field,
 this additional header will be exposed as part of the response to the
 client.
 
@@ -22667,12 +23535,15 @@ Multiple header names in the value of the `Access-Control-Expose-Headers`
 response header are separated by a comma (",").
 
 A wildcard indicates that the responses with all HTTP headers are exposed
-to clients. The `Access-Control-Expose-Headers` response header can only
-use `*` wildcard as value when the request is not credentialed.
+to clients.
 
-When the `exposeHeaders` config field contains the "*" wildcard and
-the request is credentialed, the gateway cannot use the `*` wildcard in
-the `Access-Control-Expose-Headers` response header.
+If the configuration contains the wildcard `*` in `exposeHeaders` and
+`allowCredentials` is set to `false`, the `Access-Control-Expose-Headers`
+response header can contain the wildcard `*`.
+
+If the configuration contains the wildcard `*` in `exposeHeaders` and
+`allowCredentials` is set to `true`, the gateway cannot use the `*`
+in the `Access-Control-Expose-Headers` response header.
 
 Support: Extended<br/>
         </td>
@@ -23356,7 +24227,11 @@ should be used to provide more detail about the problem.
 
 Support: Extended for Kubernetes Service
 
-Support: Implementation-specific for any other resource<br/>
+Support: Implementation-specific for any other resource
+
+If the backend service requires TLS, use BackendTLSPolicy to tell the
+implementation to supply the TLS details to be used to connect to that
+backend.<br/>
           <br/>
             <i>Validations</i>:<li>(size(self.group) == 0 && self.kind == 'Service') ? has(self.port) : true: Must have port for Service reference</li>
         </td>
@@ -23422,6 +24297,10 @@ should be used to provide more detail about the problem.
 Support: Extended for Kubernetes Service
 
 Support: Implementation-specific for any other resource
+
+If the backend service requires TLS, use BackendTLSPolicy to tell the
+implementation to supply the TLS details to be used to connect to that
+backend.
 
 <table>
     <thead>
@@ -23660,7 +24539,7 @@ Unknown values here must result in the implementation setting the
 Accepted Condition for the Route to `status: False`, with a
 Reason of `UnsupportedValue`.
 
-Support: Core<br/>
+Support: statusCode 301 and 302 are Core; all others are Extended.<br/>
           <br/>
             <i>Enum</i>: 301, 302, 303, 307, 308<br/>
             <i>Default</i>: 302<br/>
@@ -24252,9 +25131,9 @@ Header names are not case-sensitive.
 Multiple header names in the value of the `Access-Control-Allow-Headers`
 response header are separated by a comma (",").
 
-When the `AllowHeaders` field is configured with one or more headers, the
+When the `allowHeaders` field is configured with one or more headers, the
 gateway must return the `Access-Control-Allow-Headers` response header
-which value is present in the `AllowHeaders` field.
+which value is present in the `allowHeaders` field.
 
 If any header name in the `Access-Control-Request-Headers` request header
 is not included in the list of header names specified by the response
@@ -24266,21 +25145,20 @@ does not recognize by the client, it will also occur an error on the
 client side.
 
 A wildcard indicates that the requests with all HTTP headers are allowed.
-If config contains the wildcard "*" in allowHeaders and the request is
-not credentialed, the `Access-Control-Allow-Headers` response header
-can either use the `*` wildcard or the value of
-Access-Control-Request-Headers from the request.
 
-When the request is credentialed, the gateway must not specify the `*`
-wildcard in the `Access-Control-Allow-Headers` response header. When
-also the `AllowCredentials` field is true and `AllowHeaders` field
-is specified with the `*` wildcard, the gateway must specify one or more
-HTTP headers in the value of the `Access-Control-Allow-Headers` response
-header. The value of the header `Access-Control-Allow-Headers` is same as
-the `Access-Control-Request-Headers` header provided by the client. If
-the header `Access-Control-Request-Headers` is not included in the
-request, the gateway will omit the `Access-Control-Allow-Headers`
-response header, instead of specifying the `*` wildcard.
+If the configuration contains the wildcard `*` in `allowHeaders` and
+`allowCredentials` is set to `false`, the `Access-Control-Allow-Headers`
+response header may either contain the wildcard `*` or echo the value
+of the `Access-Control-Request-Headers` request header.
+
+If the configuration contains the wildcard `*` in `allowHeaders` and
+`allowCredentials` is set to `true`, the gateway must not return `*`
+in the `Access-Control-Allow-Headers` response header. Instead, it must
+return one or more header names matching the value of the
+`Access-Control-Request-Headers` request header.
+If the `Access-Control-Request-Headers` header is not present in the
+request, the gateway must omit the `Access-Control-Allow-Headers`
+response header.
 
 Support: Extended<br/>
           <br/>
@@ -24306,32 +25184,29 @@ response header are separated by a comma (",").
 A CORS-safelisted method is a method that is `GET`, `HEAD`, or `POST`.
 (See https://fetch.spec.whatwg.org/#cors-safelisted-method) The
 CORS-safelisted methods are always allowed, regardless of whether they
-are specified in the `AllowMethods` field.
+are specified in the `allowMethods` field.
 
-When the `AllowMethods` field is configured with one or more methods, the
+When the `allowMethods` field is configured with one or more methods, the
 gateway must return the `Access-Control-Allow-Methods` response header
-which value is present in the `AllowMethods` field.
+which value is present in the `allowMethods` field.
 
 If the HTTP method of the `Access-Control-Request-Method` request header
 is not included in the list of methods specified by the response header
 `Access-Control-Allow-Methods`, it will present an error on the client
 side.
 
-If config contains the wildcard "*" in allowMethods and the request is
-not credentialed, the `Access-Control-Allow-Methods` response header
-can either use the `*` wildcard or the value of
-Access-Control-Request-Method from the request.
+If the configuration contains the wildcard `*` in `allowMethods` and
+`allowCredentials` is set to `false`, the `Access-Control-Allow-Methods`
+response header may either contain the wildcard `*` or echo the value
+of the `Access-Control-Request-Method` request header.
 
-When the request is credentialed, the gateway must not specify the `*`
-wildcard in the `Access-Control-Allow-Methods` response header. When
-also the `AllowCredentials` field is true and `AllowMethods` field
-specified with the `*` wildcard, the gateway must specify one HTTP method
-in the value of the Access-Control-Allow-Methods response header. The
-value of the header `Access-Control-Allow-Methods` is same as the
-`Access-Control-Request-Method` header provided by the client. If the
-header `Access-Control-Request-Method` is not included in the request,
-the gateway will omit the `Access-Control-Allow-Methods` response header,
-instead of specifying the `*` wildcard.
+If the configuration contains the wildcard `*` in `allowMethods` and
+`allowCredentials` is set to `true`, the gateway must not return `*`
+in the `Access-Control-Allow-Methods` response header. Instead, it must
+return a single HTTP method matching the value of the
+`Access-Control-Request-Method` request header.
+If the `Access-Control-Request-Method` header is not present in the request,
+the gateway must omit the `Access-Control-Allow-Methods` response header.
 
 Support: Extended<br/>
           <br/>
@@ -24368,7 +25243,7 @@ wildcard characters behave as follows:
 An origin value that includes _only_ the `*` character indicates requests
 from all `Origin`s are allowed.
 
-When the `AllowOrigins` field is configured with multiple origins, it
+When the `allowOrigins` field is configured with multiple origins, it
 means the server supports clients from multiple origins. If the request
 `Origin` matches the configured allowed origins, the gateway must return
 the given `Origin` and sets value of the header
@@ -24390,19 +25265,15 @@ allowed origins, the gateway sets the response header
 `Access-Control-Allow-Origin` to the same value as the `Origin`
 header provided by the client.
 
-When config has the wildcard ("*") in allowOrigins, and the request
-is not credentialed (e.g., it is a preflight request), the
-`Access-Control-Allow-Origin` response header either contains the
-wildcard as well or the Origin from the request.
+If the configuration contains the wildcard `*` in `allowOrigins` and
+`allowCredentials` is set to `false`, the `Access-Control-Allow-Origin`
+response header may either contain the wildcard `*` or echo the value
+of the `Origin` request header.
 
-When the request is credentialed, the gateway must not specify the `*`
-wildcard in the `Access-Control-Allow-Origin` response header. When
-also the `AllowCredentials` field is true and `AllowOrigins` field
-specified with the `*` wildcard, the gateway must return a single origin
-in the value of the `Access-Control-Allow-Origin` response header,
-instead of specifying the `*` wildcard. The value of the header
-`Access-Control-Allow-Origin` is same as the `Origin` header provided by
-the client.
+If the configuration contains the wildcard `*` in `allowOrigins` and
+`allowCredentials` is set to `true`, the gateway must not return `*`
+in the `Access-Control-Allow-Origin` response header. Instead, it must
+return a single origin matching the value of the `Origin` request header.
 
 Support: Extended<br/>
           <br/>
@@ -24429,7 +25300,7 @@ The CORS-safelisted response headers include the following headers:
 (See https://fetch.spec.whatwg.org/#cors-safelisted-response-header-name)
 The CORS-safelisted response headers are exposed to client by default.
 
-When an HTTP header name is specified using the `ExposeHeaders` field,
+When an HTTP header name is specified using the `exposeHeaders` field,
 this additional header will be exposed as part of the response to the
 client.
 
@@ -24439,12 +25310,15 @@ Multiple header names in the value of the `Access-Control-Expose-Headers`
 response header are separated by a comma (",").
 
 A wildcard indicates that the responses with all HTTP headers are exposed
-to clients. The `Access-Control-Expose-Headers` response header can only
-use `*` wildcard as value when the request is not credentialed.
+to clients.
 
-When the `exposeHeaders` config field contains the "*" wildcard and
-the request is credentialed, the gateway cannot use the `*` wildcard in
-the `Access-Control-Expose-Headers` response header.
+If the configuration contains the wildcard `*` in `exposeHeaders` and
+`allowCredentials` is set to `false`, the `Access-Control-Expose-Headers`
+response header can contain the wildcard `*`.
+
+If the configuration contains the wildcard `*` in `exposeHeaders` and
+`allowCredentials` is set to `true`, the gateway cannot use the `*`
+in the `Access-Control-Expose-Headers` response header.
 
 Support: Extended<br/>
         </td>
@@ -25128,7 +26002,11 @@ should be used to provide more detail about the problem.
 
 Support: Extended for Kubernetes Service
 
-Support: Implementation-specific for any other resource<br/>
+Support: Implementation-specific for any other resource
+
+If the backend service requires TLS, use BackendTLSPolicy to tell the
+implementation to supply the TLS details to be used to connect to that
+backend.<br/>
           <br/>
             <i>Validations</i>:<li>(size(self.group) == 0 && self.kind == 'Service') ? has(self.port) : true: Must have port for Service reference</li>
         </td>
@@ -25194,6 +26072,10 @@ should be used to provide more detail about the problem.
 Support: Extended for Kubernetes Service
 
 Support: Implementation-specific for any other resource
+
+If the backend service requires TLS, use BackendTLSPolicy to tell the
+implementation to supply the TLS details to be used to connect to that
+backend.
 
 <table>
     <thead>
@@ -25432,7 +26314,7 @@ Unknown values here must result in the implementation setting the
 Accepted Condition for the Route to `status: False`, with a
 Reason of `UnsupportedValue`.
 
-Support: Core<br/>
+Support: statusCode 301 and 302 are Core; all others are Extended.<br/>
           <br/>
             <i>Enum</i>: 301, 302, 303, 307, 308<br/>
             <i>Default</i>: 302<br/>
@@ -26109,6 +26991,8 @@ When this field is unspecified, the number of times to attempt to retry
 a backend request is implementation-specific.
 
 Support: Extended<br/>
+          <br/>
+            <i>Minimum</i>: 1<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -26207,17 +27091,6 @@ Support: Extended<br/>
 to cookie-based session persistence.
 
 Support: Core<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>idleTimeout</b></td>
-        <td>string</td>
-        <td>
-          IdleTimeout defines the idle timeout of the persistent session.
-Once the session has been idle for more than the specified
-IdleTimeout duration, the session becomes invalid.
-
-Support: Extended<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -26724,11 +27597,7 @@ is to equal to the suffix (removing the first label) of the wildcard rule.<br/>
         <td><b><a href="#grafanaspecingressspecrulesindexhttp">http</a></b></td>
         <td>object</td>
         <td>
-          HTTPIngressRuleValue is a list of http selectors pointing to backends.
-In the example: http://<host>/<path>?<searchpart> -> backend where
-where parts of the url correspond to RFC 3986, this resource will be used
-to match against everything after the last '/' and before the first '?'
-or '#'.<br/>
+          http is a HTTP IngressRuleValue, which contains a list of http selectors<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -26740,11 +27609,7 @@ or '#'.<br/>
 
 
 
-HTTPIngressRuleValue is a list of http selectors pointing to backends.
-In the example: http://<host>/<path>?<searchpart> -> backend where
-where parts of the url correspond to RFC 3986, this resource will be used
-to match against everything after the last '/' and before the first '?'
-or '#'.
+http is a HTTP IngressRuleValue, which contains a list of http selectors
 
 <table>
     <thead>
@@ -28826,7 +29691,30 @@ GrafanaStatus defines the observed state of Grafana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>replicas</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>selector</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>serviceaccounts</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>silences</b></td>
         <td>[]string</td>
         <td>
           <br/>
@@ -29310,6 +30198,419 @@ Name of the secret containing the token
 
 ### GrafanaServiceAccount.status.conditions[index]
 <sup><sup>[↩ Parent](#grafanaserviceaccountstatus)</sup></sup>
+
+
+
+Condition contains details for one aspect of the current state of this API Resource.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>lastTransitionTime</b></td>
+        <td>string</td>
+        <td>
+          lastTransitionTime is the last time the condition transitioned from one status to another.
+This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>message</b></td>
+        <td>string</td>
+        <td>
+          message is a human readable message indicating details about the transition.
+This may be an empty string.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>reason</b></td>
+        <td>string</td>
+        <td>
+          reason contains a programmatic identifier indicating the reason for the condition's last transition.
+Producers of specific condition types may define expected values and meanings for this field,
+and whether the values are considered a guaranteed API.
+The value should be a CamelCase string.
+This field may not be empty.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          status of the condition, one of True, False, Unknown.<br/>
+          <br/>
+            <i>Enum</i>: True, False, Unknown<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type of condition in CamelCase or in foo.example.com/CamelCase.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>observedGeneration</b></td>
+        <td>integer</td>
+        <td>
+          observedGeneration represents the .metadata.generation that the condition was set based upon.
+For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+with respect to the current state of the instance.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+## GrafanaSilence
+<sup><sup>[↩ Parent](#grafanaintegreatlyorgv1beta1 )</sup></sup>
+
+
+
+
+
+
+GrafanaSilence is the Schema for the GrafanaSilence API
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+      <td><b>apiVersion</b></td>
+      <td>string</td>
+      <td>grafana.integreatly.org/v1beta1</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b>kind</b></td>
+      <td>string</td>
+      <td>GrafanaSilence</td>
+      <td>true</td>
+      </tr>
+      <tr>
+      <td><b><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta">metadata</a></b></td>
+      <td>object</td>
+      <td>Refer to the Kubernetes API documentation for the fields of the `metadata` field.</td>
+      <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanasilencespec">spec</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaSilenceSpec defines the desired state of GrafanaSilence
+Kubernetes CEL validation cannot reference the current time, so "endsAt must be in the
+future" is enforced by the controller; here we only assert the window is well-formed.<br/>
+          <br/>
+            <i>Validations</i>:<li>timestamp(self.endsAt) > timestamp(self.startsAt): spec.endsAt must be after spec.startsAt</li><li>!oldSelf.allowCrossNamespaceImport || (oldSelf.allowCrossNamespaceImport && self.allowCrossNamespaceImport): disabling spec.allowCrossNamespaceImport requires a recreate to ensure desired state</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanasilencestatus">status</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaSilenceStatus defines the observed state of GrafanaSilence<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaSilence.spec
+<sup><sup>[↩ Parent](#grafanasilence)</sup></sup>
+
+
+
+GrafanaSilenceSpec defines the desired state of GrafanaSilence
+Kubernetes CEL validation cannot reference the current time, so "endsAt must be in the
+future" is enforced by the controller; here we only assert the window is well-formed.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>comment</b></td>
+        <td>string</td>
+        <td>
+          Comment describing the reason for the silence<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>endsAt</b></td>
+        <td>string</td>
+        <td>
+          EndsAt is the time the silence expires (in UTC, RFC3339). It must be after startsAt
+and in the future; Grafana rejects silences whose window has already ended.<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanasilencespecinstanceselector">instanceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          Selects Grafana instances for import<br/>
+          <br/>
+            <i>Validations</i>:<li>self == oldSelf: spec.instanceSelector is immutable</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#grafanasilencespecmatchersindex">matchers</a></b></td>
+        <td>[]object</td>
+        <td>
+          Matchers used to select the alerts that should be silenced.
+A matcher targeting an alert rule (name "__alert_rule_uid__") must be an exact-equality
+matcher (isEqual=true, isRegex=false), otherwise Grafana will not associate the silence
+with the rule in the silences list.<br/>
+          <br/>
+            <i>Validations</i>:<li>self.all(m, m.name != '__alert_rule_uid__' || (m.isEqual && (!has(m.isRegex) || !m.isRegex))): a matcher with name '__alert_rule_uid__' must set isEqual=true and isRegex=false</li>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>startsAt</b></td>
+        <td>string</td>
+        <td>
+          StartsAt is the time the silence starts taking effect (in UTC, RFC3339)<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>allowCrossNamespaceImport</b></td>
+        <td>boolean</td>
+        <td>
+          Allow the Operator to match this resource with Grafanas outside the current namespace<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>createdBy</b></td>
+        <td>string</td>
+        <td>
+          CreatedBy is the author attributed to the silence<br/>
+          <br/>
+            <i>Default</i>: grafana-operator<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>resyncPeriod</b></td>
+        <td>string</td>
+        <td>
+          How often the resource is synced, defaults to 10m0s if not set<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>suspend</b></td>
+        <td>boolean</td>
+        <td>
+          Suspend pauses synchronizing attempts and tells the operator to ignore changes<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaSilence.spec.instanceSelector
+<sup><sup>[↩ Parent](#grafanasilencespec)</sup></sup>
+
+
+
+Selects Grafana instances for import
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanasilencespecinstanceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaSilence.spec.instanceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#grafanasilencespecinstanceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaSilence.spec.matchers[index]
+<sup><sup>[↩ Parent](#grafanasilencespec)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          The name of the label to match against<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          The value to match against<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>isEqual</b></td>
+        <td>boolean</td>
+        <td>
+          Whether the matcher is an equality matcher (true) or a negative matcher (false)<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>isRegex</b></td>
+        <td>boolean</td>
+        <td>
+          Whether to interpret the value as a regular expression<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaSilence.status
+<sup><sup>[↩ Parent](#grafanasilence)</sup></sup>
+
+
+
+GrafanaSilenceStatus defines the observed state of GrafanaSilence
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#grafanasilencestatusconditionsindex">conditions</a></b></td>
+        <td>[]object</td>
+        <td>
+          Results when synchronizing resource with Grafana instances<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>lastResync</b></td>
+        <td>string</td>
+        <td>
+          Last time the resource was synchronized with Grafana instances<br/>
+          <br/>
+            <i>Format</i>: date-time<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>silenceIDs</b></td>
+        <td>map[string]string</td>
+        <td>
+          SilenceIDs maps "<instance namespace>/<instance name>" to the Grafana-assigned
+silence ID for that instance. Grafana assigns silence IDs randomly, unlike other
+Grafana resources which are addressed by a UID the operator controls, so the
+assigned ID must be tracked here to reconcile updates and deletions correctly.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaSilence.status.conditions[index]
+<sup><sup>[↩ Parent](#grafanasilencestatus)</sup></sup>
 
 
 

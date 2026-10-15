@@ -5,32 +5,33 @@ $(BIN):
 M = $(shell printf "\033[34;1m▶\033[0m")
 
 # renovate: datasource=github-tags depName=kyverno/chainsaw
-CHAINSAW_VERSION = v0.2.14
+CHAINSAW_VERSION = v0.2.15
 # renovate: datasource=github-tags depName=kubernetes-sigs/controller-tools versioning=semver
-CONTROLLER_GEN_VERSION = v0.20.1
+CONTROLLER_GEN_VERSION = v0.22.0
 # renovate: datasource=github-tags depName=fybrik/crdoc
 CRDOC_VERSION = v0.6.4
 DART_SASS_VERSION = 1.86.0
 ENVTEST_VERSION ?= $(shell go list -m -f "{{ .Version }}" sigs.k8s.io/controller-runtime)
 # renovate: datasource=github-tags depName=golangci/golangci-lint
-GOLANGCI_LINT_VERSION = v2.11.4
+GOLANGCI_LINT_VERSION = v2.14.0
 # renovate: datasource=github-tags depName=norwoodj/helm-docs
 HELM_DOCS_VERSION = 1.14.2
-HELM_VERSION = v3.17.3
+# renovate: datasource=github-tags depName=helm/helm
+HELM_VERSION = v4.3.0
 HUGO_VERSION = 0.151.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/kind
-KIND_VERSION = v0.31.0
+KIND_VERSION = v0.33.0
 # renovate: datasource=github-tags depName=ko-build/ko
-KO_VERSION = 0.18.1
+KO_VERSION = 0.19.1
 # renovate: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.*)$
-KUSTOMIZE_VERSION = v5.8.1
+KUSTOMIZE_VERSION = v5.8.3
 MUFFET_VERSION = v2.10.9
 OPERATOR_SDK_VERSION = v1.32.0
 OPM_VERSION = v1.23.2
 # renovate: datasource=github-tags depName=mikefarah/yq
-YQ_VERSION = v4.52.5
+YQ_VERSION = v4.54.1
 # renovate: datasource=github-tags depName=google/go-containerregistry
-CRANE_VERSION = v0.21.5
+CRANE_VERSION = v0.22.1
 
 ifdef GITHUB_TOKEN
 	CURL_GH_AUTH=-H 'Authorization: Bearer $(GITHUB_TOKEN)'

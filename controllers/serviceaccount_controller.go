@@ -700,10 +700,10 @@ func (r *GrafanaServiceAccountReconciler) removeAccountToken(
 	tokenStatus *v1beta1.GrafanaServiceAccountTokenStatus,
 ) error {
 	if tokenStatus.Secret != nil {
-		secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{
+		secret := &corev1.Secret{
 			Namespace: tokenStatus.Secret.Namespace,
 			Name:      tokenStatus.Secret.Name,
-		}}
+		}
 
 		err := r.Delete(ctx, secret)
 		if err != nil && !apierrors.IsNotFound(err) {
@@ -785,16 +785,14 @@ func buildTokenSecret(
 	scheme *runtime.Scheme,
 ) *corev1.Secret {
 	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      tokenSpec.SecretName,
-			Namespace: cr.Namespace,
-			Labels:    buildSecretLabels(cr),
-			Annotations: map[string]string{
-				"operator.grafana.com/service-account-name":         cr.Name,
-				"operator.grafana.com/service-account-display-name": cr.GetGrafanaName(),
-				"operator.grafana.com/service-account-uid":          string(cr.UID),
-				"operator.grafana.com/service-account-token-name":   tokenStatus.Name,
-			},
+		Name:      tokenSpec.SecretName,
+		Namespace: cr.Namespace,
+		Labels:    buildSecretLabels(cr),
+		Annotations: map[string]string{
+			"operator.grafana.com/service-account-name":         cr.Name,
+			"operator.grafana.com/service-account-display-name": cr.GetGrafanaName(),
+			"operator.grafana.com/service-account-uid":          string(cr.UID),
+			"operator.grafana.com/service-account-token-name":   tokenStatus.Name,
 		},
 		Type: corev1.SecretTypeOpaque,
 	}

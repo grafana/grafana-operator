@@ -26,7 +26,7 @@ func NewConfigReconciler(cl client.Client) reconcilers.OperatorGrafanaReconciler
 func (r *ConfigReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, vars *v1beta1.OperatorReconcileVars, scheme *runtime.Scheme) (v1beta1.OperatorStageStatus, error) {
 	_ = logf.FromContext(ctx)
 
-	cfg := config.WriteIni(cr.Spec.Config)
+	cfg := config.WriteIni(config.SetDefaults(cr.Spec.Config, cr.Spec.Version))
 	vars.ConfigHash = config.GetHash(cfg)
 
 	configMap := resources.GetGrafanaConfigMap(cr, scheme)

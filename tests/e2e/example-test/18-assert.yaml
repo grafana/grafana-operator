@@ -1,0 +1,12 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaSilence
+metadata:
+  name: silence-sample
+  finalizers:
+    - operator.grafana.com/finalizer
+status:
+  (contains(keys(silenceIDs || `{}`), join('/', [$namespace, 'grafana']))): true
+  conditions:
+    - type: SilenceSynchronized
+      reason: ApplySuccessful
+      status: "True"

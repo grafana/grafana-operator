@@ -3,11 +3,13 @@ package grafana
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
-	"sort"
+	"slices"
 	"strings"
 
+	"github.com/blang/semver/v4"
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/config"
 	"github.com/grafana/grafana-operator/v5/controllers/reconcilers"
@@ -17,6 +19,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -99,7 +102,18 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafan
 		return v1beta1.OperatorStageResultFailed, err
 	}
 
+	selector := labels.SelectorFromValidatedSet(getSelectorLabels(cr))
+
+	cr.Status.Replicas = deployment.Status.Replicas
+	cr.Status.Selector = selector.String()
+
 	return v1beta1.OperatorStageResultSuccess, nil
+}
+
+func getSelectorLabels(cr *v1beta1.Grafana) map[string]string {
+	return map[string]string{
+		appLabel: cr.Name,
+	}
 }
 
 func getResources() corev1.ResourceRequirements {
@@ -121,32 +135,22 @@ func getVolumes(cr *v1beta1.Grafana, scheme *runtime.Scheme) []corev1.Volume {
 		{
 			// Volume to mount the config file from a config map
 			Name: cm.Name,
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: cm.Name,
-					},
-				},
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				Name: cm.Name,
 			},
 		},
 		{
 			// Volume to store the logs
-			Name: config.GrafanaLogsVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
+			Name:     config.GrafanaLogsVolumeName,
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 		{
-			Name: config.GrafanaDataVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
+			Name:     config.GrafanaDataVolumeName,
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 		{
-			Name: config.GrafanaTmpVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
+			Name:     config.GrafanaTmpVolumeName,
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 	}
 
@@ -201,11 +205,6 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 			Value: vars.ConfigHash,
 		},
 		{
-			// helps to restart Grafana upon plugin changes
-			Name:  "GF_INSTALL_PLUGINS",
-			Value: vars.Plugins,
-		},
-		{
 			// useful for unified alerting gossiping in HA-enabled setups
 			Name: "POD_IP",
 			ValueFrom: &corev1.EnvVarSource{
@@ -214,6 +213,19 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 				},
 			},
 		},
+	}
+
+	parsedVersion, err := semver.Parse(cr.Status.Version)
+	if err == nil && parsedVersion.GE(semver.MustParse("13.0.0")) {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "GF_PLUGINS_PREINSTALL_SYNC",
+			Value: vars.Plugins.Serialize("@"),
+		})
+	} else {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "GF_INSTALL_PLUGINS",
+			Value: vars.Plugins.Serialize(" "),
+		})
 	}
 
 	container := corev1.Container{
@@ -225,12 +237,12 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 			{
 				Name:          "grafana-http",
 				ContainerPort: int32(GetGrafanaPort(cr)), // #nosec G115
-				Protocol:      "TCP",
+				Protocol:      protocolTCP,
 			},
 			{
 				Name:          config.GrafanaAlertPortName,
 				ContainerPort: int32(config.GrafanaAlertPort),
-				Protocol:      "TCP",
+				Protocol:      protocolTCP,
 			},
 		},
 		Env:                      envVars,
@@ -253,10 +265,8 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 				Name: config.GrafanaAdminUserEnvVar,
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: config.GrafanaAdminUserEnvVar,
+						Name: secret.Name,
+						Key:  config.GrafanaAdminUserEnvVar,
 					},
 				},
 			},
@@ -264,10 +274,8 @@ func getContainers(cr *v1beta1.Grafana, scheme *runtime.Scheme, vars *v1beta1.Op
 				Name: config.GrafanaAdminPasswordEnvVar,
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: config.GrafanaAdminPasswordEnvVar,
+						Name: secret.Name,
+						Key:  config.GrafanaAdminPasswordEnvVar,
 					},
 				},
 			},
@@ -315,12 +323,10 @@ func getDefaultContainerSecurityContext(disableSecurityContext string, openshift
 
 func getReadinessProbe(cr *v1beta1.Grafana) *corev1.Probe {
 	return &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path:   GrafanaHealthEndpoint,
-				Port:   intstr.FromInt(GetGrafanaPort(cr)),
-				Scheme: corev1.URISchemeHTTP,
-			},
+		HTTPGet: &corev1.HTTPGetAction{
+			Path:   GrafanaHealthEndpoint,
+			Port:   intstr.FromInt(GetGrafanaPort(cr)),
+			Scheme: corev1.URISchemeHTTP,
 		},
 		TimeoutSeconds:   ReadinessProbeTimeoutSeconds,
 		PeriodSeconds:    ReadinessProbePeriodSeconds,
@@ -347,15 +353,13 @@ func getDeploymentSpec(cr *v1beta1.Grafana, deploymentName string, scheme *runti
 
 	return appsv1.DeploymentSpec{
 		Selector: &metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				"app": cr.Name,
-			},
+			MatchLabels: getSelectorLabels(cr),
 		},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: deploymentName,
 				Labels: map[string]string{
-					"app": cr.Name,
+					appLabel: cr.Name,
 				},
 			},
 			Spec: corev1.PodSpec{
@@ -374,10 +378,11 @@ func (r *DeploymentReconciler) computeSecretsHash(ctx context.Context, cr *v1bet
 	log := logf.FromContext(ctx).WithName("DeploymentReconciler")
 	secretNames, configMapNames := cr.ReferencedSecretsAndConfigMaps()
 
-	var resourceVersions []string // entries "secret/name=rv" or "configmap/name=rv", later sorted and hashed
+	var subHashes []string // coerce to string to simplify sorting
 
 	for _, name := range secretNames {
 		secret := &corev1.Secret{}
+		dataHash := sha256.New()
 
 		err := r.client.Get(ctx, types.NamespacedName{Namespace: cr.Namespace, Name: name}, secret)
 		if err != nil {
@@ -390,11 +395,16 @@ func (r *DeploymentReconciler) computeSecretsHash(ctx context.Context, cr *v1bet
 			return "", fmt.Errorf("fetching secret %s: %w", name, err)
 		}
 
-		resourceVersions = append(resourceVersions, fmt.Sprintf("secret/%s=%s", name, secret.ResourceVersion))
+		if err := json.NewEncoder(dataHash).Encode(secret.Data); err != nil {
+			return "", fmt.Errorf("calculating secret hash: %w", err)
+		}
+
+		subHashes = append(subHashes, string(dataHash.Sum(nil)))
 	}
 
 	for _, name := range configMapNames {
 		cm := &corev1.ConfigMap{}
+		dataHash := sha256.New()
 
 		err := r.client.Get(ctx, types.NamespacedName{Namespace: cr.Namespace, Name: name}, cm)
 		if err != nil {
@@ -407,24 +417,27 @@ func (r *DeploymentReconciler) computeSecretsHash(ctx context.Context, cr *v1bet
 			return "", fmt.Errorf("fetching configmap %s: %w", name, err)
 		}
 
-		resourceVersions = append(resourceVersions, fmt.Sprintf("configmap/%s=%s", name, cm.ResourceVersion))
+		if err := json.NewEncoder(dataHash).Encode(cm.Data); err != nil {
+			return "", fmt.Errorf("calculating config map hash: %w", err)
+		}
+
+		subHashes = append(subHashes, string(dataHash.Sum(nil)))
 	}
 
-	return hashResourceVersions(resourceVersions), nil
+	return aggregateHash(subHashes), nil
 }
 
-// hashResourceVersions produces a deterministic hex hash from a slice of "kind/name=resourceVersion"
-// entries. Sorts the slice so order does not affect the hash, then SHA-256 hashes the concatenated strings.
-func hashResourceVersions(versions []string) string {
-	if len(versions) == 0 {
+// aggregateHash takes the passed list of hashes and sorts/sums them
+func aggregateHash(hashes []string) string {
+	if len(hashes) == 0 {
 		return ""
 	}
 
-	sort.Strings(versions)
+	slices.Sort(hashes)
 
 	h := sha256.New()
 
-	for _, v := range versions {
+	for _, v := range hashes {
 		io.WriteString(h, v) //nolint:errcheck
 	}
 

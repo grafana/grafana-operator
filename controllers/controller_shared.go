@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
 	"github.com/grafana/grafana-operator/v5/controllers/resources"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -43,6 +44,7 @@ const (
 	// condition types
 	conditionNoMatchingInstance             = "NoMatchingInstance"
 	conditionNoMatchingFolder               = "NoMatchingFolder"
+	conditionFolderUIDMismatch              = "FolderUIDMismatch"
 	conditionInvalidSpec                    = "InvalidSpec"
 	conditionNotificationPolicyLoopDetected = "NotificationPolicyLoopDetected"
 	conditionSuspended                      = "Suspended"
@@ -65,6 +67,7 @@ const (
 	LogMsgRunningFinalizer    = "failed to finalize CR"
 	LogMsgRemoveFinalizer     = "failed to remove finalizer"
 	LogMsgApplyErrors         = "failed to sync CR to all Grafana instances"
+	LogMsgUpdateCache         = "failed to update cache for remote resource"
 
 	DbgMsgFoundMatchingInstances = "found matching Grafana instances"
 
@@ -82,16 +85,17 @@ type Config struct {
 	ResyncPeriod time.Duration
 }
 
-func (c *Config) requeueAfter(d metav1.Duration) time.Duration {
-	if c == nil {
-		return d.Duration
-	}
+func (c *Config) requeueAfter(d *metav1.Duration) time.Duration {
 	// duration on CRs take precedence over global config.
-	if d.Duration > 0 {
+	if d != nil {
 		return d.Duration
 	}
 
-	return c.ResyncPeriod
+	if c != nil {
+		return c.ResyncPeriod
+	}
+
+	return DefaultReSyncPeriod
 }
 
 // Allow slower initial retry on any failure
@@ -192,31 +196,31 @@ func getFolderUID(ctx context.Context, cl client.Client, ref v1beta1.FolderRefer
 		return "", err
 	}
 
+	if mismatch := meta.FindStatusCondition(folder.Status.Conditions, conditionFolderUIDMismatch); mismatch != nil && mismatch.Status == metav1.ConditionTrue {
+		setNoMatchingFolder(ref.Conditions(), ref.GetGeneration(), mismatch.Reason, "Unable to synchronize resource, the uid of the folder was inferred. See the GrafanaFolder resource for more details")
+		return "", errors.New(mismatch.Message)
+	}
+
 	removeNoMatchingFolder(ref.Conditions())
 
 	return folder.GetGrafanaUID(), nil
 }
 
 func labelsSatisfyMatchExpressions(labels map[string]string, matchExpressions []metav1.LabelSelectorRequirement) bool {
-	// To preserve support for scenario with instanceSelector: {}
-	if len(labels) == 0 {
-		return true
-	}
-
 	for _, matchExpression := range matchExpressions {
 		selected := false
 
-		if label, ok := labels[matchExpression.Key]; ok {
-			switch matchExpression.Operator {
-			case metav1.LabelSelectorOpDoesNotExist:
-				selected = false
-			case metav1.LabelSelectorOpExists:
-				selected = true
-			case metav1.LabelSelectorOpIn:
-				selected = slices.Contains(matchExpression.Values, label)
-			case metav1.LabelSelectorOpNotIn:
-				selected = !slices.Contains(matchExpression.Values, label)
-			}
+		label, exists := labels[matchExpression.Key]
+
+		switch matchExpression.Operator {
+		case metav1.LabelSelectorOpExists:
+			selected = exists
+		case metav1.LabelSelectorOpDoesNotExist:
+			selected = !exists
+		case metav1.LabelSelectorOpIn:
+			selected = exists && slices.Contains(matchExpression.Values, label)
+		case metav1.LabelSelectorOpNotIn:
+			selected = !exists || !slices.Contains(matchExpression.Values, label)
 		}
 
 		// All matchExpressions must evaluate to true in order to satisfy the conditions
@@ -384,12 +388,40 @@ func removeSuspended(conditions *[]metav1.Condition) {
 	meta.RemoveStatusCondition(conditions, conditionSuspended)
 }
 
-func ignoreStatusUpdates() predicate.Predicate {
+type IgnoreStatusUpdatesOpt func(oldObj, newObj client.Object) bool
+
+func ignoreStatusUpdates(opts ...IgnoreStatusUpdatesOpt) predicate.Predicate {
 	return predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			// Ignore updates to CR status in which case metadata.Generation does not change
-			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
+			if e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration() {
+				return true
+			}
+
+			for _, opt := range opts {
+				if opt(e.ObjectOld, e.ObjectNew) {
+					return true
+				}
+			}
+
+			return false
 		},
+	}
+}
+
+func exceptDeploymentReplicas() IgnoreStatusUpdatesOpt {
+	return func(oldObj, newObj client.Object) bool {
+		oldDeployment, ok := oldObj.(*appsv1.Deployment)
+		if !ok {
+			return false
+		}
+
+		newDeployment, ok := newObj.(*appsv1.Deployment)
+		if !ok {
+			return false
+		}
+
+		return oldDeployment.Status.Replicas != newDeployment.Status.Replicas
 	}
 }
 
@@ -478,39 +510,43 @@ func getReferencedValue(ctx context.Context, cl client.Client, namespace string,
 	return getConfigMapValue(ctx, cl, namespace, source.ConfigMapKeyRef)
 }
 
-// Add finalizer through a MergePatch
-// Avoids updating the entire object and only changes the finalizers
+// Adds finalizer if missing
 func addFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
-	// Only update when changed
 	if controllerutil.AddFinalizer(cr, grafanaFinalizer) {
-		return patchFinalizers(ctx, cl, cr)
+		finalizers := cr.GetFinalizers()
+
+		patch, err := json.Marshal(
+			map[string]any{"metadata": map[string]any{"finalizers": finalizers}},
+		)
+		if err != nil {
+			return err
+		}
+
+		return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
 	}
 
 	return nil
 }
 
-// Remove finalizer through a MergePatch
-// Avoids updating the entire object and only changes the finalizers
+// Removes finalizer if present
 func removeFinalizer(ctx context.Context, cl client.Client, cr client.Object) error {
-	// Only update when changed
-	if controllerutil.RemoveFinalizer(cr, grafanaFinalizer) {
-		return patchFinalizers(ctx, cl, cr)
+	idx := slices.Index(cr.GetFinalizers(), grafanaFinalizer)
+	if idx == -1 {
+		return nil
 	}
 
-	return nil
-}
+	controllerutil.RemoveFinalizer(cr, grafanaFinalizer)
 
-// Helper func for add/remove, avoid using directly
-func patchFinalizers(ctx context.Context, cl client.Client, cr client.Object) error {
-	crFinalizers := cr.GetFinalizers()
+	// Here, we use a JSONPatch to avoid accidental attempts to re-add finalizers (owned by other controllers)
+	// due to stale controller-runtime's cache. - Such attempts would be refused by the API server (no new finalizers
+	// can be added if the object is being deleted).
+	patch := fmt.Sprintf(`[
+		{"op":"test","path":"/metadata/finalizers/%d","value":"%s"},
+		{"op":"remove","path":"/metadata/finalizers/%d"}
+		]`, idx, grafanaFinalizer, idx,
+	)
 
-	// Create patch using slice
-	patch, err := json.Marshal(map[string]any{"metadata": map[string]any{"finalizers": crFinalizers}})
-	if err != nil {
-		return err
-	}
-
-	return cl.Patch(ctx, cr, client.RawPatch(types.MergePatchType, patch))
+	return cl.Patch(ctx, cr, client.RawPatch(types.JSONPatchType, []byte(patch)))
 }
 
 func addAnnotation(ctx context.Context, cl client.Client, cr client.Object, key, value string) error {

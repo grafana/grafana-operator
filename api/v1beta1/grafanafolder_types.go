@@ -72,7 +72,7 @@ type GrafanaFolderStatus struct {
 // +kubebuilder:printcolumn:name="No matching instances",type="boolean",JSONPath=".status.NoMatchingInstances",description=""
 // +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
-// +kubebuilder:resource:categories={grafana-operator}
+// +kubebuilder:resource:categories={all,grafana-operator}
 type GrafanaFolder struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -123,10 +123,6 @@ type GrafanaFolderList struct {
 	Items           []GrafanaFolder `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&GrafanaFolder{}, &GrafanaFolderList{})
-}
-
 func (in *GrafanaFolderList) Exists(namespace, name string) bool {
 	for _, item := range in.Items {
 		if item.Namespace == namespace && item.Name == name {
@@ -175,6 +171,18 @@ func (in *GrafanaFolder) AllowCrossNamespace() bool {
 
 func (in *GrafanaFolder) CommonStatus() *GrafanaCommonStatus {
 	return &in.Status.GrafanaCommonStatus
+}
+
+var _ CommonSpecResource = (*GrafanaFolder)(nil)
+
+func (in *GrafanaFolder) CommonSpec() GrafanaCommonSpec {
+	return in.Spec.GrafanaCommonSpec
+}
+
+var _ NoMatchingInstancesResource = (*GrafanaFolder)(nil)
+
+func (in *GrafanaFolder) SetNoMatchingInstances(v bool) {
+	in.Status.NoMatchingInstances = v
 }
 
 func (in *GrafanaFolder) NamespacedResource(uid string) NamespacedResource {

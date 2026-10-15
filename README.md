@@ -26,7 +26,7 @@ Whether you’re running one Grafana instance or many, the Grafana Operator simp
 Deploy the Grafana Operator easily in your cluster using Helm:
 
 ```bash
-helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version 5.22.2
+helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version 5.25.0
 ```
 
 **Option 2: Kustomize & More**
@@ -104,7 +104,3 @@ Feel free to drop into our Grafana Operator discussions on:
 ## Contributing
 
 For more information on how to contribute to the operator look at [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=grafana/grafana-operator&type=date&legend=top-left)](https://www.star-history.com/#grafana/grafana-operator&type=date&legend=top-left)

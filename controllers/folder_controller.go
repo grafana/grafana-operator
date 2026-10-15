@@ -22,13 +22,17 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,8 +45,10 @@ import (
 )
 
 const (
-	conditionFolderSynchronized = "FolderSynchronized"
-	conditionReasonCyclicParent = "CyclicParent"
+	conditionFolderSynchronized      = "FolderSynchronized"
+	conditionReasonCyclicParent      = "CyclicParent"
+	conditionReasonFolderUIDInferred = "FolderUIDInferred"
+	conditionReasonConsistentUID     = "ConsistentUID"
 
 	LogMsgCyclicFolder = "failed to validate GrafanaFolder, parentFolderUID must not reference the uid of the current folder"
 )
@@ -140,16 +146,24 @@ func (r *GrafanaFolderReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	applyErrors := make(map[string]string)
+	uidMismatches := make(map[string]string)
 
 	for _, grafana := range instances {
-		err = r.onFolderCreated(ctx, &grafana, cr, parentFolderUID)
+		trackedUID, err := r.onFolderCreated(ctx, &grafana, cr, parentFolderUID)
 		if err != nil {
 			applyErrors[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = err.Error()
+			continue
+		}
+
+		if trackedUID != cr.GetGrafanaUID() {
+			uidMismatches[fmt.Sprintf("%s/%s", grafana.Namespace, grafana.Name)] = trackedUID
 		}
 	}
 
-	condition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, cr.Generation, applyErrors, len(instances))
-	meta.SetStatusCondition(&cr.Status.Conditions, condition)
+	synchronizedCondition := buildSynchronizedCondition("Folder", conditionFolderSynchronized, cr.Generation, applyErrors, len(instances))
+	meta.SetStatusCondition(&cr.Status.Conditions, synchronizedCondition)
+	mismatchCondition := buildUIDMismatchCondition(cr.Generation, uidMismatches, len(instances))
+	meta.SetStatusCondition(&cr.Status.Conditions, mismatchCondition)
 
 	if len(applyErrors) > 0 {
 		err = fmt.Errorf(FmtStrApplyErrors, applyErrors)
@@ -200,7 +214,7 @@ func (r *GrafanaFolderReconciler) finalize(ctx context.Context, cr *v1beta1.Graf
 	return nil
 }
 
-func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaFolder, parentFolderUID string) error {
+func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *v1beta1.Grafana, cr *v1beta1.GrafanaFolder, parentFolderUID string) (string, error) {
 	log := logf.FromContext(ctx)
 
 	title := cr.GetTitle()
@@ -208,18 +222,18 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 
 	gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, r.Client, grafana)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	exists, remoteUID, remoteParent, err := r.Exists(gClient, cr)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// Update when missing, the CR is updated or parentFolder has changed.
 	if exists && cr.Unchanged() && parentFolderUID == remoteParent {
 		log.V(1).Info("folder unchanged. skipping remaining requests")
-		return nil
+		return remoteUID, nil
 	}
 
 	if exists {
@@ -232,7 +246,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 				Title:     title,
 			})
 			if err != nil {
-				return err
+				return "", err
 			}
 		}
 
@@ -241,7 +255,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 				ParentUID: parentFolderUID,
 			})
 			if err != nil {
-				return err
+				return "", err
 			}
 		}
 	} else {
@@ -253,7 +267,7 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 
 		_, err := gClient.Folders.CreateFolder(body) //nolint:errcheck
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
@@ -263,17 +277,17 @@ func (r *GrafanaFolderReconciler) onFolderCreated(ctx context.Context, grafana *
 
 		err = json.Unmarshal([]byte(cr.Spec.Permissions), &permissions)
 		if err != nil {
-			return fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
+			return "", fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
 		}
 
 		_, err = gClient.Folders.UpdateFolderPermissions(uid, &permissions) //nolint:errcheck
 		if err != nil {
-			return fmt.Errorf("failed to update folder permissions: %w", err)
+			return "", fmt.Errorf("failed to update folder permissions: %w", err)
 		}
 	}
 
 	// Update grafana instance Status
-	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
+	return uid, grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource(uid))
 }
 
 // Check if the folder exists. Matches UID first and fall back to title. Title matching only works for non-nested folders
@@ -318,10 +332,104 @@ func (r *GrafanaFolderReconciler) Exists(gClient *genapi.GrafanaHTTPAPI, cr *v1b
 	}
 }
 
+func buildUIDMismatchCondition(generation int64, uidMismatches map[string]string, total int) metav1.Condition {
+	condition := metav1.Condition{
+		Type:               conditionFolderUIDMismatch,
+		ObservedGeneration: generation,
+		LastTransitionTime: metav1.Time{
+			Time: time.Now(),
+		},
+	}
+
+	if len(uidMismatches) == 0 {
+		condition.Status = metav1.ConditionFalse
+		condition.Reason = conditionReasonConsistentUID
+		condition.Message = fmt.Sprintf("UIDs consistent across all %d instances", total)
+	} else {
+		condition.Status = metav1.ConditionTrue
+		condition.Reason = conditionReasonFolderUIDInferred
+
+		var sb strings.Builder
+		for i, uid := range uidMismatches {
+			fmt.Fprintf(&sb, "\n- %s: inferred %s", i, uid)
+		}
+
+		condition.Message = fmt.Sprintf("UID was inferred for %d out of %d instances: %s", len(uidMismatches), total, sb.String())
+	}
+
+	return condition
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *GrafanaFolderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.GrafanaFolder{}).
 		WithEventFilter(ignoreStatusUpdates()).
 		Complete(r)
+}
+
+func NewGenericFolderReconciler(cl client.Client, cfg *Config) *GenericReconciler[v1beta1.GrafanaFolder, *v1beta1.GrafanaFolder] {
+	return &GenericReconciler[v1beta1.GrafanaFolder, *v1beta1.GrafanaFolder]{
+		Client:       cl,
+		Cfg:          cfg,
+		ResourceName: "Folder",
+		GVR:          folderv1.FolderKind().GroupVersionResource(),
+		Convert: func(ctx context.Context, cl client.Client, cr *v1beta1.GrafanaFolder) (runtime.Object, error) {
+			parentFolderUID, err := getFolderUID(ctx, cl, cr)
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", LogMsgResolvingFolderUID, err)
+			}
+
+			f := folderv1.NewFolder()
+			f.APIVersion = folderv1.GroupVersion.Identifier()
+			f.Kind = folderv1.FolderKind().Kind()
+
+			f.Name = cr.GetGrafanaUID()
+			f.Annotations = make(map[string]string)
+
+			f.Spec.Title = cr.Spec.Title
+			if parentFolderUID != "" {
+				f.Annotations[apiutils.AnnoKeyFolder] = parentFolderUID
+			}
+
+			return f, nil
+		},
+		Validate: func(cr *v1beta1.GrafanaFolder) *ValidationError {
+			if cr.Spec.ParentFolderUID == cr.GetGrafanaUID() {
+				return &ValidationError{
+					Err:    fmt.Errorf("%s: %w", LogMsgCyclicFolder, ErrCyclicFolder),
+					Reason: "The value of parentFolderUID must not be the uid of the current folder",
+				}
+			}
+
+			return nil
+		},
+		PostApplyHook: func(ctx context.Context, cl client.Client, instance *v1beta1.Grafana, cr *v1beta1.GrafanaFolder) error {
+			if cr.Spec.Permissions != "" {
+				gClient, err := grafanaclient.NewGeneratedGrafanaClient(ctx, cl, instance)
+				if err != nil {
+					return fmt.Errorf("building grafana client: %w", err)
+				}
+
+				uid := cr.GetGrafanaUID()
+				// NOTE: it's up to a user to reset permissions with correct json
+				permissions := models.UpdateDashboardACLCommand{}
+
+				err = json.Unmarshal([]byte(cr.Spec.Permissions), &permissions)
+				if err != nil {
+					return fmt.Errorf("failed to unmarshal spec.permissions: %w", err)
+				}
+
+				_, err = gClient.Folders.UpdateFolderPermissions(uid, &permissions) //nolint:errcheck
+				if err != nil {
+					return fmt.Errorf("failed to update folder permissions: %w", err)
+				}
+
+				return nil
+			}
+
+			return nil
+		},
+		SynchronizedCondition: conditionFolderSynchronized,
+	}
 }

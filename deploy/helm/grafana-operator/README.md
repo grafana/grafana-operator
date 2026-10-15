@@ -7,14 +7,14 @@ linkTitle: "Helm installation"
 
 [grafana-operator](https://github.com/grafana/grafana-operator) for Kubernetes to manage Grafana instances and grafana resources.
 
-![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.22.2](https://img.shields.io/badge/AppVersion-v5.22.2-informational?style=flat-square)
+![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.25.0](https://img.shields.io/badge/AppVersion-v5.25.0-informational?style=flat-square)
 
 ## Installation
 
 This is a OCI helm chart, helm started support OCI in version 3.8.0.
 
 ```shell
-helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version 5.22.2
+helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version 5.25.0
 ```
 
 Sadly helm OCI charts currently don't support searching for available versions of a helm [oci registry](https://github.com/helm/helm/issues/11000).
@@ -30,7 +30,7 @@ resource "helm_release" "grafana_kubernetes_operator" {
   repository = "oci://ghcr.io/grafana/helm-charts"
   chart      = "grafana-operator"
   verify     = false
-  version    = "5.22.2"
+  version    = "5.25.0"
 }
 ```
 
@@ -43,7 +43,7 @@ This can result in the operator misbehaving when a release contains updates to t
 To avoid issues due to outdated or missing definitions, run the following command before updating an existing installation:
 
 ```shell
-kubectl apply --server-side --force-conflicts -f https://github.com/grafana/grafana-operator/releases/download/v5.22.2/crds.yaml
+kubectl apply --server-side --force-conflicts -f https://github.com/grafana/grafana-operator/releases/download/v5.25.0/crds.yaml
 ```
 
 The `--server-side` and `--force-conflict` flags are required to avoid running into issues with the `kubectl.kubernetes.io/last-applied-configuration` annotation.
@@ -56,7 +56,7 @@ without manual `kubectl apply` step required, `--set crds.immutable=false` on `h
 
 Use `helm upgrade -i --take-ownership` when switching to mutable CRDs for the first time only:
 ```shell
-helm upgrade -i --take-ownership --set crds.immutable=false grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version 5.22.2
+helm upgrade -i --take-ownership --set crds.immutable=false grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version 5.25.0
 ```
 
 Both types of CRDs are protected on the Helm chart uninstall to avoid cascading deletion.
@@ -93,6 +93,7 @@ It's easier to just manage this configuration outside of the operator.
 | extraVolumes | list | `[]` | extra pod volumes |
 | fullnameOverride | string | `""` | Overrides the fully qualified app name. |
 | global.imageRegistry | string | `nil` | Overrides the Docker registry globally for all images |
+| gomemlimitRatio | string | `"0.9"` | Sets the GOMEMLIMIT variable to a percentage of either the CGroup (v2 or v1) with fallback to the System. Results in less GC cycles when there's memory to spare and more when nearing the limit to reduce OOM kills. |
 | hostUsers | bool | `true` | Set to false to opt-in to use user namespaces |
 | image.pullPolicy | string | `"IfNotPresent"` | The image pull policy to use in grafana operator container |
 | image.registry | string | `"ghcr.io"` | grafana operator image registry |
@@ -109,6 +110,7 @@ It's easier to just manage this configuration outside of the operator.
 | logging.time | string | `"rfc3339"` | Time encoding ("epoch", "iso8601", "millis", "nano", "rfc3339", "rfc3339nano") |
 | maxConcurrentReconciles | int | `1` | Maximum number of concurrent reconciles per Custom Resource. |
 | metricsService.annotations | object | `{}` | annotations on the metrics service |
+| metricsService.ipFamilyPolicy | string | `""` | IP family policy to use, e.g., SingleStack, PreferDualStack, or RequireDualStack |
 | metricsService.metricsPort | int | `9090` | metrics service port |
 | metricsService.pprofPort | int | `8888` | port for the pprof profiling endpoint |
 | metricsService.type | string | `"ClusterIP"` | metrics service type |
@@ -141,6 +143,7 @@ It's easier to just manage this configuration outside of the operator.
 | serviceMonitor.targetLabels | list | `[]` | Set of labels to transfer from the Kubernetes Service onto the target |
 | serviceMonitor.telemetryPath | string | `"/metrics"` | Set path to metrics path |
 | tolerations | list | `[]` | pod tolerations |
+| volumes.dashboards | object | `{}` | emptyDir options for dashboards-dir |
 | watchLabelSelectors | string | `""` | Sets the `WATCH_LABEL_SELECTORS` environment variable, it defines which CRs are watched according to their labels. By default, the operator watches all CRs. To make it watch only a subset of CRs, define the variable as a *stringified label selector*. See also: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/ Beware: Always label Grafana CRs before enabling to ensure labels are inherited. # Existing Secrets/ConfigMaps referenced in CRs also need to be labeled to continue working. |
 | watchNamespaceSelector | string | `""` | Sets the `WATCH_NAMESPACE_SELECTOR` environment variable, it defines which namespaces the operator should be listening for based on a namespace label (e.g. `"environment: dev"`). By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead. When combined with "namespaceScope" users must manually create the `RoleBindings` for the matched namespaces. |
 | watchNamespaces | string | `""` | Sets the `WATCH_NAMESPACE` environment variable, it defines which namespaces the operator should be listening for (e.g. `"grafana, foo"`). By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead. |

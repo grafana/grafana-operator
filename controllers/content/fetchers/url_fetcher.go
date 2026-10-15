@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -16,8 +15,6 @@ import (
 	"github.com/grafana/grafana-operator/v5/controllers/content/cache"
 	"github.com/grafana/grafana-operator/v5/controllers/metrics"
 	"github.com/prometheus/client_golang/prometheus"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, cl client.Client, tlsConfig *tls.Config) ([]byte, error) {
@@ -89,16 +86,6 @@ func FetchFromURL(ctx context.Context, cr v1beta1.GrafanaContentResource, cl cli
 	if err != nil {
 		return []byte{}, err
 	}
-
-	gz, err := cache.Gzip(content)
-	if err != nil {
-		return []byte{}, fmt.Errorf("failed to gzip dashboard %v", cr.GetName())
-	}
-
-	status := cr.GrafanaContentStatus()
-	status.ContentCache = gz
-	status.ContentTimestamp = metav1.Time{Time: time.Now()}
-	status.ContentURL = spec.URL
 
 	return content, nil
 }

@@ -33,7 +33,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -141,8 +140,8 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		// Clean up uid, so further reconcilications can track changes there
 		cr.Status.UID = ""
 
-		// Force requeue for datasource creation
-		return ctrl.Result{Requeue: true}, nil
+		// Requeue after a short delay to let the cache observe the status update
+		return ctrl.Result{RequeueAfter: RequeueDelay}, nil
 	}
 
 	datasource, hash, err := r.buildDatasourceModel(ctx, cr)
@@ -224,7 +223,7 @@ func (r *GrafanaDatasourceReconciler) deleteOldDatasource(ctx context.Context, c
 
 		_, err = gClient.Datasources.DeleteDataSourceByUID(*uid) //nolint
 		if err != nil {
-			if IsNotErrorType[*datasources.GetDataSourceByUIDNotFound](err) {
+			if IsNotErrorType[*datasources.DeleteDataSourceByUIDNotFound](err) {
 				return fmt.Errorf("deleting datasource to update uid %s: %w", *uid, err)
 			}
 		}
@@ -427,10 +426,10 @@ func (r *GrafanaDatasourceReconciler) requestsForChangeByField(indexKey string) 
 
 		var reqs []reconcile.Request
 		for _, datasource := range list.Items {
-			reqs = append(reqs, reconcile.Request{NamespacedName: types.NamespacedName{
+			reqs = append(reqs, reconcile.Request{
 				Namespace: datasource.Namespace,
 				Name:      datasource.Name,
-			}})
+			})
 		}
 
 		return reqs
@@ -475,7 +474,8 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 
 			substitution := strings.ReplaceAll(currentValue, fmt.Sprintf("${%v}", key), val)
 			substitution = strings.ReplaceAll(substitution, fmt.Sprintf("$%v", key), val)
-			log.V(1).Info("overriding value", "key", override.TargetPath, "value", val)
+
+			log.V(1).Info("overriding value", "key", override.TargetPath)
 
 			if err := n.SetString(substitution); err != nil {
 				return nil, "", fmt.Errorf("setting new value for field: %w", err)

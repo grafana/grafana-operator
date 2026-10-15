@@ -51,7 +51,7 @@ func getDefaultConfig(t *testing.T) map[string]map[string]string {
 
 func TestSetDefaults(t *testing.T) {
 	t.Run("Nil config is properly handled", func(t *testing.T) {
-		cfg := setDefaults(nil)
+		cfg := SetDefaults(nil, "")
 
 		got := cfg
 		want := getDefaultConfig(t)
@@ -61,7 +61,7 @@ func TestSetDefaults(t *testing.T) {
 
 	t.Run("All defaults are set", func(t *testing.T) {
 		cfg := map[string]map[string]string{}
-		cfg = setDefaults(cfg)
+		cfg = SetDefaults(cfg, "")
 
 		got := cfg
 		want := getDefaultConfig(t)
@@ -78,7 +78,7 @@ func TestSetDefaults(t *testing.T) {
 				"provisioning": "d",
 			},
 		}
-		cfg = setDefaults(cfg)
+		cfg = SetDefaults(cfg, "")
 
 		got := cfg
 		want := getDefaultConfig(t)
@@ -98,7 +98,7 @@ func TestSetDefaults(t *testing.T) {
 			"dashboards":       dashboardsOverrides,
 			"unified_alerting": unifiedAlertingOverrides,
 		}
-		cfg = setDefaults(cfg)
+		cfg = SetDefaults(cfg, "")
 
 		got := cfg
 		want := getDefaultConfig(t)
@@ -116,7 +116,7 @@ func TestSetDefaults(t *testing.T) {
 		cfg := map[string]map[string]string{
 			"custom_section": customSectionOverrides,
 		}
-		cfg = setDefaults(cfg)
+		cfg = SetDefaults(cfg, "")
 
 		got := cfg
 		want := getDefaultConfig(t)

@@ -87,14 +87,10 @@ func TestGrafanaFolder_GetGrafanaUID(t *testing.T) {
 
 func newFolder(name, uid string) *GrafanaFolder {
 	return &GrafanaFolder{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       "GrafanaFolder",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
+		APIVersion: APIVersion,
+		Kind:       "GrafanaFolder",
+		Name:       name,
+		Namespace:  "default",
 		Spec: GrafanaFolderSpec{
 			CustomUID: uid,
 			GrafanaCommonSpec: GrafanaCommonSpec{

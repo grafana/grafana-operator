@@ -13,6 +13,19 @@ type GrafanaContentDatasource struct {
 	DatasourceName string `json:"datasourceName"`
 }
 
+// GrafanaContentVariable overrides the default (current) value of a named template
+// variable (templating.list[]) in the resolved dashboard model.
+type GrafanaContentVariable struct {
+	// Name of the template variable to override, matching templating.list[].name in the model.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// Value is the new default value. For datasource variables this is the datasource UID or
+	// name; for query, custom, constant and textbox variables it is the selected value.
+	// Multi-value (multi-select) variables are collapsed to this single value.
+	Value string `json:"value"`
+}
+
 type GrafanaContentEnv struct {
 	Name string `json:"name"`
 	// Inline env value
@@ -51,6 +64,36 @@ type JsonnetProjectBuild struct {
 type GrafanaComContentReference struct {
 	ID       int  `json:"id"`
 	Revision *int `json:"revision,omitempty"`
+}
+
+// GrafanaContentOCI references a dashboard JSON file inside an OCI artifact in a container registry.
+// Bytes are fetched at reconcile time and never persisted to etcd; recommended for dashboards that
+// exceed the etcd object-size limit (~1 MiB).
+type GrafanaContentOCI struct {
+	// Reference is the full OCI artifact reference including a tag or digest,
+	// e.g. "ghcr.io/team/dashboards:v1.4.7" or
+	// "ghcr.io/team/dashboards@sha256:abc123...". Prefer a digest for
+	// reproducible deployments.
+	// +kubebuilder:validation:MinLength=3
+	// +kubebuilder:validation:MaxLength=512
+	// +kubebuilder:validation:Pattern=`^[^:@]+(:[^:@/]+|@sha256:[a-fA-F0-9]{64})$`
+	Reference string `json:"reference"`
+
+	// Path is the path of the file to extract from the artifact.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=512
+	Path string `json:"path"`
+
+	// PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+	// If omitted, anonymous pull is attempted.
+	// +optional
+	PullSecretRef *corev1.LocalObjectReference `json:"pullSecretRef,omitempty"`
+
+	// InsecurePlainHTTP switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+	// Intended for in-cluster or test registries; HTTPS registries with self-signed
+	// certificates are not supported. Default false.
+	// +optional
+	InsecurePlainHTTP bool `json:"insecurePlainHTTP,omitempty"`
 }
 
 type GrafanaContentSpec struct {
@@ -94,6 +137,10 @@ type GrafanaContentSpec struct {
 	// +optional
 	GrafanaCom *GrafanaComContentReference `json:"grafanaCom,omitempty"`
 
+	// model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
+	// +optional
+	OCI *GrafanaContentOCI `json:"oci,omitempty"`
+
 	// Cache duration for models fetched from URLs
 	// +optional
 	ContentCacheDuration metav1.Duration `json:"contentCacheDuration,omitempty"`
@@ -125,4 +172,11 @@ type GrafanaContentResource interface {
 	client.Object
 	GrafanaContentSpec() *GrafanaContentSpec
 	GrafanaContentStatus() *GrafanaContentStatus
+}
+
+// GrafanaContentVariableOverrider is implemented by content resources whose model carries template
+// variables (templating.list[]), so that only those resources take part in variable overriding.
+// +kubebuilder:object:generate=false
+type GrafanaContentVariableOverrider interface {
+	ContentVariables() []GrafanaContentVariable
 }

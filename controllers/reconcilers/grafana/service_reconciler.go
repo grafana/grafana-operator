@@ -38,7 +38,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 		service.Spec = corev1.ServiceSpec{
 			Ports: getServicePorts(cr),
 			Selector: map[string]string{
-				"app": cr.Name,
+				appLabel: cr.Name,
 			},
 			Type: corev1.ServiceTypeClusterIP,
 		}
@@ -87,7 +87,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana, 
 			ClusterIP: "None",
 			Ports:     getHeadlessServicePorts(cr),
 			Selector: map[string]string{
-				"app": cr.Name,
+				appLabel: cr.Name,
 			},
 			Type: corev1.ServiceTypeClusterIP,
 		}
@@ -127,7 +127,7 @@ func getServicePorts(cr *v1beta1.Grafana) []corev1.ServicePort {
 	defaultPorts := []corev1.ServicePort{
 		{
 			Name:       config.GrafanaHTTPPortName,
-			Protocol:   "TCP",
+			Protocol:   protocolTCP,
 			Port:       intPort,
 			TargetPort: intstr.FromString("grafana-http"),
 		},
@@ -142,7 +142,7 @@ func getHeadlessServicePorts(_ *v1beta1.Grafana) []corev1.ServicePort {
 	defaultPorts := []corev1.ServicePort{
 		{
 			Name:       config.GrafanaAlertPortName,
-			Protocol:   "TCP",
+			Protocol:   protocolTCP,
 			Port:       intPort,
 			TargetPort: intstr.FromInt32(intPort),
 		},

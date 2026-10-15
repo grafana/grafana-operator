@@ -17,10 +17,12 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
+	"github.com/grafana/grafana-operator/v5/pkg/tk8s"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -97,12 +99,51 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 			want:             true,
 		},
 		{
-			name:   "No labels",
+			name:   "No labels does not match Exists",
 			labels: map[string]string{},
 			matchExpressions: []metav1.LabelSelectorRequirement{
 				{
 					Operator: metav1.LabelSelectorOpExists,
 					Key:      "dashboards",
+				},
+			},
+			want: false,
+		},
+		{
+			name:   "No labels matches DoesNotExist",
+			labels: map[string]string{},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpDoesNotExist,
+					Key:      "dashboards",
+				},
+			},
+			want: true,
+		},
+		{
+			name:   "No labels does not match In",
+			labels: map[string]string{},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name:   "No labels matches NotIn",
+			labels: map[string]string{},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpNotIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana",
+					},
 				},
 			},
 			want: true,
@@ -276,6 +317,35 @@ func TestLabelsSatisfyMatchExpressions(t *testing.T) {
 				},
 			},
 			want: false,
+		},
+		{
+			name: "Missing label matches DoesNotExist",
+			labels: map[string]string{
+				"random-label": "random-value",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpDoesNotExist,
+					Key:      "dashboards",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Missing label matches NotIn",
+			labels: map[string]string{
+				"random-label": "random-value",
+			},
+			matchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Operator: metav1.LabelSelectorOpNotIn,
+					Key:      "dashboards",
+					Values: []string{
+						"grafana",
+					},
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -480,10 +550,8 @@ func TestGetGrafanaRefValue(t *testing.T) {
 		{
 			name: "Get value with dots",
 			instance: &v1beta1.Grafana{
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{
-						"foo.bar/baz": "some-value",
-					},
+				Annotations: map[string]string{
+					"foo.bar/baz": "some-value",
 				},
 			},
 			selector: &corev1.ObjectFieldSelector{
@@ -518,14 +586,12 @@ func TestGetGrafanaRefValue(t *testing.T) {
 var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	t := GinkgoT()
 
-	ns := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
+	ns := corev1.Namespace{
 		Name: "matching-instances",
-	}}
+	}
 	allowFolder := v1beta1.GrafanaFolder{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: ns.Name,
-			Name:      "allow-cross-namespace",
-		},
+		Namespace: ns.Name,
+		Name:      "allow-cross-namespace",
 		Spec: v1beta1.GrafanaFolderSpec{
 			GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 				AllowCrossNamespaceImport: true,
@@ -545,12 +611,10 @@ var _ = Describe("GetMatchingInstances functions", Ordered, func() {
 	matchAllFolder.Spec.InstanceSelector = &metav1.LabelSelector{} // InstanceSelector is never nil
 
 	BaseGrafana := v1beta1.Grafana{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: ns.Name,
-			Name:      "instance",
-			Labels:    map[string]string{"matching-instances": "test"},
-		},
-		Spec: v1beta1.GrafanaSpec{},
+		Namespace: ns.Name,
+		Name:      "instance",
+		Labels:    map[string]string{"matching-instances": "test"},
+		Spec:      v1beta1.GrafanaSpec{},
 	}
 	matchesNothingGrafana := BaseGrafana.DeepCopy()
 	matchesNothingGrafana.Name = "no-labels-instance"
@@ -653,4 +717,43 @@ func TestIsNotErrorType(t *testing.T) {
 		got := IsNotErrorType[errTypeA](errB)
 		assert.Equal(t, want, got)
 	})
+}
+
+func TestRemoveFinalizer(t *testing.T) {
+	t.Parallel()
+
+	const extraFinalizer = "extraFinalizer"
+
+	cr := &corev1.ConfigMap{
+		Namespace: "default",
+		Name:      "test",
+		Finalizers: []string{
+			grafanaFinalizer,
+			extraFinalizer,
+		},
+	}
+
+	ctx := context.Background()
+	cl := tk8s.GetFakeClient(t)
+
+	err := cl.Create(ctx, cr)
+	require.NoError(t, err)
+
+	err = removeFinalizer(ctx, cl, cr)
+	require.NoError(t, err)
+
+	// Make sure the finalizer is removed from the object
+	assert.NotContains(t, cr.GetFinalizers(), grafanaFinalizer)
+
+	// Fetch the CR from API-server to make sure the finalizer is gone there as well
+	cr.Finalizers = []string{}
+	key := tk8s.GetRequestKey(t, cr)
+
+	err = cl.Get(ctx, key, cr)
+	require.NoError(t, err)
+
+	want := []string{extraFinalizer}
+	got := cr.GetFinalizers()
+
+	assert.Equal(t, want, got)
 }

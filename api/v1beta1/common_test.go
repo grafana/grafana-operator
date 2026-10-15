@@ -16,13 +16,9 @@ var _ = Describe("GrafanaCommonSpec#AllowCrossNamespaceImport Validation rule te
 	t := GinkgoT()
 
 	undefinedCrossImportFolder := &GrafanaFolder{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       "GrafanaFolder",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-		},
+		APIVersion: APIVersion,
+		Kind:       "GrafanaFolder",
+		Namespace:  "default",
 		Spec: GrafanaFolderSpec{
 			GrafanaCommonSpec: GrafanaCommonSpec{
 				InstanceSelector: &metav1.LabelSelector{},

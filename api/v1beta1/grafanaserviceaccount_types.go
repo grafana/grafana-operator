@@ -23,7 +23,7 @@ import (
 // GrafanaServiceAccountTokenSpec defines a token for a service account
 type GrafanaServiceAccountTokenSpec struct {
 	// Name of the token
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
 
@@ -47,7 +47,7 @@ type GrafanaServiceAccountSpec struct {
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
 	// +kubebuilder:validation:XValidation:rule="duration(self) > duration('0s')",message="spec.resyncPeriod must be greater than 0"
-	ResyncPeriod metav1.Duration `json:"resyncPeriod,omitempty"`
+	ResyncPeriod *metav1.Duration `json:"resyncPeriod,omitempty"`
 
 	// Suspend pauses reconciliation of the service account
 	// +optional
@@ -55,7 +55,7 @@ type GrafanaServiceAccountSpec struct {
 	Suspend bool `json:"suspend,omitempty"`
 
 	// Name of the Grafana instance to create the service account for
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.instanceName is immutable"
 	InstanceName string `json:"instanceName"`
@@ -66,7 +66,7 @@ type GrafanaServiceAccountSpec struct {
 	Name string `json:"name,omitempty"`
 
 	// Role of the service account (Viewer, Editor, Admin)
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:Enum=Viewer;Editor;Admin
 	Role string `json:"role"`
 
@@ -137,7 +137,7 @@ type GrafanaServiceAccountStatus struct {
 // GrafanaServiceAccount is the Schema for the grafanaserviceaccounts API
 // +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
-// +kubebuilder:resource:categories={grafana-operator}
+// +kubebuilder:resource:categories={all,grafana-operator}
 type GrafanaServiceAccount struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -207,8 +207,4 @@ func (in *GrafanaServiceAccount) GetGrafanaName() string {
 	}
 
 	return in.Name
-}
-
-func init() {
-	SchemeBuilder.Register(&GrafanaServiceAccount{}, &GrafanaServiceAccountList{})
 }

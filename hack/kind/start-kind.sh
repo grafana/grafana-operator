@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 KIND=${KIND:-kind}
-KIND_NODE_VERSION=${KIND_NODE_VERSION:-v1.35.0}
+KIND_NODE_VERSION=${KIND_NODE_VERSION:-v1.36.1}
 KIND_CLUSTER_NAME=${KIND_CLUSTER_NAME:-kind-grafana}
 KUBECONFIG=${KUBECONFIG:-~/.kube/kind-grafana-operator}
 set -eu

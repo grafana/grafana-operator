@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -265,12 +266,33 @@ func (r *GrafanaAlertRuleGroupReconciler) matchesStateInGrafana(exists bool, mod
 		return false
 	}
 
-	matchesRemoteState := remoteModel.FolderUID == model.FolderUID &&
-		remoteModel.Interval == model.Interval &&
-		reflect.DeepEqual(remoteModel.Rules, model.Rules) &&
-		remoteModel.Title == model.Title
+	normalizedModel := normalizeAlertRuleGroupForComparison(model)
+	normalizedRemoteModel := normalizeAlertRuleGroupForComparison(remoteModel)
+
+	matchesRemoteState := normalizedRemoteModel.FolderUID == normalizedModel.FolderUID &&
+		normalizedRemoteModel.Interval == normalizedModel.Interval &&
+		reflect.DeepEqual(normalizedRemoteModel.Rules, normalizedModel.Rules) &&
+		normalizedRemoteModel.Title == normalizedModel.Title
 
 	return matchesRemoteState
+}
+
+func normalizeAlertRuleGroupForComparison(group *models.AlertRuleGroup) *models.AlertRuleGroup {
+	if group == nil {
+		return nil
+	}
+
+	raw, err := json.Marshal(group)
+	if err != nil {
+		return group
+	}
+
+	var normalized models.AlertRuleGroup
+	if err := json.Unmarshal(raw, &normalized); err != nil {
+		return group
+	}
+
+	return &normalized
 }
 
 func (r *GrafanaAlertRuleGroupReconciler) reconcileWithInstance(ctx context.Context, instance *v1beta1.Grafana, cr *v1beta1.GrafanaAlertRuleGroup, mGroup *models.AlertRuleGroup, disableProvenance *string) error {

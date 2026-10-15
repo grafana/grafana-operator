@@ -3,12 +3,13 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.22.0
   name: grafanadashboards.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaDashboard
     listKind: GrafanaDashboardList
@@ -61,7 +62,9 @@ spec:
                 description: model from configmap
                 properties:
                   key:
-                    description: The key to select.
+                    description: |-
+                      The key to select from the ConfigMap's Data field.
+                      Keys in the BinaryData field are not currently propagated to container env vars.
                     type: string
                   name:
                     default: ""
@@ -107,7 +110,9 @@ spec:
                       description: Selects a key of a ConfigMap.
                       properties:
                         key:
-                          description: The key to select.
+                          description: |-
+                            The key to select from the ConfigMap's Data field.
+                            Keys in the BinaryData field are not currently propagated to container env vars.
                           type: string
                         name:
                           default: ""
@@ -169,7 +174,9 @@ spec:
                           description: Selects a key of a ConfigMap.
                           properties:
                             key:
-                              description: The key to select.
+                              description: |-
+                                The key to select from the ConfigMap's Data field.
+                                Keys in the BinaryData field are not currently propagated to container env vars.
                               type: string
                             name:
                               default: ""
@@ -312,6 +319,141 @@ spec:
                 - fileName
                 - gzipJsonnetProject
                 type: object
+              oci:
+                description: model from an OCI artifact (e.g. ghcr.io/team/dashboards:v1)
+                properties:
+                  insecurePlainHTTP:
+                    description: |-
+                      InsecurePlainHTTP switches the registry connection to plain HTTP (non-TLS) instead of HTTPS.
+                      Intended for in-cluster or test registries; HTTPS registries with self-signed
+                      certificates are not supported. Default false.
+                    type: boolean
+                  path:
+                    description: Path is the path of the file to extract from the
+                      artifact.
+                    maxLength: 512
+                    minLength: 1
+                    type: string
+                  pullSecretRef:
+                    description: |-
+                      PullSecretRef references a kubernetes.io/dockerconfigjson Secret in the same namespace as the CR.
+                      If omitted, anonymous pull is attempted.
+                    properties:
+                      name:
+                        default: ""
+                        description: |-
+                          Name of the referent.
+                          This field is effectively required, but due to backwards compatibility is
+                          allowed to be empty. Instances of this type with an empty value here are
+                          almost certainly wrong.
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  reference:
+                    description: |-
+                      Reference is the full OCI artifact reference including a tag or digest,
+                      e.g. "ghcr.io/team/dashboards:v1.4.7" or
+                      "ghcr.io/team/dashboards@sha256:abc123...". Prefer a digest for
+                      reproducible deployments.
+                    maxLength: 512
+                    minLength: 3
+                    pattern: ^[^:@]+(:[^:@/]+|@sha256:[a-fA-F0-9]{64})$
+                    type: string
+                required:
+                - path
+                - reference
+                type: object
+              patch:
+                description: |-
+                  Patch the contents of the dashboard JSON using jq scripts.
+                  This is applied to a resolved dashboard, after variable substitution.
+                properties:
+                  env:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        valueFrom:
+                          properties:
+                            configMapKeyRef:
+                              description: Selects a key of a ConfigMap.
+                              properties:
+                                key:
+                                  description: |-
+                                    The key to select from the ConfigMap's Data field.
+                                    Keys in the BinaryData field are not currently propagated to container env vars.
+                                  type: string
+                                name:
+                                  default: ""
+                                  description: |-
+                                    Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  type: string
+                                optional:
+                                  description: Specify whether the ConfigMap or its
+                                    key must be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            grafanaRef:
+                              description: ObjectFieldSelector selects an APIVersioned
+                                field of an object.
+                              properties:
+                                apiVersion:
+                                  description: Version of the schema the FieldPath
+                                    is written in terms of, defaults to "v1".
+                                  type: string
+                                fieldPath:
+                                  description: Path of the field to select in the
+                                    specified API version.
+                                  type: string
+                              required:
+                              - fieldPath
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            secretKeyRef:
+                              description: Selects a key of a Secret.
+                              properties:
+                                key:
+                                  description: The key of the secret to select from.  Must
+                                    be a valid secret key.
+                                  type: string
+                                name:
+                                  default: ""
+                                  description: |-
+                                    Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  type: string
+                                optional:
+                                  description: Specify whether the Secret or its key
+                                    must be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                          type: object
+                      required:
+                      - name
+                      - valueFrom
+                      type: object
+                    type: array
+                  scripts:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - scripts
+                type: object
               plugins:
                 description: plugins
                 items:
@@ -327,6 +469,38 @@ spec:
                   - version
                   type: object
                 type: array
+              publicSharing:
+                description: Allows configuration of sharing the dashboard publicly
+                properties:
+                  accessToken:
+                    description: Optional. Unique access token. If empty it will generate
+                      a new access token per instance.
+                    maxLength: 36
+                    minLength: 36
+                    type: string
+                    x-kubernetes-validations:
+                    - message: spec.publicDashboard.accessToken is immutable
+                      rule: self == oldSelf
+                    - message: spec.publicDashboard.accessToken must be a valid uuid
+                      rule: '!format.uuid().validate(self).hasValue()'
+                  annotationsEnabled:
+                    description: Optional. When set to true, shows annotations. The
+                      default value is false.
+                    type: boolean
+                  enabled:
+                    default: true
+                    description: Optional. Set to false to disable sharing, the public
+                      dashboard is still created. The default value is true.
+                    type: boolean
+                  timeSelectionEnabled:
+                    description: Optional. when set to true, the time picker is enabled
+                      in the shared dashboard. The default value is false.
+                    type: boolean
+                type: object
+                x-kubernetes-validations:
+                - message: spec.publicDashboard.accessToken is immutable
+                  rule: ((!has(oldSelf.accessToken) && !has(self.accessToken)) ||
+                    (has(oldSelf.accessToken) && has(self.accessToken)))
               resyncPeriod:
                 description: How often the resource is synced, defaults to 10m0s if
                   not set
@@ -405,6 +579,31 @@ spec:
                         x-kubernetes-map-type: atomic
                     type: object
                 type: object
+              variables:
+                description: |-
+                  overrides the default (current) value of named template variables in the dashboard model.
+                  Variables that are not present in the model are ignored.
+                items:
+                  description: |-
+                    GrafanaContentVariable overrides the default (current) value of a named template
+                    variable (templating.list[]) in the resolved dashboard model.
+                  properties:
+                    name:
+                      description: Name of the template variable to override, matching
+                        templating.list[].name in the model.
+                      minLength: 1
+                      type: string
+                    value:
+                      description: |-
+                        Value is the new default value. For datasource variables this is the datasource UID or
+                        name; for query, custom, constant and textbox variables it is the selected value.
+                        Multi-value (multi-select) variables are collapsed to this single value.
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
             required:
             - instanceSelector
             type: object
@@ -502,6 +701,9 @@ spec:
                 description: Last time the resource was synchronized with Grafana
                   instances
                 format: date-time
+                type: string
+              publicSharingPath:
+                description: The resulting path where a public sharing config is available
                 type: string
               uid:
                 type: string

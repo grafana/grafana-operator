@@ -3,12 +3,13 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.1
+    controller-gen.kubebuilder.io/version: v0.22.0
   name: grafananotificationpolicyroutes.grafana.integreatly.org
 spec:
   group: grafana.integreatly.org
   names:
     categories:
+    - all
     - grafana-operator
     kind: GrafanaNotificationPolicyRoute
     listKind: GrafanaNotificationPolicyRouteList
@@ -72,10 +73,12 @@ spec:
                 items:
                   properties:
                     isEqual:
-                      description: is equal
+                      description: 'Deprecated: Does nothing and is not exported by
+                        Grafana'
                       type: boolean
                     isRegex:
-                      description: is regex
+                      description: 'Deprecated: Does nothing and is not exported by
+                        Grafana'
                       type: boolean
                     name:
                       description: name

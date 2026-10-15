@@ -5,6 +5,10 @@ tags:
   - Folders
 ---
 
+{{% alert title="Note" color="primary" %}}
+The GrafanaDashboard CR only supports V1 dashboards(legacy API), but it is possible to provision V2 dashboards via the [`GrafanaManifest`](https://grafana.github.io/grafana-operator/docs/examples/manifests/dashboards-v2/) resource.
+{{% /alert %}}
+
 [Dashboards](https://grafana.com/docs/grafana/latest/dashboards/) is the core feature of Grafana and of course something that you can manage through the operator.
 
 To view the entire configuration that you can do within Dashboards, look at our [API documentation](/docs/api/#grafanadashboardspec).
@@ -19,6 +23,7 @@ You can configure and reference dashboards as code in many different ways.
 - [Jsonnet](#jsonnet) (Deprecated)
 - [JaaS](#jaas)
 - [ConfigMap](#configmap)
+- [OCI](#oci)
 
 To view all configuration options for folders, look at our [API documentation](/docs/api/#grafanadashboardspec).
 
@@ -467,6 +472,40 @@ spec:
 the `.spec.folder` field is ignored when either `.spec.folderUID` or `.spec.folderRef` is present in the GrafanaDashboard declaration.
 {{% /alert %}}
 
+## Override template variable defaults
+
+The `spec.variables` field overrides the default (`current`) value of a dashboard's template
+variables (`templating.list[]`). For each entry the operator matches a variable by `name` and
+sets its selected value, reconciling `options[]` so the value is valid. A `name` that is not
+present in the dashboard is ignored.
+
+Unlike `spec.datasources` (which performs a `${...}` string replacement and requires the
+author to embed placeholders), `spec.variables` operates on the parsed model, so it also works
+on dashboards you do not author, such as those fetched via `grafanaCom`, `url`, `oci` or a
+shared `configMapRef`. Datasource-type variables are overridden the same way, where the `value`
+is the datasource UID or name.
+
+The override sets both the variable's display text and value to `value`, so for datasource or
+query variables the dropdown may show the raw value until Grafana re-resolves the label.
+Multi-value (multi-select) variables are collapsed to the single provided `value`.
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: grafanadashboard-variable-override
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  variables:
+    - name: namespace
+      value: "default"
+    - name: datasource
+      value: "prometheus-uid"
+  url: "https://raw.githubusercontent.com/grafana-operator/grafana-operator/master/examples/dashboard_from_url/dashboard.json"
+```
+
 ## Dashboard customization by providing environment variables
 
 Will be pleasant for scenarios when you would like to extend the behaviour of jsonnet generation by parametrizing it with runtime Env vars:
@@ -495,10 +534,12 @@ spec:
           name: custom-grafana-dashboard-secrets
           key: PROMETHEUS_USERNAME
   envFrom: # just example, such cm and secrets are not provided by vendor
-    - configMapRef:
+    - configMapKeyRef:
         name: custom-grafana-dashboard-cm
-    - secretRef:
+        key: GRAFANA_URL
+    - secretKeyRef:
         name: custom-grafana-dashboard-secrets
+        key: PROMETHEUS_USERNAME
   jsonnet: |
    local grafana = import 'grafonnet/grafana.libsonnet';
    local dashboard = grafana.dashboard;
@@ -600,10 +641,12 @@ spec:
           name: custom-grafana-dashboard-secrets
           key: PROMETHEUS_USERNAME
   envFrom: # just example, such cm and secrets are not provided by vendor
-    - configMapRef:
+    - configMapKeyRef:
         name: custom-grafana-dashboard-cm
-    - secretRef:
+        key: GRAFANA_URL
+    - secretKeyRef:
         name: custom-grafana-dashboard-secrets
+        key: PROMETHEUS_USERNAME
   jsonnetLib:
     jPath:
       - "vendor"
@@ -685,3 +728,38 @@ In a standard scenario, a folder with default settings gets created through a `G
 
 If you need more control over folders (such as RBAC settings), it can be achieved through a `GrafanaFolder` CR.
 {{% /alert %}}
+
+## OCI
+
+Load a dashboard JSON file from an OCI artifact stored in a container registry (e.g. GHCR, ECR, GAR). Bytes are fetched at reconcile time and never stored in etcd, making this the recommended source for dashboards that exceed the etcd object-size limit (~1 MiB).
+
+The `reference` field must include either a tag (`:v1.4.7`) or a digest (`@sha256:...`):
+
+- **tag** - mutable pointer to a registry tag. The operator re-fetches on each reconcile and caches the result according to `contentCacheDuration`.
+- **digest** - immutable content-addressable reference. Guarantees bit-for-bit reproducibility and is recommended for production deployments.
+
+For public registries omit `pullSecretRef`. For private registries create a `kubernetes.io/dockerconfigjson` Secret in the same namespace as the dashboard CR and reference it via `pullSecretRef`.
+
+The `insecurePlainHTTP` field (default `false`) switches the registry connection from HTTPS to plain HTTP; intended for in-cluster or test registries. HTTPS registries with self-signed certificates are not supported.
+
+Image signing (e.g. cosign/Sigstore) is not verified by the operator.
+
+Example: push a dashboard artifact with [oras](https://oras.land/):
+
+```bash
+echo '{"title":"My Dashboard","panels":[]}' > board.json
+oras push ghcr.io/team-a/dashboards:v1.4.7 \
+  --artifact-type application/vnd.grafana.dashboard+json \
+  board.json:application/json
+```
+
+Alternatively, a regular container image works too — useful if you already have container tooling in your pipeline:
+
+```dockerfile
+FROM scratch
+ADD board.json /board.json
+```
+
+When the artifact is a container image the operator walks its layer tarballs in reverse order (upper layers win), matching standard container filesystem semantics.
+
+{{< readfile file="./oci/resources.yaml" code="true" lang="yaml" >}}

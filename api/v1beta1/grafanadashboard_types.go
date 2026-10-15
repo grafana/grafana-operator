@@ -45,15 +45,53 @@ type GrafanaDashboardSpec struct {
 	// +optional
 	FolderRef string `json:"folderRef,omitempty"`
 
+	// overrides the default (current) value of named template variables in the dashboard model.
+	// Variables that are not present in the model are ignored.
+	// +optional
+	Variables []GrafanaContentVariable `json:"variables,omitempty"`
+
 	// plugins
 	// +optional
 	Plugins PluginList `json:"plugins,omitempty"`
+
+	// Allows configuration of sharing the dashboard publicly
+	// +optional
+	PublicSharing *GrafanaDashboardPublicSharing `json:"publicSharing,omitempty"`
+
+	// Patch the contents of the dashboard JSON using jq scripts.
+	// This is applied to a resolved dashboard, after variable substitution.
+	// +optional
+	Patch *Patch `json:"patch,omitempty"`
+}
+
+// +kubebuilder:validation:XValidation:rule="((!has(oldSelf.accessToken) && !has(self.accessToken)) || (has(oldSelf.accessToken) && has(self.accessToken)))", message="spec.publicDashboard.accessToken is immutable"
+type GrafanaDashboardPublicSharing struct {
+	// Optional. Set to false to disable sharing, the public dashboard is still created. The default value is true.
+	// +optional
+	// +kubebuilder:default=true
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Optional. Unique access token. If empty it will generate a new access token per instance.
+	// +kubebuilder:validation:MaxLength=36
+	// +kubebuilder:validation:MinLength=36
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="spec.publicDashboard.accessToken is immutable"
+	// +kubebuilder:validation:XValidation:rule="!format.uuid().validate(self).hasValue()",message="spec.publicDashboard.accessToken must be a valid uuid"
+	AccessToken string `json:"accessToken,omitempty"` //#nosec G117
+
+	// Optional. When set to true, shows annotations. The default value is false.
+	AnnotationsEnabled bool `json:"annotationsEnabled,omitempty"`
+
+	// Optional. when set to true, the time picker is enabled in the shared dashboard. The default value is false.
+	TimeSelectionEnabled bool `json:"timeSelectionEnabled,omitempty"`
 }
 
 // GrafanaDashboardStatus defines the observed state of GrafanaDashboard
 type GrafanaDashboardStatus struct {
 	GrafanaCommonStatus  `json:",inline"`
 	GrafanaContentStatus `json:",inline"`
+
+	// The resulting path where a public sharing config is available
+	PublicSharingPath string `json:"publicSharingPath,omitempty"`
 
 	// The dashboard instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool `json:"NoMatchingInstances,omitempty"`
@@ -66,7 +104,7 @@ type GrafanaDashboardStatus struct {
 // +kubebuilder:printcolumn:name="No matching instances",type="boolean",JSONPath=".status.NoMatchingInstances",description=""
 // +kubebuilder:printcolumn:name="Last resync",type="date",format="date-time",JSONPath=".status.lastResync",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
-// +kubebuilder:resource:categories={grafana-operator}
+// +kubebuilder:resource:categories={all,grafana-operator}
 type GrafanaDashboard struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -116,7 +154,15 @@ func (in *GrafanaDashboard) GrafanaContentStatus() *GrafanaContentStatus {
 	return &in.Status.GrafanaContentStatus
 }
 
-var _ GrafanaContentResource = &GrafanaDashboard{}
+// ContentVariables implements GrafanaContentVariableOverrider
+func (in *GrafanaDashboard) ContentVariables() []GrafanaContentVariable {
+	return in.Spec.Variables
+}
+
+var (
+	_ GrafanaContentResource          = &GrafanaDashboard{}
+	_ GrafanaContentVariableOverrider = &GrafanaDashboard{}
+)
 
 func (in *GrafanaDashboardList) Exists(namespace, name string) bool {
 	for _, item := range in.Items {
@@ -160,8 +206,4 @@ func (in *GrafanaDashboard) GetPluginConfigMapKey() string {
 
 func (in *GrafanaDashboard) GetPluginConfigMapDeprecatedKey() string {
 	return fmt.Sprintf("%v-dashboard", in.Name)
-}
-
-func init() {
-	SchemeBuilder.Register(&GrafanaDashboard{}, &GrafanaDashboardList{})
 }

@@ -83,7 +83,7 @@ func TestGrafanaPluginString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.plugin.String()
+			got := tt.plugin.Serialize(" ")
 
 			assert.Equal(t, tt.want, got)
 		})
@@ -263,7 +263,7 @@ func TestPluginListString(t *testing.T) {
 				Version: "6.7",
 			},
 		}
-		out := pl.String()
+		out := pl.Serialize(" ")
 
 		split := strings.Split(out, ",")
 		if len(split) != 3 {
@@ -300,7 +300,7 @@ func TestPluginListString(t *testing.T) {
 			},
 		}
 
-		got := pl.String()
+		got := pl.Serialize(" ")
 		want := "a 1.0.0,b,c 2.0.0"
 
 		assert.Equal(t, want, got)

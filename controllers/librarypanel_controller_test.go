@@ -129,10 +129,8 @@ var _ = Describe("LibraryPanel Reconciler", Ordered, func() {
 		require.NoError(t, err)
 
 		cr := &v1beta1.GrafanaLibraryPanel{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-				Name:      "url-based-library-panel",
-			},
+			Namespace: "default",
+			Name:      "url-based-library-panel",
 			Spec: v1beta1.GrafanaLibraryPanelSpec{
 				GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
 					InstanceSelector: &metav1.LabelSelector{
