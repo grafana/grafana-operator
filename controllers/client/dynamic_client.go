@@ -1,10 +1,12 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -134,6 +136,13 @@ func (c *DynamicClient) Apply(ctx context.Context, obj *unstructured.Unstructure
 		return fmt.Errorf("fetching existing resource: %w", err)
 	}
 
+	// An update that changes nothing is not free: Grafana handles it like any other and
+	// announces a dashboard as saved to every browser that has it open, which reloads it there.
+	// Without this check that happens at every resync.
+	if matchesExisting(obj, existing) {
+		return nil
+	}
+
 	// Carry over the resource version to ensure the object will be accepted if other updates have been made
 	obj.SetResourceVersion(existing.GetResourceVersion())
 
@@ -142,6 +151,98 @@ func (c *DynamicClient) Apply(ctx context.Context, obj *unstructured.Unstructure
 	}
 
 	return nil
+}
+
+// matchesExisting reports whether existing already holds everything an update with obj would
+// set. Grafana adds metadata of its own (labels and annotations under grafana.app/), so a label
+// or an annotation of obj only has to be present in existing, and status is the server's. Every
+// other top-level field has to be equal both ways, as an update replaces it.
+func matchesExisting(obj, existing *unstructured.Unstructured) bool {
+	keys := make(map[string]struct{}, len(obj.Object)+len(existing.Object))
+	for key := range obj.Object {
+		keys[key] = struct{}{}
+	}
+
+	for key := range existing.Object {
+		keys[key] = struct{}{}
+	}
+
+	for key := range keys {
+		switch key {
+		case "apiVersion", "kind", "metadata", "status":
+			continue
+		}
+
+		if !equalIgnoringNull(obj.Object[key], existing.Object[key]) {
+			return false
+		}
+	}
+
+	return isSubset(obj.GetLabels(), existing.GetLabels()) &&
+		isSubset(obj.GetAnnotations(), existing.GetAnnotations())
+}
+
+func isSubset(subset, set map[string]string) bool {
+	for key, value := range subset {
+		if actual, ok := set[key]; !ok || actual != value {
+			return false
+		}
+	}
+
+	return true
+}
+
+// equalIgnoringNull compares two values by their JSON, so that a number decoded as int64 equals
+// the same number produced by a patch as an int, while every digit of a large number still
+// counts. A null member of an object counts as absent: Grafana stores some nullable fields
+// explicitly, such as the value of a dashboard's base threshold step, that a template leaves out.
+func equalIgnoringNull(a, b any) bool {
+	na, errA := withoutNull(a)
+	nb, errB := withoutNull(b)
+
+	if errA != nil || errB != nil {
+		return false
+	}
+
+	return reflect.DeepEqual(na, nb)
+}
+
+func withoutNull(v any) (any, error) {
+	enc, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+
+	dec := json.NewDecoder(bytes.NewReader(enc))
+	dec.UseNumber()
+
+	var out any
+	if err := dec.Decode(&out); err != nil {
+		return nil, err
+	}
+
+	return dropNull(out), nil
+}
+
+func dropNull(v any) any {
+	switch typed := v.(type) {
+	case map[string]any:
+		for key, value := range typed {
+			if value == nil {
+				delete(typed, key)
+
+				continue
+			}
+
+			typed[key] = dropNull(value)
+		}
+	case []any:
+		for i, value := range typed {
+			typed[i] = dropNull(value)
+		}
+	}
+
+	return v
 }
 
 func (c *DynamicClient) ApplyObject(ctx context.Context, obj runtime.Object) error {
