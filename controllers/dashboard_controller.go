@@ -159,6 +159,7 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModelResolution, msg)
 			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
 			log.Error(fmt.Errorf("%s", msg), "unsupported dashboard format")
+
 			return ctrl.Result{}, nil
 		}
 	}
