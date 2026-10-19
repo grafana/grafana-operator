@@ -23,7 +23,8 @@
     {
       "matchManagers": ["gomod"],
       "matchDepTypes": ["indirect"],
-      "enabled": false
+      "enabled": false,
+      "allowedVersions": "{{currentVersion}}"
     },
     {
       "matchManagers": [
