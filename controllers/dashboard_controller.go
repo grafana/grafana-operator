@@ -151,6 +151,19 @@ func (r *GrafanaDashboardReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, fmt.Errorf("%s: %w", LogMsgResolvingDashboardContents, err)
 	}
 
+	// v2 documents contain "apiVersion" or "kind" at the root; classic dashboards never do.
+	// Accepting them would silently delete the existing dashboard. Use GrafanaManifest instead.
+	for _, key := range []string{"apiVersion", "kind"} {
+		if _, found := dashboardModel[key]; found {
+			msg := fmt.Sprintf("spec.json contains %q indicating a v2 resource; GrafanaDashboard only accepts classic dashboard JSON, use GrafanaManifest for v2 resources", key)
+			setInvalidSpec(&cr.Status.Conditions, cr.Generation, conditionReasonInvalidModelResolution, msg)
+			meta.RemoveStatusCondition(&cr.Status.Conditions, conditionDashboardSynchronized)
+			log.Error(fmt.Errorf("%s", msg), "unsupported dashboard format")
+
+			return ctrl.Result{}, nil
+		}
+	}
+
 	dto, err := r.getPublicSharingDTO(cr)
 	if err != nil {
 		// Should almost never happen
