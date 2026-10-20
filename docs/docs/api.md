@@ -3173,6 +3173,14 @@ GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#grafanadatasourcespeccache">cache</a></b></td>
+        <td>object</td>
+        <td>
+          Query and resource caching settings, applied through the Grafana Enterprise cache API.
+When omitted, the cache configuration of the datasource is left untouched.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanadatasourcespecpluginsindex">plugins</a></b></td>
         <td>[]object</td>
         <td>
@@ -3411,6 +3419,61 @@ Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
 the values array must be non-empty. If the operator is Exists or DoesNotExist,
 the values array must be empty. This array is replaced during a strategic
 merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### GrafanaDatasource.spec.cache
+<sup><sup>[↩ Parent](#grafanadatasourcespec)</sup></sup>
+
+
+
+Query and resource caching settings, applied through the Grafana Enterprise cache API.
+When omitted, the cache configuration of the datasource is left untouched.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          Whether query and resource caching is enabled for this datasource<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>ttlQueriesMs</b></td>
+        <td>integer</td>
+        <td>
+          TTL MS, or "time to live", is how long a cached item will stay in the cache before it is removed (in milliseconds)<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>ttlResourcesMs</b></td>
+        <td>integer</td>
+        <td>
+          TTL MS, or "time to live", is how long a cached resource response will stay in the cache before it is removed (in milliseconds)<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>useDefaultTTL</b></td>
+        <td>boolean</td>
+        <td>
+          If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini<br/>
         </td>
         <td>false</td>
       </tr></tbody>
