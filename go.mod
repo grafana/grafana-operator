@@ -1,6 +1,6 @@
 module github.com/grafana/grafana-operator/v5
 
-go 1.27.2
+go 1.27.3
 
 require (
 	github.com/KimMachineGun/automemlimit v1.0.0
@@ -11,7 +11,7 @@ require (
 	github.com/go-openapi/runtime v0.33.3
 	github.com/go-openapi/strfmt v0.27.3
 	github.com/google/go-jsonnet v0.22.0
-	github.com/grafana/grafana-openapi-client-go v0.0.0-20260828183528-15d99ca95e47
+	github.com/grafana/grafana-openapi-client-go v0.0.0-20261015192556-fcf0a80b71e9
 	github.com/grafana/grafana/apps/folder v0.0.0-20260511051340-90bed70d199c
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260511053550-5c87510b9bf6
 	github.com/itchyny/gojq v0.12.19
@@ -29,7 +29,7 @@ require (
 	k8s.io/apimachinery v0.37.1
 	k8s.io/client-go v0.37.1
 	k8s.io/klog/v2 v2.140.0
-	oras.land/oras-go/v2 v2.6.3
+	oras.land/oras-go/v2 v2.6.4
 	sigs.k8s.io/controller-runtime v0.25.2
 	sigs.k8s.io/gateway-api v1.6.3
 	sigs.k8s.io/kustomize/kyaml v0.21.2

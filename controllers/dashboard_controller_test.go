@@ -171,6 +171,40 @@ var _ = Describe("Dashboard Reconciler: Provoke Conditions", func() {
 			wantErr: LogMsgApplyingPatch,
 		},
 		{
+			name: "v2 dashboard resource rejected: apiVersion at root",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "invalid-spec-v2-apiversion",
+			},
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					JSON: `{"apiVersion":"dashboard.grafana.app/v2","kind":"Dashboard","metadata":{"name":"my-dashboard"},"spec":{}}`,
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidModelResolution,
+			},
+		},
+		{
+			name: "v2 dashboard resource rejected: kind at root",
+			meta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "invalid-spec-v2-kind",
+			},
+			spec: v1beta1.GrafanaDashboardSpec{
+				GrafanaCommonSpec: commonSpecInvalidSpec,
+				GrafanaContentSpec: v1beta1.GrafanaContentSpec{
+					JSON: `{"kind":"Dashboard","metadata":{"name":"my-dashboard"},"spec":{}}`,
+				},
+			},
+			want: metav1.Condition{
+				Type:   conditionInvalidSpec,
+				Reason: conditionReasonInvalidModelResolution,
+			},
+		},
+		{
 			name: "Successfully applied resource to instance",
 			meta: objectMetaSynchronized,
 			spec: v1beta1.GrafanaDashboardSpec{

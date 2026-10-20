@@ -7,17 +7,17 @@ M = $(shell printf "\033[34;1m▶\033[0m")
 # renovate: datasource=github-tags depName=kyverno/chainsaw
 CHAINSAW_VERSION = v0.2.15
 # renovate: datasource=github-tags depName=kubernetes-sigs/controller-tools versioning=semver
-CONTROLLER_GEN_VERSION = v0.22.0
+CONTROLLER_GEN_VERSION = v0.23.0
 # renovate: datasource=github-tags depName=fybrik/crdoc
 CRDOC_VERSION = v0.6.4
 DART_SASS_VERSION = 1.86.0
 ENVTEST_VERSION ?= $(shell go list -m -f "{{ .Version }}" sigs.k8s.io/controller-runtime)
 # renovate: datasource=github-tags depName=golangci/golangci-lint
-GOLANGCI_LINT_VERSION = v2.14.0
+GOLANGCI_LINT_VERSION = v2.15.0
 # renovate: datasource=github-tags depName=norwoodj/helm-docs
 HELM_DOCS_VERSION = 1.14.2
 # renovate: datasource=github-tags depName=helm/helm
-HELM_VERSION = v4.3.0
+HELM_VERSION = v4.3.1
 HUGO_VERSION = 0.151.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/kind
 KIND_VERSION = v0.33.0
