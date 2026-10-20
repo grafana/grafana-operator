@@ -154,6 +154,57 @@ var _ = Describe("ServiceAccount: Tampering with CR or Created ServiceAccount in
 		deleteCR(t, cr, r)
 	})
 
+	It("Does not adopt an account of another CR when the ID in status is stale", func() {
+		t := GinkgoT()
+
+		newCR := func(name string) *v1beta1.GrafanaServiceAccount {
+			return &v1beta1.GrafanaServiceAccount{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: "default",
+				},
+				Spec: v1beta1.GrafanaServiceAccountSpec{
+					Tokens: []v1beta1.GrafanaServiceAccountTokenSpec{{
+						Name: name,
+					}},
+				},
+			}
+		}
+
+		owner := newCR("adopt-owner")
+		rOwner := createAndReconcileCR(t, owner)
+
+		stale := newCR("adopt-stale")
+		rStale := createAndReconcileCR(t, stale)
+
+		gClient, err := grafanaclient.NewGeneratedGrafanaClient(testCtx, cl, externalGrafanaCr)
+		require.NoError(t, err)
+
+		ownerID := owner.Status.Account.ID
+		require.NotEqual(t, ownerID, stale.Status.Account.ID)
+
+		// Simulate a Grafana reset: the account of stale is gone and its ID now belongs to the account of owner.
+		_, err = gClient.ServiceAccounts.DeleteServiceAccount(stale.Status.Account.ID) //nolint:errcheck
+		require.NoError(t, err)
+
+		stale.Status.Account.ID = ownerID
+		err = cl.Status().Update(testCtx, stale)
+		require.NoError(t, err)
+
+		reconcileAndCompareSpecWithStatus(t, stale, rStale, gClient)
+
+		// stale must have created its own account instead of adopting (renaming) the one of owner.
+		// Accounts are told apart by login: a rename in Grafana does not change it.
+		require.NotEqual(t, ownerID, stale.Status.Account.ID)
+
+		// owner's account and token are untouched
+		reconcileAndCompareSpecWithStatus(t, owner, rOwner, gClient)
+		require.Equal(t, ownerID, owner.Status.Account.ID)
+
+		deleteCR(t, stale, rStale)
+		deleteCR(t, owner, rOwner)
+	})
+
 	It("Recreate token secret when deleted", func() {
 		t := GinkgoT()
 
