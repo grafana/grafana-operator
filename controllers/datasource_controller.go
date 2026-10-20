@@ -28,6 +28,7 @@ import (
 	"github.com/spyzhov/ajson"
 
 	genapi "github.com/grafana/grafana-openapi-client-go/client"
+	"github.com/grafana/grafana-openapi-client-go/client/enterprise"
 	grafanaclient "github.com/grafana/grafana-operator/v5/controllers/client"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -323,8 +324,40 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		}
 	}
 
+	if err := r.applyCacheConfig(gClient, cr, datasource); err != nil {
+		return err
+	}
+
 	// Update grafana instance Status
 	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
+}
+
+func (r *GrafanaDatasourceReconciler) applyCacheConfig(gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDatasource, datasource *models.UpdateDataSourceCommand) error {
+	cache := cr.Spec.Cache
+	if cache == nil {
+		return nil
+	}
+
+	params := enterprise.NewSetDataSourceCacheConfigParams().
+		WithDataSourceUID(datasource.UID).
+		WithBody(&models.CacheConfigSetter{
+			DataSourceUID:  datasource.UID,
+			Enabled:        cache.Enabled,
+			UseDefaultTTL:  cache.UseDefaultTTL,
+			TTLQueriesMs:   cache.TTLQueriesMs,
+			TTLResourcesMs: cache.TTLResourcesMs,
+		})
+
+	if datasource.Type != "" {
+		params = params.WithDataSourceType(&datasource.Type)
+	}
+
+	_, err := gClient.Enterprise.SetDataSourceCacheConfig(params) //nolint:errcheck
+	if err != nil {
+		return fmt.Errorf("configuring datasource cache: %w", err)
+	}
+
+	return nil
 }
 
 func (r *GrafanaDatasourceReconciler) Exists(gClient *genapi.GrafanaHTTPAPI, uid, name string) (bool, string, error) {
@@ -498,6 +531,16 @@ func (r *GrafanaDatasourceReconciler) buildDatasourceModel(ctx context.Context, 
 	// TODO Remove hashing along with the Status.Hash field
 	hash := sha256.New()
 	hash.Write(newBytes)
+
+	// Cache settings are applied through a separate API, but changes to them must still trigger a resync
+	if cr.Spec.Cache != nil {
+		cacheBytes, err := json.Marshal(cr.Spec.Cache)
+		if err != nil {
+			return nil, "", fmt.Errorf("encoding datasource cache config as json: %w", err)
+		}
+
+		hash.Write(cacheBytes)
+	}
 
 	return &res, fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
