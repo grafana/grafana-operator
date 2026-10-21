@@ -421,7 +421,14 @@ func exceptDeploymentReplicas() IgnoreStatusUpdatesOpt {
 			return false
 		}
 
-		return oldDeployment.Status.Replicas != newDeployment.Status.Replicas
+		return oldDeployment.Status.Replicas != newDeployment.Status.Replicas ||
+			// Reconcile when the deployment gets its first ready replica. The complete stage waits for a
+			// ready replica. Without this event, the stage would see the change only at the next backoff
+			// retry or on an unrelated event.
+			//
+			// Do not reconcile when it loses its last ready replica. Resource controllers then retry the
+			// instance with backoff. After a reconcile, they would skip it until their next resync.
+			(oldDeployment.Status.ReadyReplicas == 0 && newDeployment.Status.ReadyReplicas > 0)
 	}
 }
 
