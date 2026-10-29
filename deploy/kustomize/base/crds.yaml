@@ -1588,6 +1588,33 @@ spec:
                 description: Allow the Operator to match this resource with Grafanas
                   outside the current namespace
                 type: boolean
+              cache:
+                description: |-
+                  Query and resource caching settings, applied through the Grafana Enterprise cache API.
+                  When omitted, the cache configuration of the datasource is left untouched.
+                properties:
+                  enabled:
+                    description: Whether query and resource caching is enabled for
+                      this datasource
+                    type: boolean
+                  ttlQueriesMs:
+                    description: TTL MS, or "time to live", is how long a cached item
+                      will stay in the cache before it is removed (in milliseconds)
+                    format: int64
+                    minimum: 0
+                    type: integer
+                  ttlResourcesMs:
+                    description: TTL MS, or "time to live", is how long a cached resource
+                      response will stay in the cache before it is removed (in milliseconds)
+                    format: int64
+                    minimum: 0
+                    type: integer
+                  useDefaultTTL:
+                    description: If UseDefaultTTL is enabled, then the TTLQueriesMS
+                      and TTLResourcesMS in this object is always sent as the default
+                      TTL located in grafana.ini
+                    type: boolean
+                type: object
               datasource:
                 properties:
                   access:

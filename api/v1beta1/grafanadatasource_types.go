@@ -57,6 +57,29 @@ type GrafanaDatasourceInternal struct {
 	SecureJSONData json.RawMessage `json:"secureJsonData,omitempty"`
 }
 
+// GrafanaDatasourceCache configures query and resource caching for the datasource.
+// Requires Grafana Enterprise or Grafana Cloud:
+// https://grafana.com/docs/grafana/latest/administration/data-source-management/#query-and-resource-caching
+type GrafanaDatasourceCache struct {
+	// Whether query and resource caching is enabled for this datasource
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini
+	// +optional
+	UseDefaultTTL *bool `json:"useDefaultTTL,omitempty"`
+
+	// TTL MS, or "time to live", is how long a cached item will stay in the cache before it is removed (in milliseconds)
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	TTLQueriesMs int64 `json:"ttlQueriesMs,omitempty"`
+
+	// TTL MS, or "time to live", is how long a cached resource response will stay in the cache before it is removed (in milliseconds)
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	TTLResourcesMs int64 `json:"ttlResourcesMs,omitempty"`
+}
+
 // GrafanaDatasourceSpec defines the desired state of GrafanaDatasource
 // +kubebuilder:validation:XValidation:rule="((!has(oldSelf.uid) && !has(self.uid)) || (has(oldSelf.uid) && has(self.uid)))", message="spec.uid is immutable"
 type GrafanaDatasourceSpec struct {
@@ -71,6 +94,11 @@ type GrafanaDatasourceSpec struct {
 	CustomUID string `json:"uid,omitempty"`
 
 	Datasource *GrafanaDatasourceInternal `json:"datasource"`
+
+	// Query and resource caching settings, applied through the Grafana Enterprise cache API.
+	// When omitted, the cache configuration of the datasource is left untouched.
+	// +optional
+	Cache *GrafanaDatasourceCache `json:"cache,omitempty"`
 
 	// plugins
 	// +optional
