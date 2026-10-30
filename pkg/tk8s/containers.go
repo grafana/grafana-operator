@@ -17,7 +17,8 @@ func GetGrafanaTestContainer(t tHelper, ctx context.Context, image string) testc
 			"3000/tcp",
 		),
 		testcontainers.WithAdditionalWaitStrategy(
-			wait.ForHTTP("/api/health").WithStartupTimeout(15*time.Second),
+			// grafana 13.3 runs its fresh-database migrations for well over 15s before /api/health responds
+			wait.ForHTTP("/api/health").WithStartupTimeout(90*time.Second),
 		),
 	)
 
