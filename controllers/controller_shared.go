@@ -421,7 +421,8 @@ func exceptDeploymentReplicas() IgnoreStatusUpdatesOpt {
 			return false
 		}
 
-		return oldDeployment.Status.Replicas != newDeployment.Status.Replicas
+		return oldDeployment.Status.Replicas != newDeployment.Status.Replicas ||
+			(oldDeployment.Status.ReadyReplicas == 0) != (newDeployment.Status.ReadyReplicas == 0)
 	}
 }
 
