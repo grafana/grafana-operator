@@ -51,8 +51,9 @@ func SetDefaults(cfg map[string]map[string]string, version string) map[string]ma
 		return cfg
 	}
 
-	if parsedVersion.GE(semver.MustParse("13.0.0")) {
+	if parsedVersion.GE(semver.MustParse("13.0.0")) && parsedVersion.LT(semver.MustParse("13.3.0")) {
 		// OOM due to changes in gzip implementation: https://github.com/grafana/grafana/issues/123017
+		// 13.3.0 replaced pgzip with compress/gzip: https://github.com/grafana/grafana/pull/133778
 		if cfg["server"] == nil {
 			cfg["server"] = make(map[string]string)
 		}
