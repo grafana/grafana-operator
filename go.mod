@@ -31,7 +31,7 @@ require (
 	k8s.io/klog/v2 v2.140.0
 	oras.land/oras-go/v2 v2.7.0
 	sigs.k8s.io/controller-runtime v0.25.2
-	sigs.k8s.io/gateway-api v1.6.3
+	sigs.k8s.io/gateway-api v1.7.0
 	sigs.k8s.io/kustomize/kyaml v0.21.2
 )
 
@@ -138,7 +138,7 @@ require (
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/term v0.47.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
-	golang.org/x/time v0.15.0 // indirect
+	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/tools v0.51.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
