@@ -22562,8 +22562,16 @@ be given to rules from the HTTPRoute with the largest number of:
 * Characters in a matching non-wildcard hostname.
 * Characters in a matching hostname.
 
-If ties exist across multiple Routes, the matching precedence rules for
-HTTPRouteMatches takes over.
+When multiple HTTPRoutes attach to the same Listener and yield identical
+Listener/Route intersected hostnames, implementations SHOULD evaluate
+precedence using the original hostnames configured on the Route, not the
+calculated Listener/Route hostname intersection.
+
+Resolving Route precedence using original Route hostname specificity is an
+Extended feature. Implementations that support this behavior SHOULD claim
+support for the `GatewayRouteHostnameIntersectionPrecedence` feature.
+Implementations that do not support this feature MAY evaluate precedence
+using the calculated Listener/Route hostname intersection.
 
 Support: Core<br/>
         </td>
@@ -22644,11 +22652,9 @@ ParentRef of the Route.
         <td><b><a href="#grafanaspechttproutespecrulesindex">rules</a></b></td>
         <td>[]object</td>
         <td>
-          Rules are a list of HTTP matchers, filters and actions.
-
-<gateway:experimental:validation:XValidation:message="Rule name must be unique within the route",rule="self.all(l1, !has(l1.name) || self.exists_one(l2, has(l2.name) && l1.name == l2.name))"><br/>
+          Rules are a list of HTTP matchers, filters and actions.<br/>
           <br/>
-            <i>Validations</i>:<li>(self.size() > 0 ? self[0].matches.size() : 0) + (self.size() > 1 ? self[1].matches.size() : 0) + (self.size() > 2 ? self[2].matches.size() : 0) + (self.size() > 3 ? self[3].matches.size() : 0) + (self.size() > 4 ? self[4].matches.size() : 0) + (self.size() > 5 ? self[5].matches.size() : 0) + (self.size() > 6 ? self[6].matches.size() : 0) + (self.size() > 7 ? self[7].matches.size() : 0) + (self.size() > 8 ? self[8].matches.size() : 0) + (self.size() > 9 ? self[9].matches.size() : 0) + (self.size() > 10 ? self[10].matches.size() : 0) + (self.size() > 11 ? self[11].matches.size() : 0) + (self.size() > 12 ? self[12].matches.size() : 0) + (self.size() > 13 ? self[13].matches.size() : 0) + (self.size() > 14 ? self[14].matches.size() : 0) + (self.size() > 15 ? self[15].matches.size() : 0) <= 128: While 16 rules and 64 matches per rule are allowed, the total number of matches across all rules in a route must be less than 128</li>
+            <i>Validations</i>:<li>self.all(l1, !has(l1.name) || self.exists_one(l2, has(l2.name) && l1.name == l2.name)): Rule name must be unique within the route</li><li>(self.size() > 0 ? self[0].matches.size() : 0) + (self.size() > 1 ? self[1].matches.size() : 0) + (self.size() > 2 ? self[2].matches.size() : 0) + (self.size() > 3 ? self[3].matches.size() : 0) + (self.size() > 4 ? self[4].matches.size() : 0) + (self.size() > 5 ? self[5].matches.size() : 0) + (self.size() > 6 ? self[6].matches.size() : 0) + (self.size() > 7 ? self[7].matches.size() : 0) + (self.size() > 8 ? self[8].matches.size() : 0) + (self.size() > 9 ? self[9].matches.size() : 0) + (self.size() > 10 ? self[10].matches.size() : 0) + (self.size() > 11 ? self[11].matches.size() : 0) + (self.size() > 12 ? self[12].matches.size() : 0) + (self.size() > 13 ? self[13].matches.size() : 0) + (self.size() > 14 ? self[14].matches.size() : 0) + (self.size() > 15 ? self[15].matches.size() : 0) <= 128: While 16 rules and 64 matches per rule are allowed, the total number of matches across all rules in a route must be less than 128</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -23027,23 +23033,28 @@ Support: Extended<br/>
         <td>
           Retry defines the configuration for when to retry an HTTP request.
 
-Support: Extended
+A request is retried when attempts is greater than 0 and the backend did
+not process it. This is the case when the connection could not be
+established, or when the backend explicitly rejected the request, either
+before processing it or with one of the configured status codes.
 
-<gateway:experimental><br/>
+Support: Extended<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#grafanaspechttproutespecrulesindexsessionpersistence">sessionPersistence</a></b></td>
         <td>object</td>
         <td>
-          SessionPersistence defines and configures session persistence
+          Deprecated: use the Backend resource for session persistence (GEP-4894).
+
+SessionPersistence defines and configures session persistence
 for the route rule.
 
 Support: Extended
 
 <gateway:experimental><br/>
           <br/>
-            <i>Validations</i>:<li>!has(self.cookieConfig) || !has(self.cookieConfig.lifetimeType) || self.cookieConfig.lifetimeType != 'Permanent' || has(self.absoluteTimeout): AbsoluteTimeout must be specified when cookie lifetimeType is Permanent</li><li>!has(self.cookieConfig) || self.type == 'Cookie': cookieConfig can only be set with type Cookie</li>
+            <i>Validations</i>:<li>!has(self.cookie) || !has(self.cookie.lifetimeType) || self.cookie.lifetimeType != 'Permanent' || has(self.absoluteTimeout): AbsoluteTimeout must be specified when cookie lifetimeType is Permanent</li><li>!has(self.cookie) || self.type == 'Cookie': cookie must be nil if type is not Cookie</li><li>self.type != 'Cookie' || has(self.cookie): cookie must be specified for Cookie type</li><li>!has(self.header) || self.type == 'Header': header must be nil if type is not Header</li><li>self.type != 'Header' || has(self.header): header must be specified for Header type</li>
         </td>
         <td>false</td>
       </tr><tr>
@@ -23943,6 +23954,9 @@ See https://github.com/kubernetes-sigs/gateway-api/pull/4001#discussion_r2291405
 for more.
 
 If 0, the body will not be sent to the authorization server.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Minimum</i>: 0<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -25718,6 +25732,9 @@ See https://github.com/kubernetes-sigs/gateway-api/pull/4001#discussion_r2291405
 for more.
 
 If 0, the body will not be sent to the authorization server.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Minimum</i>: 0<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -27034,9 +27051,12 @@ documentation to determine the supported dialect.<br/>
 
 Retry defines the configuration for when to retry an HTTP request.
 
-Support: Extended
+A request is retried when attempts is greater than 0 and the backend did
+not process it. This is the case when the connection could not be
+established, or when the backend explicitly rejected the request, either
+before processing it or with one of the configured status codes.
 
-<gateway:experimental>
+Support: Extended
 
 <table>
     <thead>
@@ -27052,36 +27072,35 @@ Support: Extended
         <td>integer</td>
         <td>
           Attempts specifies the maximum number of times an individual request
-from the gateway to a backend should be retried.
+from the Gateway to a backend should be retried in addition to the
+initial request.
 
 If the maximum number of retries has been attempted without a successful
 response from the backend, the Gateway MUST return an error.
 
-When this field is unspecified, the number of times to attempt to retry
-a backend request is implementation-specific.
+An explicit zero value MUST disable retries.
 
 Support: Extended<br/>
           <br/>
-            <i>Minimum</i>: 1<br/>
+            <i>Default</i>: 1<br/>
+            <i>Minimum</i>: 0<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>backoff</b></td>
         <td>string</td>
         <td>
-          Backoff specifies the minimum duration a Gateway should wait between
+          Backoff specifies the base interval for a backoff strategy between
 retry attempts and is represented in Gateway API Duration formatting.
+The duration a Gateway waits before a retry attempt is determined
+by the base interval and the implementation's retry strategy.
 
-For example, setting the `rules[].retry.backoff` field to the value
-`100ms` will cause a backend request to first be retried approximately
-100 milliseconds after timing out or receiving a response code configured
-to be retriable.
-
-An implementation MAY use an exponential or alternative backoff strategy
-for subsequent retry attempts, MAY cap the maximum backoff duration to
-some amount greater than the specified minimum, and MAY add arbitrary
-jitter to stagger requests, as long as unsuccessful backend requests are
-not retried before the configured minimum duration.
+Implementations MAY add random jitter and MAY cap the delay at an
+implementation-defined maximum, which SHOULD NOT be less than the base
+interval. The precise backoff curve and jitter calculation are
+implementation-specific and not exposed in the Gateway API specification.
+Implementations typically apply exponential backoff with jitter to
+mitigate thundering-herd issues.
 
 If a Request timeout (`rules[].timeouts.request`) is configured on the
 route, the entire duration of the initial request and any retry attempts
@@ -27093,18 +27112,23 @@ return a timeout error.
 If a BackendRequest timeout (`rules[].timeouts.backendRequest`) is
 configured on the route, any retry attempts which reach the configured
 BackendRequest timeout duration without a response SHOULD be canceled if
-possible and the Gateway should wait for at least the specified backoff
-duration before attempting to retry the backend request again.
+possible and the Gateway SHOULD schedule the next retry attempt according
+to the configured backoff.
 
 If a BackendRequest timeout is _not_ configured on the route, retry
 attempts MAY time out after an implementation default duration, or MAY
 remain pending until a configured Request timeout or implementation
 default duration for total request time is reached.
 
-When this field is unspecified, the time to wait between retry attempts
-is implementation-specific.
+When this field is unspecified, the backoff strategy and base interval
+are implementation-specific.
 
-Support: Extended<br/>
+Implementations which retry immediately with no backoff MUST NOT advertise
+support for this field and MUST set the Accepted Condition for the Route
+to `status: False` with a Reason of `UnsupportedValue` when this field is
+set.
+
+Support: Implementation-specific<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -27125,6 +27149,8 @@ Support: Extended<br/>
 <sup><sup>[↩ Parent](#grafanaspechttproutespecrulesindex)</sup></sup>
 
 
+
+Deprecated: use the Backend resource for session persistence (GEP-4894).
 
 SessionPersistence defines and configures session persistence
 for the route rule.
@@ -27154,25 +27180,23 @@ Support: Extended<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#grafanaspechttproutespecrulesindexsessionpersistencecookieconfig">cookieConfig</a></b></td>
+        <td><b><a href="#grafanaspechttproutespecrulesindexsessionpersistencecookie">cookie</a></b></td>
         <td>object</td>
         <td>
-          CookieConfig provides configuration settings that are specific
+          Cookie provides configuration settings that are specific
 to cookie-based session persistence.
 
 Support: Core<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>sessionName</b></td>
-        <td>string</td>
+        <td><b><a href="#grafanaspechttproutespecrulesindexsessionpersistenceheader">header</a></b></td>
+        <td>object</td>
         <td>
-          SessionName defines the name of the persistent session token
-which may be reflected in the cookie or the header. Users
-should avoid reusing session names to prevent unintended
-consequences, such as rejection or unpredictable behavior.
+          Header provides configuration settings that are specific
+to header-based session persistence.
 
-Support: Implementation-specific<br/>
+Support: Extended<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -27195,12 +27219,12 @@ Support: Extended for "Header" type<br/>
 </table>
 
 
-### Grafana.spec.httpRoute.spec.rules[index].sessionPersistence.cookieConfig
+### Grafana.spec.httpRoute.spec.rules[index].sessionPersistence.cookie
 <sup><sup>[↩ Parent](#grafanaspechttproutespecrulesindexsessionpersistence)</sup></sup>
 
 
 
-CookieConfig provides configuration settings that are specific
+Cookie provides configuration settings that are specific
 to cookie-based session persistence.
 
 Support: Core
@@ -27242,6 +27266,64 @@ Support: Extended for "Permanent" type<br/>
             <i>Default</i>: Session<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name defines the name of the cookie used for session persistence.
+If not specified, a unique cookie name SHOULD be generated.
+Users should avoid reusing cookie names to prevent unintended
+consequences, such as rejection or unpredictable behavior.
+
+Support: Extended<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          Path defines the cookie Path attribute. When not specified,
+implementations MUST default the cookie path to "/".
+
+Support: Extended<br/>
+          <br/>
+            <i>Default</i>: /<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Grafana.spec.httpRoute.spec.rules[index].sessionPersistence.header
+<sup><sup>[↩ Parent](#grafanaspechttproutespecrulesindexsessionpersistence)</sup></sup>
+
+
+
+Header provides configuration settings that are specific
+to header-based session persistence.
+
+Support: Extended
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name defines the name of the header used for session persistence.
+The client must include this header in subsequent requests to
+maintain the session.
+
+Support: Core<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 

@@ -8329,8 +8329,16 @@ spec:
                           * Characters in a matching non-wildcard hostname.
                           * Characters in a matching hostname.
 
-                          If ties exist across multiple Routes, the matching precedence rules for
-                          HTTPRouteMatches takes over.
+                          When multiple HTTPRoutes attach to the same Listener and yield identical
+                          Listener/Route intersected hostnames, implementations SHOULD evaluate
+                          precedence using the original hostnames configured on the Route, not the
+                          calculated Listener/Route hostname intersection.
+
+                          Resolving Route precedence using original Route hostname specificity is an
+                          Extended feature. Implementations that support this behavior SHOULD claim
+                          support for the `GatewayRouteHostnameIntersectionPrecedence` feature.
+                          Implementations that do not support this feature MAY evaluate precedence
+                          using the calculated Listener/Route hostname intersection.
 
                           Support: Core
                         items:
@@ -8575,10 +8583,8 @@ spec:
                         type: array
                         x-kubernetes-list-type: atomic
                       rules:
-                        description: |-
-                          Rules are a list of HTTP matchers, filters and actions.
-
-                          <gateway:experimental:validation:XValidation:message="Rule name must be unique within the route",rule="self.all(l1, !has(l1.name) || self.exists_one(l2, has(l2.name) && l1.name == l2.name))">
+                        description: Rules are a list of HTTP matchers, filters and
+                          actions.
                         items:
                           description: |-
                             HTTPRouteRule defines semantics for matching an HTTP request based on
@@ -9136,6 +9142,8 @@ spec:
                                                     for more.
 
                                                     If 0, the body will not be sent to the authorization server.
+                                                  format: int32
+                                                  minimum: 0
                                                   type: integer
                                               type: object
                                             grpc:
@@ -10696,6 +10704,8 @@ spec:
                                               for more.
 
                                               If 0, the body will not be sent to the authorization server.
+                                            format: int32
+                                            minimum: 0
                                             type: integer
                                         type: object
                                       grpc:
@@ -11955,39 +11965,41 @@ spec:
                               description: |-
                                 Retry defines the configuration for when to retry an HTTP request.
 
-                                Support: Extended
+                                A request is retried when attempts is greater than 0 and the backend did
+                                not process it. This is the case when the connection could not be
+                                established, or when the backend explicitly rejected the request, either
+                                before processing it or with one of the configured status codes.
 
-                                <gateway:experimental>
+                                Support: Extended
                               properties:
                                 attempts:
+                                  default: 1
                                   description: |-
                                     Attempts specifies the maximum number of times an individual request
-                                    from the gateway to a backend should be retried.
+                                    from the Gateway to a backend should be retried in addition to the
+                                    initial request.
 
                                     If the maximum number of retries has been attempted without a successful
                                     response from the backend, the Gateway MUST return an error.
 
-                                    When this field is unspecified, the number of times to attempt to retry
-                                    a backend request is implementation-specific.
+                                    An explicit zero value MUST disable retries.
 
                                     Support: Extended
-                                  minimum: 1
+                                  minimum: 0
                                   type: integer
                                 backoff:
                                   description: |-
-                                    Backoff specifies the minimum duration a Gateway should wait between
+                                    Backoff specifies the base interval for a backoff strategy between
                                     retry attempts and is represented in Gateway API Duration formatting.
+                                    The duration a Gateway waits before a retry attempt is determined
+                                    by the base interval and the implementation's retry strategy.
 
-                                    For example, setting the `rules[].retry.backoff` field to the value
-                                    `100ms` will cause a backend request to first be retried approximately
-                                    100 milliseconds after timing out or receiving a response code configured
-                                    to be retriable.
-
-                                    An implementation MAY use an exponential or alternative backoff strategy
-                                    for subsequent retry attempts, MAY cap the maximum backoff duration to
-                                    some amount greater than the specified minimum, and MAY add arbitrary
-                                    jitter to stagger requests, as long as unsuccessful backend requests are
-                                    not retried before the configured minimum duration.
+                                    Implementations MAY add random jitter and MAY cap the delay at an
+                                    implementation-defined maximum, which SHOULD NOT be less than the base
+                                    interval. The precise backoff curve and jitter calculation are
+                                    implementation-specific and not exposed in the Gateway API specification.
+                                    Implementations typically apply exponential backoff with jitter to
+                                    mitigate thundering-herd issues.
 
                                     If a Request timeout (`rules[].timeouts.request`) is configured on the
                                     route, the entire duration of the initial request and any retry attempts
@@ -11999,18 +12011,23 @@ spec:
                                     If a BackendRequest timeout (`rules[].timeouts.backendRequest`) is
                                     configured on the route, any retry attempts which reach the configured
                                     BackendRequest timeout duration without a response SHOULD be canceled if
-                                    possible and the Gateway should wait for at least the specified backoff
-                                    duration before attempting to retry the backend request again.
+                                    possible and the Gateway SHOULD schedule the next retry attempt according
+                                    to the configured backoff.
 
                                     If a BackendRequest timeout is _not_ configured on the route, retry
                                     attempts MAY time out after an implementation default duration, or MAY
                                     remain pending until a configured Request timeout or implementation
                                     default duration for total request time is reached.
 
-                                    When this field is unspecified, the time to wait between retry attempts
-                                    is implementation-specific.
+                                    When this field is unspecified, the backoff strategy and base interval
+                                    are implementation-specific.
 
-                                    Support: Extended
+                                    Implementations which retry immediately with no backoff MUST NOT advertise
+                                    support for this field and MUST set the Accepted Condition for the Route
+                                    to `status: False` with a Reason of `UnsupportedValue` when this field is
+                                    set.
+
+                                    Support: Implementation-specific
                                   pattern: ^([0-9]{1,5}(h|m|s|ms)){1,4}$
                                   type: string
                                 codes:
@@ -12036,8 +12053,6 @@ spec:
 
                                       Implementations MAY support specifying discrete values in the 400-499 range,
                                       which are often inadvisable to retry.
-
-                                      <gateway:experimental>
                                     maximum: 599
                                     minimum: 400
                                     type: integer
@@ -12046,6 +12061,8 @@ spec:
                               type: object
                             sessionPersistence:
                               description: |-
+                                Deprecated: use the Backend resource for session persistence (GEP-4894).
+
                                 SessionPersistence defines and configures session persistence
                                 for the route rule.
 
@@ -12062,9 +12079,9 @@ spec:
                                     Support: Extended
                                   pattern: ^([0-9]{1,5}(h|m|s|ms)){1,4}$
                                   type: string
-                                cookieConfig:
+                                cookie:
                                   description: |-
-                                    CookieConfig provides configuration settings that are specific
+                                    Cookie provides configuration settings that are specific
                                     to cookie-based session persistence.
 
                                     Support: Core
@@ -12095,17 +12112,49 @@ spec:
                                       - Permanent
                                       - Session
                                       type: string
-                                  type: object
-                                sessionName:
-                                  description: |-
-                                    SessionName defines the name of the persistent session token
-                                    which may be reflected in the cookie or the header. Users
-                                    should avoid reusing session names to prevent unintended
-                                    consequences, such as rejection or unpredictable behavior.
+                                    name:
+                                      description: |-
+                                        Name defines the name of the cookie used for session persistence.
+                                        If not specified, a unique cookie name SHOULD be generated.
+                                        Users should avoid reusing cookie names to prevent unintended
+                                        consequences, such as rejection or unpredictable behavior.
 
-                                    Support: Implementation-specific
-                                  maxLength: 128
-                                  type: string
+                                        Support: Extended
+                                      maxLength: 256
+                                      minLength: 1
+                                      pattern: ^[A-Za-z0-9!#$%&'*+\-.^_\x60|~]+$
+                                      type: string
+                                    path:
+                                      default: /
+                                      description: |-
+                                        Path defines the cookie Path attribute. When not specified,
+                                        implementations MUST default the cookie path to "/".
+
+                                        Support: Extended
+                                      maxLength: 1024
+                                      type: string
+                                  type: object
+                                header:
+                                  description: |-
+                                    Header provides configuration settings that are specific
+                                    to header-based session persistence.
+
+                                    Support: Extended
+                                  properties:
+                                    name:
+                                      description: |-
+                                        Name defines the name of the header used for session persistence.
+                                        The client must include this header in subsequent requests to
+                                        maintain the session.
+
+                                        Support: Core
+                                      maxLength: 256
+                                      minLength: 1
+                                      pattern: ^[A-Za-z0-9!#$%&'*+\-.^_\x60|~]+$
+                                      type: string
+                                  required:
+                                  - name
+                                  type: object
                                 type:
                                   default: Cookie
                                   description: |-
@@ -12124,11 +12173,17 @@ spec:
                               x-kubernetes-validations:
                               - message: AbsoluteTimeout must be specified when cookie
                                   lifetimeType is Permanent
-                                rule: '!has(self.cookieConfig) || !has(self.cookieConfig.lifetimeType)
-                                  || self.cookieConfig.lifetimeType != ''Permanent''
-                                  || has(self.absoluteTimeout)'
-                              - message: cookieConfig can only be set with type Cookie
-                                rule: '!has(self.cookieConfig) || self.type == ''Cookie'''
+                                rule: '!has(self.cookie) || !has(self.cookie.lifetimeType)
+                                  || self.cookie.lifetimeType != ''Permanent'' ||
+                                  has(self.absoluteTimeout)'
+                              - message: cookie must be nil if type is not Cookie
+                                rule: '!has(self.cookie) || self.type == ''Cookie'''
+                              - message: cookie must be specified for Cookie type
+                                rule: self.type != 'Cookie' || has(self.cookie)
+                              - message: header must be nil if type is not Header
+                                rule: '!has(self.header) || self.type == ''Header'''
+                              - message: header must be specified for Header type
+                                rule: self.type != 'Header' || has(self.header)
                             timeouts:
                               description: |-
                                 Timeouts defines the timeouts that can be configured for an HTTP request.
@@ -12240,6 +12295,9 @@ spec:
                         type: array
                         x-kubernetes-list-type: atomic
                         x-kubernetes-validations:
+                        - message: Rule name must be unique within the route
+                          rule: self.all(l1, !has(l1.name) || self.exists_one(l2,
+                            has(l2.name) && l1.name == l2.name))
                         - message: While 16 rules and 64 matches per rule are allowed,
                             the total number of matches across all rules in a route
                             must be less than 128

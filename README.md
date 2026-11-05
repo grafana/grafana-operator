@@ -8,7 +8,7 @@
 [![GitHub Last Commit](https://img.shields.io/github/last-commit/grafana/grafana-operator)](https://github.com/grafana/grafana-operator/tags)
 [![GitHub Contributors](https://img.shields.io/github/contributors/grafana/grafana-operator)](https://github.com/grafana/grafana-operator/tags)
 
-**[Official Documentation](https://grafana-operator.github.io/grafana-operator/)** | **[Quickstart](#getting-started)** | **[Installation](#installation)** | **[Tutorials](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/grafana-operator/)**
+**[Official Documentation](https://grafana-operator.github.io/grafana-operator/)** | **[Quickstart](#getting-started)** | **[Installation](#installation)** | **[Tutorials](https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/grafana-operator/)**
 
 </div>
 
@@ -79,8 +79,8 @@ spec:
 
 For more tailored setups and resources management, check out these guides:
 
-- [Managing Data Sources and Dashboards](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/grafana-operator/operator-dashboards-folders-datasources/)
-- [GitOps Dashboards Management with ArgoCD](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/grafana-operator/manage-dashboards-argocd/)
+- [Managing Data Sources and Dashboards](https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/grafana-operator/operator-dashboards-folders-datasources/)
+- [GitOps Dashboards Management with ArgoCD](https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/grafana-operator/manage-dashboards-argocd/)
 
 ## Why Grafana Operator?
 
