@@ -197,6 +197,7 @@ func (r *GrafanaDatasourceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	cr.Status.Hash = hash
 	cr.Status.LastMessage = "" //nolint:staticcheck
 	cr.Status.UID = cr.GetGrafanaUID()
+	cr.Status.CacheManaged = cr.Spec.Cache != nil
 
 	return ctrl.Result{RequeueAfter: r.Cfg.requeueAfter(cr.Spec.ResyncPeriod)}, nil
 }
@@ -324,7 +325,7 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 		}
 	}
 
-	if err := r.applyCacheConfig(gClient, cr, datasource); err != nil {
+	if err := r.applyCacheConfig(ctx, gClient, cr, datasource); err != nil {
 		return err
 	}
 
@@ -332,14 +333,33 @@ func (r *GrafanaDatasourceReconciler) onDatasourceCreated(ctx context.Context, g
 	return grafana.AddNamespacedResource(ctx, r.Client, cr, cr.NamespacedResource())
 }
 
-func (r *GrafanaDatasourceReconciler) applyCacheConfig(gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDatasource, datasource *models.UpdateDataSourceCommand) error {
+func (r *GrafanaDatasourceReconciler) applyCacheConfig(ctx context.Context, gClient *genapi.GrafanaHTTPAPI, cr *v1beta1.GrafanaDatasource, datasource *models.UpdateDataSourceCommand) error {
+	var dsType *string
+	if datasource.Type != "" {
+		dsType = &datasource.Type
+	}
+
 	cache := cr.Spec.Cache
 	if cache == nil {
+		if !cr.Status.CacheManaged {
+			return nil
+		}
+
+		params := enterprise.NewDisableDataSourceCacheParamsWithContext(ctx).
+			WithDataSourceUID(datasource.UID).
+			WithDataSourceType(dsType)
+
+		_, err := gClient.Enterprise.DisableDataSourceCache(params) //nolint:errcheck
+		if err != nil {
+			return fmt.Errorf("disabling datasource cache: %w", err)
+		}
+
 		return nil
 	}
 
-	params := enterprise.NewSetDataSourceCacheConfigParams().
+	params := enterprise.NewSetDataSourceCacheConfigParamsWithContext(ctx).
 		WithDataSourceUID(datasource.UID).
+		WithDataSourceType(dsType).
 		WithBody(&models.CacheConfigSetter{
 			DataSourceUID:  datasource.UID,
 			Enabled:        cache.Enabled,
@@ -347,10 +367,6 @@ func (r *GrafanaDatasourceReconciler) applyCacheConfig(gClient *genapi.GrafanaHT
 			TTLQueriesMs:   cache.TTLQueriesMs,
 			TTLResourcesMs: cache.TTLResourcesMs,
 		})
-
-	if datasource.Type != "" {
-		params = params.WithDataSourceType(&datasource.Type)
-	}
 
 	_, err := gClient.Enterprise.SetDataSourceCacheConfig(params) //nolint:errcheck
 	if err != nil {

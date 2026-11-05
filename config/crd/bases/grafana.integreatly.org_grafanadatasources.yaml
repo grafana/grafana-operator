@@ -294,6 +294,10 @@ spec:
                 description: The datasource instanceSelector can't find matching grafana
                   instances
                 type: boolean
+              cacheManaged:
+                description: Whether spec.cache has been applied to the datasource,
+                  used to disable caching again when spec.cache is removed
+                type: boolean
               conditions:
                 description: Results when synchronizing resource with Grafana instances
                 items:

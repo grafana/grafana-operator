@@ -120,6 +120,8 @@ type GrafanaDatasourceStatus struct {
 	// The datasource instanceSelector can't find matching grafana instances
 	NoMatchingInstances bool   `json:"NoMatchingInstances,omitempty"`
 	UID                 string `json:"uid,omitempty"`
+	// Whether spec.cache has been applied to the datasource, used to disable caching again when spec.cache is removed
+	CacheManaged bool `json:"cacheManaged,omitempty"`
 }
 
 //+kubebuilder:object:root=true

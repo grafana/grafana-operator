@@ -3703,6 +3703,13 @@ GrafanaDatasourceStatus defines the observed state of GrafanaDatasource
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>cacheManaged</b></td>
+        <td>boolean</td>
+        <td>
+          Whether spec.cache has been applied to the datasource, used to disable caching again when spec.cache is removed<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#grafanadatasourcestatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
