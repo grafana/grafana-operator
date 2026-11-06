@@ -41,6 +41,35 @@ func TestGetDatasourceContent(t *testing.T) {
 		assert.NotEmpty(t, hash)
 		assert.Equal(t, want, got)
 	})
+
+	t.Run("cache config changes the hash", func(t *testing.T) {
+		cr := &v1beta1.GrafanaDatasource{
+			Spec: v1beta1.GrafanaDatasourceSpec{
+				Datasource: &v1beta1.GrafanaDatasourceInternal{
+					Name: "prometheus",
+					Type: "prometheus",
+				},
+			},
+		}
+
+		_, withoutCache, err := reconciler.buildDatasourceModel(testCtx, cr)
+		require.NoError(t, err)
+
+		cr.Spec.Cache = &v1beta1.GrafanaDatasourceCache{
+			Enabled:      new(true),
+			TTLQueriesMs: 60000,
+		}
+
+		_, withCache, err := reconciler.buildDatasourceModel(testCtx, cr)
+		require.NoError(t, err)
+		assert.NotEqual(t, withoutCache, withCache)
+
+		cr.Spec.Cache.TTLQueriesMs = 120000
+
+		_, withChangedTTL, err := reconciler.buildDatasourceModel(testCtx, cr)
+		require.NoError(t, err)
+		assert.NotEqual(t, withCache, withChangedTTL)
+	})
 }
 
 func TestDatasourceIndexing(t *testing.T) {
