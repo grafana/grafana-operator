@@ -26,6 +26,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -756,4 +757,51 @@ func TestRemoveFinalizer(t *testing.T) {
 	got := cr.GetFinalizers()
 
 	assert.Equal(t, want, got)
+}
+
+func TestExceptDeploymentReplicas(t *testing.T) {
+	tests := []struct {
+		name string
+		old  appsv1.DeploymentStatus
+		new  appsv1.DeploymentStatus
+		want bool
+	}{
+		{
+			name: "no change",
+			old:  appsv1.DeploymentStatus{Replicas: 1, ReadyReplicas: 1},
+			new:  appsv1.DeploymentStatus{Replicas: 1, ReadyReplicas: 1},
+			want: false,
+		},
+		{
+			name: "replicas changed",
+			old:  appsv1.DeploymentStatus{Replicas: 1},
+			new:  appsv1.DeploymentStatus{Replicas: 2},
+			want: true,
+		},
+		{
+			name: "first replica ready",
+			old:  appsv1.DeploymentStatus{Replicas: 1},
+			new:  appsv1.DeploymentStatus{Replicas: 1, ReadyReplicas: 1},
+			want: true,
+		},
+		{
+			name: "last ready replica gone",
+			old:  appsv1.DeploymentStatus{Replicas: 1, ReadyReplicas: 1},
+			new:  appsv1.DeploymentStatus{Replicas: 1},
+			want: false,
+		},
+		{
+			name: "more replicas ready",
+			old:  appsv1.DeploymentStatus{Replicas: 2, ReadyReplicas: 1},
+			new:  appsv1.DeploymentStatus{Replicas: 2, ReadyReplicas: 2},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := exceptDeploymentReplicas()(&appsv1.Deployment{Status: tt.old}, &appsv1.Deployment{Status: tt.new})
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
