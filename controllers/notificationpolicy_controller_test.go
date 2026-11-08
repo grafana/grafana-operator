@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/grafana/grafana-operator/v5/api/v1beta1"
@@ -27,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 
 	. "github.com/onsi/ginkgo/v2"
 )
@@ -374,6 +376,100 @@ func TestAssembleNotificationPolicyRoutes(t *testing.T) {
 				require.NoError(t, err, "assembleNotificationPolicyRoutes() should not return an error")
 				assert.Equal(t, tt.want, tt.notificationPolicy, "assembleNotificationPolicyRoutes() returned unexpected policy")
 			}
+		})
+	}
+}
+
+func TestAssembleNotificationPolicyRoutesOrder(t *testing.T) {
+	tests := []struct {
+		name                      string
+		routes                    []client.ObjectKey
+		allowCrossNamespaceImport bool
+		wantReceivers             []string
+	}{
+		{
+			name: "name within a namespace",
+			routes: []client.ObjectKey{
+				{Namespace: "default", Name: "a"},
+				{Namespace: "default", Name: "b"},
+				{Namespace: "default", Name: "c"},
+			},
+			wantReceivers: []string{"default/a", "default/b", "default/c"},
+		},
+		{
+			name: "namespace before name",
+			routes: []client.ObjectKey{
+				{Namespace: "a-ns", Name: "z"},
+				{Namespace: "b-ns", Name: "a"},
+				{Namespace: "b-ns", Name: "z"},
+			},
+			allowCrossNamespaceImport: true,
+			wantReceivers:             []string{"a-ns/z", "b-ns/a", "b-ns/z"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := runtime.NewScheme()
+			require.NoError(t, v1beta1.AddToScheme(s))
+
+			routes := make([]v1beta1.GrafanaNotificationPolicyRoute, len(tt.routes))
+			for i, key := range tt.routes {
+				routes[i] = v1beta1.GrafanaNotificationPolicyRoute{
+					Namespace: key.Namespace,
+					Name:      key.Name,
+					Labels:    map[string]string{"tier": "first"},
+					Spec: v1beta1.GrafanaNotificationPolicyRouteSpec{
+						Route: v1beta1.Route{
+							PartialRoute: v1beta1.PartialRoute{Receiver: key.String()},
+						},
+					},
+				}
+			}
+
+			cl := fake.NewClientBuilder().
+				WithScheme(s).
+				WithObjects(convertRoutesToClientObjects(routes)...).
+				WithInterceptorFuncs(interceptor.Funcs{
+					List: func(ctx context.Context, cl client.WithWatch, list client.ObjectList, opts ...client.ListOption) error {
+						if err := cl.List(ctx, list, opts...); err != nil {
+							return err
+						}
+
+						// The fake client sorts lists; the informer cache does not guarantee order.
+						routeList, ok := list.(*v1beta1.GrafanaNotificationPolicyRouteList)
+						require.True(t, ok)
+						slices.Reverse(routeList.Items)
+
+						return nil
+					},
+				}).
+				Build()
+
+			policy := &v1beta1.GrafanaNotificationPolicy{
+				Namespace: "default",
+				Spec: v1beta1.GrafanaNotificationPolicySpec{
+					GrafanaCommonSpec: v1beta1.GrafanaCommonSpec{
+						AllowCrossNamespaceImport: tt.allowCrossNamespaceImport,
+					},
+					Route: &v1beta1.TopLevelRoute{
+						Receiver: defaultReceiver,
+						RouteSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"tier": "first"},
+						},
+					},
+				},
+			}
+
+			_, err := assembleNotificationPolicyRoutes(t.Context(), cl, policy)
+			require.NoError(t, err)
+
+			receivers := make([]string, len(policy.Spec.Route.Routes))
+			for i, route := range policy.Spec.Route.Routes {
+				receivers[i] = route.Receiver
+			}
+
+			assert.Equal(t, tt.wantReceivers, receivers)
 		})
 	}
 }
