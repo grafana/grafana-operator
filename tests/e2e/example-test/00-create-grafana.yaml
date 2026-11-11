@@ -11,6 +11,8 @@ spec:
     useKubeAuth: (semver_compare(env('GF_TEST_CONTAINER_VERSION'),'>=12.2.x'))
     preferIngress: false
   config:
+    plugins:
+      preinstall_auto_update: "false"
     log:
       mode: "console"
     auth:

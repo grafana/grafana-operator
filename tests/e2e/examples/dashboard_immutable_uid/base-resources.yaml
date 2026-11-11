@@ -8,6 +8,8 @@ metadata:
 spec:
   version: (env('GF_TEST_CONTAINER_VERSION'))
   config:
+    plugins:
+      preinstall_auto_update: "false"
     log:
       mode: "console"
     auth:
