@@ -102,7 +102,7 @@ spec:
   - email: grafana-operator@grafana.com
     name: Grafana-operator maintainers
   maturity: stable
-  minKubeVersion: 1.23.0
+  minKubeVersion: 1.32.0
   provider:
     name: Grafana Labs
     url: https://grafana.com
