@@ -127,6 +127,7 @@ It's easier to just manage this configuration outside of the operator.
 | readinessProbe | object | `{"httpGet":{"path":"/readyz","port":8081}}` | pod livenessProbe |
 | replicas | int | `1` | The number of operators to run simultaneously. With leader election, only one instance reconciles CRs preventing duplicate reconciliations. Note: Multiple replicas increase stability, it does not increase throughput. |
 | resources | object | `{}` | grafana operator container resources |
+| revisionHistoryLimit | int | `10` | The number of old ReplicaSets to retain for rollback. Older ReplicaSets beyond this limit are garbage collected. |
 | securityContext.allowPrivilegeEscalation | bool | `false` | Whether to allow privilege escalation |
 | securityContext.capabilities | object | `{"drop":["ALL"]}` | A list of capabilities to drop |
 | securityContext.readOnlyRootFilesystem | bool | `true` | Whether to allow writing to the root filesystem |
