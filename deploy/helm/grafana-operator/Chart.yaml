@@ -1,6 +1,9 @@
 apiVersion: v2
 name: grafana-operator
 description: Helm chart for the Grafana Operator
+home: https://github.com/grafana/grafana-operator
+sources:
+  - https://github.com/grafana/grafana-operator
 # A chart can be either an 'application' or a 'library' chart.
 #
 # Application charts are a collection of templates that can be packaged into versioned archives
