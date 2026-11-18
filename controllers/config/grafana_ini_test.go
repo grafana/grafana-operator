@@ -124,6 +124,34 @@ func TestSetDefaults(t *testing.T) {
 
 		assert.Equal(t, want, got)
 	})
+
+	t.Run("Gzip is disabled only on affected versions", func(t *testing.T) {
+		tests := []struct {
+			version string
+			want    string
+		}{
+			{version: "12.4.3", want: ""},
+			{version: "13.0.0", want: "false"},
+			{version: "13.2.4", want: "false"},
+			{version: "13.3.0", want: ""},
+			{version: "not-semver", want: ""},
+		}
+
+		for _, tt := range tests {
+			cfg := SetDefaults(nil, tt.version)
+
+			assert.Equal(t, tt.want, cfg["server"]["enable_gzip"], tt.version)
+		}
+	})
+
+	t.Run("Explicit gzip setting is preserved", func(t *testing.T) {
+		cfg := map[string]map[string]string{
+			"server": {"enable_gzip": "true"},
+		}
+		cfg = SetDefaults(cfg, "13.2.4")
+
+		assert.Equal(t, "true", cfg["server"]["enable_gzip"])
+	})
 }
 
 func TestWriteIni(t *testing.T) {
