@@ -62,7 +62,6 @@ func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana,
 
 	_, err := grafanaclient.GetAuthenticationStatus(ctx, r.client, cr)
 	if err != nil {
-		cr.Status.Version = ""
 		return v1beta1.OperatorStageResultFailed, fmt.Errorf("failed to authenticate with instance: %w", err)
 	}
 
@@ -70,7 +69,6 @@ func (r *CompleteReconciler) Reconcile(ctx context.Context, cr *v1beta1.Grafana,
 
 	version, err := grafanaclient.GetGrafanaVersion(ctx, r.client, cr)
 	if err != nil {
-		cr.Status.Version = ""
 		return v1beta1.OperatorStageResultFailed, fmt.Errorf("failed fetching version from instance: %w", err)
 	}
 
