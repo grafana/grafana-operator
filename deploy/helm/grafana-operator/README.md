@@ -7,14 +7,14 @@ linkTitle: "Helm installation"
 
 [grafana-operator](https://github.com/grafana/grafana-operator) for Kubernetes to manage Grafana instances and grafana resources.
 
-![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.25.0](https://img.shields.io/badge/AppVersion-v5.25.0-informational?style=flat-square)
+![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v5.26.0](https://img.shields.io/badge/AppVersion-v5.26.0-informational?style=flat-square)
 
 ## Installation
 
 This is a OCI helm chart, helm started support OCI in version 3.8.0.
 
 ```shell
-helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version 5.25.0
+helm upgrade -i grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version 5.26.0
 ```
 
 Sadly helm OCI charts currently don't support searching for available versions of a helm [oci registry](https://github.com/helm/helm/issues/11000).
@@ -30,7 +30,7 @@ resource "helm_release" "grafana_kubernetes_operator" {
   repository = "oci://ghcr.io/grafana/helm-charts"
   chart      = "grafana-operator"
   verify     = false
-  version    = "5.25.0"
+  version    = "5.26.0"
 }
 ```
 
@@ -43,7 +43,7 @@ This can result in the operator misbehaving when a release contains updates to t
 To avoid issues due to outdated or missing definitions, run the following command before updating an existing installation:
 
 ```shell
-kubectl apply --server-side --force-conflicts -f https://github.com/grafana/grafana-operator/releases/download/v5.25.0/crds.yaml
+kubectl apply --server-side --force-conflicts -f https://github.com/grafana/grafana-operator/releases/download/v5.26.0/crds.yaml
 ```
 
 The `--server-side` and `--force-conflict` flags are required to avoid running into issues with the `kubectl.kubernetes.io/last-applied-configuration` annotation.
@@ -56,7 +56,7 @@ without manual `kubectl apply` step required, `--set crds.immutable=false` on `h
 
 Use `helm upgrade -i --take-ownership` when switching to mutable CRDs for the first time only:
 ```shell
-helm upgrade -i --take-ownership --set crds.immutable=false grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version 5.25.0
+helm upgrade -i --take-ownership --set crds.immutable=false grafana-operator oci://ghcr.io/grafana/helm-charts/grafana-operator --version 5.26.0
 ```
 
 Both types of CRDs are protected on the Helm chart uninstall to avoid cascading deletion.
@@ -127,6 +127,7 @@ It's easier to just manage this configuration outside of the operator.
 | readinessProbe | object | `{"httpGet":{"path":"/readyz","port":8081}}` | pod livenessProbe |
 | replicas | int | `1` | The number of operators to run simultaneously. With leader election, only one instance reconciles CRs preventing duplicate reconciliations. Note: Multiple replicas increase stability, it does not increase throughput. |
 | resources | object | `{}` | grafana operator container resources |
+| revisionHistoryLimit | int | `10` | The number of old ReplicaSets to retain for rollback. Older ReplicaSets beyond this limit are garbage collected. |
 | securityContext.allowPrivilegeEscalation | bool | `false` | Whether to allow privilege escalation |
 | securityContext.capabilities | object | `{"drop":["ALL"]}` | A list of capabilities to drop |
 | securityContext.readOnlyRootFilesystem | bool | `true` | Whether to allow writing to the root filesystem |

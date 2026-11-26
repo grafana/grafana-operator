@@ -108,6 +108,8 @@ spec:
     tls:
       insecureSkipVerify: true
   config:
+    plugins:
+      preinstall_auto_update: "false"
     server:
       ca_cert: /certs/ca.crt
       cert_file: /certs/tls.crt

@@ -9,6 +9,8 @@ spec:
   client:
     preferIngress: false
   config:
+    plugins:
+      preinstall_auto_update: "false"
     log:
       mode: "console"
     auth:
@@ -45,6 +47,10 @@ metadata:
     dashboards: grafana-external
 spec:
   version: (env('GF_TEST_CONTAINER_VERSION'))
+  config:
+    plugins:
+      # Grafana starts much faster when it doesn't need to upgrade plugins
+      preinstall_auto_update: "false"
   external:
     url: (join('',['http://grafana-internal-service.',$namespace,':3000']))
     adminPassword:

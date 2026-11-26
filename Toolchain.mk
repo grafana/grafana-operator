@@ -17,7 +17,7 @@ GOLANGCI_LINT_VERSION = v2.15.0
 # renovate: datasource=github-tags depName=norwoodj/helm-docs
 HELM_DOCS_VERSION = 1.14.2
 # renovate: datasource=github-tags depName=helm/helm
-HELM_VERSION = v4.3.1
+HELM_VERSION = v4.3.2
 HUGO_VERSION = 0.151.0
 # renovate: datasource=github-tags depName=kubernetes-sigs/kind
 KIND_VERSION = v0.33.0
@@ -29,7 +29,7 @@ MUFFET_VERSION = v2.10.9
 OPERATOR_SDK_VERSION = v1.32.0
 OPM_VERSION = v1.23.2
 # renovate: datasource=github-tags depName=mikefarah/yq
-YQ_VERSION = v4.54.1
+YQ_VERSION = v4.54.3
 # renovate: datasource=github-tags depName=google/go-containerregistry
 CRANE_VERSION = v0.22.1
 

@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -453,6 +454,11 @@ func getMatchingNotificationPolicyRoutes(ctx context.Context, cl client.Client, 
 			validRoutes = append(validRoutes, route)
 		}
 	}
+
+	// The cache does not guarantee order, and route order affects matching.
+	slices.SortFunc(validRoutes, func(a, b v1beta1.GrafanaNotificationPolicyRoute) int {
+		return cmp.Or(cmp.Compare(a.Namespace, b.Namespace), cmp.Compare(a.Name, b.Name))
+	})
 
 	return validRoutes, nil
 }

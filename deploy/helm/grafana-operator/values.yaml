@@ -14,6 +14,10 @@ leaderElect: true
 # Note: Multiple replicas increase stability, it does not increase throughput.
 replicas: 1
 
+# -- The number of old ReplicaSets to retain for rollback.
+# Older ReplicaSets beyond this limit are garbage collected.
+revisionHistoryLimit: 10
+
 # -- Sets the `WATCH_NAMESPACE` environment variable,
 # it defines which namespaces the operator should be listening for (e.g. `"grafana, foo"`).
 # By default, the operator watches all namespaces. To make it watch only its own namespace, check out `namespaceScope` option instead.
